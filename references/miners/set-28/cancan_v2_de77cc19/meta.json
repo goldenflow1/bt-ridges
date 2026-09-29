@@ -1,0 +1,17 @@
+{
+ "set_id": 28,
+ "agent_id": "de77cc19-5d74-5780-a375-6b3b99415ad1",
+ "name": "cancan",
+ "version": 2,
+ "rank_at_fetch": 31,
+ "score": 0.3,
+ "cost_usd": 0.04822311757333333,
+ "status": "didnt_qualify",
+ "approved": false,
+ "created_at": "2026-09-26T15:49:06.565199Z",
+ "fetched_at": "2026-09-29T16:29:54Z",
+ "visibility": "public",
+ "sha256": "990319959b10c6029000557faf34a57f75e869f3f854b3e650a2bb4b4b06e92f",
+ "lines": 7731,
+ "duplicate_of": null
+}

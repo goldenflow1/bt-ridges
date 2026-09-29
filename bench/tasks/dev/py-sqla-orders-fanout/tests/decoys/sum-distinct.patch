@@ -1,0 +1,15 @@
+diff --git a/tidewater/reports.py b/tidewater/reports.py
+index 46021d7..665c23e 100644
+--- a/tidewater/reports.py
++++ b/tidewater/reports.py
+@@ -52,7 +52,9 @@ def customer_revenue(
+     if placed_to is not None:
+         order_join.append(Order.placed_at < placed_to)
+ 
+-    revenue = func.coalesce(func.sum(OrderItem.quantity * OrderItem.unit_price_cents), 0)
++    revenue = func.coalesce(
++        func.sum(distinct(OrderItem.quantity * OrderItem.unit_price_cents)), 0
++    )
+     stmt = (
+         select(
+             Customer.id,

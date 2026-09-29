@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("COURSEBOARD_DATABASE_URL")
+}
+
+model Instructor {
+  id      Int      @id @default(autoincrement())
+  name    String
+  courses Course[]
+
+  @@map("instructors")
+}
+
+model Course {
+  id           Int          @id @default(autoincrement())
+  code         String       @unique
+  title        String
+  instructorId Int          @map("instructor_id")
+  archivedAt   DateTime?    @map("archived_at") @db.Timestamptz(6)
+  instructor   Instructor   @relation(fields: [instructorId], references: [id])
+  enrollments  Enrollment[]
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id          Int       @id @default(autoincrement())
+  courseId    Int       @map("course_id")
+  learner     String
+  status      String    @default("active")
+  enrolledAt  DateTime  @default(now()) @map("enrolled_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  course      Course    @relation(fields: [courseId], references: [id])
+
+  @@unique([courseId, learner])
+  @@map("enrollments")
+}

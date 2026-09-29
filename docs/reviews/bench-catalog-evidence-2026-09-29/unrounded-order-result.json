@@ -1,0 +1,8 @@
+{
+  "probe": "unrounded_order_decoy",
+  "reward": "1",
+  "failed": [],
+  "additional_test_returncode": 1,
+  "additional_test_output": "{\"expectedIds\":[1,2],\"actual\":[[2,0.1],[1,0.1]]}\nnode:internal/process/promises:391\n    triggerUncaughtException(err, true /* fromPromise */);\n    ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n+   2,\n+   1\n-   1,\n-   2\n  ]\n    at main (/app/test/review_rounding_tie.ts:11:9) {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: [ 2, 1 ],\n  expected: [ 1, 2 ],\n  operator: 'deepStrictEqual'\n}\n\nNode.js v20.18.0\n",
+  "logs": "/tmp/validate-ts-prisma-groupby-n98ih6xj"
+}

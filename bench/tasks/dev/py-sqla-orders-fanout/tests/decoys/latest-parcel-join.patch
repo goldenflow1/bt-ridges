@@ -1,0 +1,24 @@
+diff --git a/tidewater/reports.py b/tidewater/reports.py
+index 46021d7..39bd345 100644
+--- a/tidewater/reports.py
++++ b/tidewater/reports.py
+@@ -64,7 +64,18 @@ def customer_revenue(
+         .select_from(Customer)
+         .outerjoin(Order, and_(*order_join))
+         .outerjoin(OrderItem, OrderItem.order_id == Order.id)
+-        .outerjoin(Shipment, Shipment.order_id == Order.id)
++        .outerjoin(
++            Shipment,
++            and_(
++                Shipment.order_id == Order.id,
++                # only the latest parcel, so split shipments do not repeat lines
++                Shipment.shipped_at
++                == select(func.max(Shipment.shipped_at))
++                .where(Shipment.order_id == Order.id)
++                .correlate(Order)
++                .scalar_subquery(),
++            ),
++        )
+         .group_by(Customer.id, Customer.name)
+         .order_by(desc("revenue_cents"), Customer.id)
+     )

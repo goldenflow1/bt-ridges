@@ -1,0 +1,14 @@
+{
+  "containers": [
+    "b7c5a8923841 bex-tracer-challenge-api-1"
+  ],
+  "networks": [
+    "03f905d29f9e none",
+    "45dafec28547 host",
+    "cea89d135a51 bex-tracer_default",
+    "f3c167f57404 bridge"
+  ],
+  "volumes": [
+    "32d017b4de4b24df2c7c182c413dd280f251c3f25ccccedf87492abb38c1262d"
+  ]
+}

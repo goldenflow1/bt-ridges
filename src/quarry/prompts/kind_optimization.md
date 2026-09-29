@@ -1,0 +1,1 @@
+This task asks for less database work with identical results. First capture the current results and the current number of queries (or plan / rows read) on realistic volume, then change the code, then show the results are identical and that the work no longer grows with the data.

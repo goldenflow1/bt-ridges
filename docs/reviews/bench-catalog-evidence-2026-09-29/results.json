@@ -1,0 +1,27 @@
+[
+  {
+    "task": "py-sqla-orders-fanout",
+    "returncode": 0,
+    "seconds": 450.7
+  },
+  {
+    "task": "ch-py-replacing-final",
+    "returncode": 0,
+    "seconds": 509.2
+  },
+  {
+    "task": "go-sqlx-pagination",
+    "returncode": 0,
+    "seconds": 304.4
+  },
+  {
+    "task": "ts-prisma-groupby",
+    "returncode": 0,
+    "seconds": 439.4
+  },
+  {
+    "task": "py-django-n-plus-one",
+    "returncode": 0,
+    "seconds": 480.8
+  }
+]

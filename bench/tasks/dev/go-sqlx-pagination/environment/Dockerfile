@@ -1,0 +1,29 @@
+FROM golang:1.23.2-bookworm
+
+ENV GOFLAGS=-mod=vendor \
+    GOPROXY=off \
+    GOTOOLCHAIN=local \
+    CGO_ENABLED=0 \
+    AUDITFEED_DATABASE_URL=postgres://auditfeed:auditfeed-app-81b04c6e@postgres:5432/auditfeed_dev?sslmode=disable \
+    AUDITFEED_TEST_DATABASE_URL=postgres://auditfeed:auditfeed-app-81b04c6e@postgres:5432/auditfeed_test?sslmode=disable
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends bash ca-certificates git postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY app/ /app/
+WORKDIR /app
+
+RUN rm -rf /app/.git \
+    && find /app -type d -exec chmod 755 {} + \
+    && find /app -type f -exec chmod 644 {} + \
+    && go build ./... \
+    && go vet ./... \
+    && go test -count=1 -run '^$' ./... \
+    && useradd --create-home --uid 1000 --shell /bin/bash agent \
+    && chown -R root:root /app \
+    && chown root:agent /app/internal/store \
+    && chmod 775 /app/internal/store \
+    && chown agent:agent /app/internal/store/events.go
+
+CMD ["sh", "-c", "sleep infinity"]

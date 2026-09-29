@@ -1,0 +1,18 @@
+diff --git a/recipes/views.py b/recipes/views.py
+index 32d2802..0e820cc 100644
+--- a/recipes/views.py
++++ b/recipes/views.py
+@@ -9,7 +9,12 @@ PAGE_SIZE = 20
+ 
+ 
+ def recipe_list(request):
+-    recipes = Recipe.objects.filter(published=True).order_by("-created_at", "id")
++    recipes = (
++        Recipe.objects.filter(published=True)
++        .select_related("author")
++        .prefetch_related("tags", "ingredients", "reviews")
++        .order_by("-created_at", "id")
++    )
+     tag = request.GET.get("tag")
+     if tag:
+         recipes = recipes.filter(tags__slug=tag)

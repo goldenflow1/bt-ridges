@@ -1,0 +1,13 @@
+Data semantics checklist (all engines):
+- Joins change grain. Joining a one-to-many relation before aggregating multiplies rows; aggregate each relation at its own grain first (subquery/CTE), or use EXISTS for filters. DISTINCT inside SUM/AVG is not a fix: equal values from different rows collapse.
+- COUNT(*) counts rows, COUNT(col) skips NULLs, COUNT(DISTINCT col) collapses duplicates. Pick the one the requirement means.
+- A LEFT JOIN followed by a WHERE on the right table becomes an inner join; move the condition into the ON clause.
+- NOT IN with a subquery that can return NULL returns no rows; use NOT EXISTS.
+- Empty groups: aggregates over no rows return NULL; wrap with COALESCE(..., 0) when the caller expects a number, and keep the group row with an outer join or correlated subquery.
+- Ordering: "latest", "first", "top N" and pagination need a total order. Add a unique tie-breaker (usually the primary key) to ORDER BY and to keyset predicates (row comparison `(a, id) > (x, y)`).
+- Integer division truncates; cast to numeric/decimal before dividing, then round.
+- Time: use half-open ranges [start, end); be explicit about the time zone of day/week buckets; beware end-of-day inclusive bounds.
+- Hierarchies: "descendants at any depth" means the whole subtree, not one level; count distinct leaf entities once.
+- Keep query objects lazy and composable when the code returns a queryset/builder: callers may filter, order, slice or select values afterwards.
+- N+1: a query per row inside a loop grows with data. Replace with one set-based query, a join, or batched loading (IN (...) / prefetch).
+- Verify on data that exercises the edge cases above, not only the rows that happen to exist.

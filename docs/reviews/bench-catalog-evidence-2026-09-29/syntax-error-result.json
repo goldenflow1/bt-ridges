@@ -1,0 +1,13 @@
+{
+  "probe": "syntax_error_decoy",
+  "reward": "0",
+  "failed": [
+    "bounded_customer_revenue_function",
+    "python_compilation",
+    "ruff_lint",
+    "regression_report_tests",
+    "hidden_revenue_fanout_worlds"
+  ],
+  "accepted_by_current_decoy_condition": true,
+  "logs": "/tmp/validate-py-sqla-orders-fanout-rczo25r7"
+}

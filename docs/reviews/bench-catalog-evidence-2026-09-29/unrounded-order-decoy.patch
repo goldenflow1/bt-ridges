@@ -1,0 +1,20 @@
+diff --git a/src/reports.ts b/src/reports.ts
+--- a/src/reports.ts
++++ b/src/reports.ts
+@@ -49,14 +49,14 @@
+       c.title,
+       COUNT(e.id) AS enrolled,
+       COUNT(e.completed_at) AS completed,
+-      COALESCE(COUNT(e.completed_at) * 100 / NULLIF(COUNT(e.id), 0), 0) AS completion_rate
++      COALESCE(ROUND(COUNT(e.completed_at) * 100.0 / NULLIF(COUNT(e.id), 0), 1), 0) AS completion_rate
+     FROM courses c
+     LEFT JOIN enrollments e
+       ON e.course_id = c.id
+      AND e.status <> 'withdrawn'
+     WHERE c.archived_at IS NULL
+     GROUP BY c.id, c.code, c.title
+-    ORDER BY completion_rate DESC, c.id
++    ORDER BY COALESCE(COUNT(e.completed_at) * 100.0 / NULLIF(COUNT(e.id), 0), 0) DESC, c.id
+   `;
+   return rows.map((row) => ({
+     courseId: row.course_id,

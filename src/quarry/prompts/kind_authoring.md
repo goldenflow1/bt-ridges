@@ -1,0 +1,1 @@
+This task asks you to write a data path that does not exist yet (or returns placeholder values). Before writing code, derive the expected output for a few small scenarios directly from the requirements, including empty and tie cases; then implement and compare.

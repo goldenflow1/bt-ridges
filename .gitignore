@@ -1,0 +1,9 @@
+dist/
+bench/runs/
+__pycache__/
+*.pyc
+.venv/
+.env*
+*.log
+.pytest_cache/
+.ruff_cache/

@@ -1,0 +1,1 @@
+The code returns wrong data. Reproduce the defect on crafted data first, write down the correct output from the requirements, then fix it at its source in the production path and show old-wrong / new-right on the same data.

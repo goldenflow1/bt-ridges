@@ -1,0 +1,17 @@
+{
+ "set_id": 28,
+ "agent_id": "72b224ef-cca0-50ec-aca8-4435ca000876",
+ "name": "NEON",
+ "version": 4,
+ "rank_at_fetch": 33,
+ "score": 0.3,
+ "cost_usd": 0.05027553346666668,
+ "status": "didnt_qualify",
+ "approved": false,
+ "created_at": "2026-09-24T04:45:29.595586Z",
+ "fetched_at": "2026-09-29T16:30:25Z",
+ "visibility": "public",
+ "sha256": "678777bb15dd68af34d880c48db4bad919ab5c87238ccf4531adc01f705209d0",
+ "lines": 8859,
+ "duplicate_of": null
+}

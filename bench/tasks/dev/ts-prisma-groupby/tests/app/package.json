@@ -1,0 +1,21 @@
+{
+  "name": "courseboard",
+  "version": "2.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Course catalogue and learner progress reporting",
+  "scripts": {
+    "report": "tsx src/cli.ts",
+    "test": "node --import tsx --test test/reports.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.16.11",
+    "prisma": "5.22.0",
+    "tsx": "4.19.1",
+    "typescript": "5.6.3"
+  }
+}

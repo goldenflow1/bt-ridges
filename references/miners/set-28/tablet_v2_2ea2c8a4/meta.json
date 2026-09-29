@@ -1,0 +1,17 @@
+{
+ "set_id": 28,
+ "agent_id": "2ea2c8a4-6e51-50a5-ab4d-4c8e8a16adcc",
+ "name": "tablet",
+ "version": 2,
+ "rank_at_fetch": 34,
+ "score": 0.3,
+ "cost_usd": 0.052582126500000013,
+ "status": "didnt_qualify",
+ "approved": false,
+ "created_at": "2026-09-25T02:31:35.383675Z",
+ "fetched_at": "2026-09-29T16:30:46Z",
+ "visibility": "public",
+ "sha256": "fbaa3c6f8efa1988018b3bc59142c24114100c58ed7db6eb39a200f7513ceca5",
+ "lines": 7422,
+ "duplicate_of": null
+}

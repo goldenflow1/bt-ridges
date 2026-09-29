@@ -1,0 +1,22 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: postgres.Dockerfile
+    volumes:
+      - type: tmpfs
+        target: /var/lib/postgresql/data
+        tmpfs:
+          size: 536870912
+    environment:
+      POSTGRES_PASSWORD: auditfeed-pg-hidden-6b21e7d9
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres && test -f /var/lib/postgresql/data/TASK_READY"]
+      interval: 2s
+      timeout: 2s
+      retries: 120
+    deploy:
+      resources:
+        limits:
+          memory: 1024m

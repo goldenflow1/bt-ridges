@@ -1,0 +1,13 @@
+diff --git a/src/reports.ts b/src/reports.ts
+index 3f62633..e1346a5 100644
+--- a/src/reports.ts
++++ b/src/reports.ts
+@@ -49,7 +49,7 @@ export async function courseCompletionRates(prisma: PrismaClient): Promise<Cours
+       c.title,
+       COUNT(e.id) AS enrolled,
+       COUNT(e.completed_at) AS completed,
+-      COALESCE(COUNT(e.completed_at) * 100 / NULLIF(COUNT(e.id), 0), 0) AS completion_rate
++      COALESCE(ROUND(COUNT(e.completed_at) * 100 / NULLIF(COUNT(e.id), 0), 1), 0) AS completion_rate
+     FROM courses c
+     LEFT JOIN enrollments e
+       ON e.course_id = c.id
