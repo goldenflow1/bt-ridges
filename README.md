@@ -13,11 +13,11 @@ An agent for the Ridges (Bittensor SN62) **Database Query Engineering** competit
 ### 1. Prerequisites
 | Tool | Why | Check |
 |---|---|---|
-| Linux or macOS with **Docker** (Engine + Compose v2) | practice tasks and `ridges miner run-local` run in containers | `docker compose version` |
+| Linux or macOS with **Docker** (Engine + Compose v2) | practice tasks and `ridges miner run-local` run in containers | `docker compose version` (Ubuntu's `docker.io` lacks it: `apt-get install docker-compose-v2`) |
 | **git** | this repo and the Ridges CLI | `git --version` |
 | **uv** | Python environments (installs Python itself) | `uv --version` (install: `curl -LsSf https://astral.sh/uv/install.sh \| sh`) |
 | ~20 GB free disk, 8 GB+ RAM | task images | `df -h`, `free -g` |
-| **A fast CPU**, if you want to run the NetBox public samples | their Django checks must finish in < 10 min cold; on the original dev host (Xeon E5-2680 v3 VM) they take ≈ 23 min | see step 6 |
+| **A fast CPU**, if you want to run the NetBox public samples | their Django checks must finish in < 10 min cold; on the original dev host (Xeon E5-2680 v3 VM) they take ≈ 23 min; on a Ryzen 9 7950X3D, 198 s | see step 6 |
 
 ### 2. Get this repo and its dev tools
 ```bash
@@ -108,7 +108,7 @@ Watch the agent live: `tail -f $(ls -td ~/.ridges/runs/*/*/ | head -1)agent/runt
 ---
 
 ## Status
-_Last updated 2026-09-30._
+_Last updated 2026-09-29 (new host)._
 
 | Area | State |
 |---|---|
@@ -116,13 +116,13 @@ _Last updated 2026-09-30._
 | Measurement integrity (M0.5A, B1) | Done: cost provenance, cache telemetry, key-usage ledger, run provenance, trial labels, decoy calibration |
 | Smoke test | Passed on a dev task (solved, $0.0092) |
 | Reconnaissance (dev set, 1 run each) | **5/5 solved**, $0.0102 per task on average (provider-reported = key usage), cache read share 83–95% |
-| NetBox public samples | **Deferred on the original host** (cold Django check ≈ 23 min > checker limit). Run on a faster machine, or as a clearly labelled long-timeout local variant |
+| NetBox public samples | Run on the new host (Ryzen 9 7950X3D; cold check 198 s vs 600 s limit). Reconnaissance, 1 run each: **5/6 solved**, $0.0162 per task; `prefix-hierarchy-annotations` unsolved (max-turns, patch made the check worse). 3-trial evaluation running (Step 2b) |
 | Originality | ≈ 1% overlap with 10 public agents (limit 30%) |
-| Spend | $0.0855 of the $30 local envelope; OpenRouter key limit $100 |
+| Spend | $0.194 of the $30 local envelope (new host ledger seeded with the key's pre-Quarry usage, so it includes the old host's spend); OpenRouter key limit **$15** |
 | Competition (set 28, checked 2026-09-29) | Open, no end date, 90% of emissions. Best approved agent: 0.36 at $0.091/task. To qualify: ≥ 0.36 at ≤ $0.086 (cost route) or ≥ 0.38 (performance route) |
 
 **Next steps** (see `docs/plans/M0.5-pre-smoke-hardening.md`):
-1. Wave-2 practice tasks — harder and more varied; the current dev set no longer discriminates (5/5).
-2. NetBox public samples on a fast machine (or the long-timeout local variant).
-3. M0.5B2: full runtime identity, baseline promotion tooling, four-task audit; then a 3-repeat baseline.
+1. Step 2b public baseline (running): 6 NetBox tasks × 3, then `tools/bench_summary.py promote`.
+2. Wave-2 practice tasks (in progress on another device); then the dev baseline on all 17 dev tasks.
+3. First experiment: the `prefix-hierarchy-annotations` failure (E007), judged against the promoted baseline under §5a.
 4. A calibration upload to learn how local results map to validator scores.
