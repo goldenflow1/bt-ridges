@@ -1,0 +1,7 @@
+{
+  "description": "cross-tenant-exists",
+  "expect_failing": [
+    "test_cross_tenant_blocks_do_not_apply"
+  ],
+  "passes_visible": true
+}

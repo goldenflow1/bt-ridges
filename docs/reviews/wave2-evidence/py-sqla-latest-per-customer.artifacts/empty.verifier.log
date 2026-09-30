@@ -1,0 +1,189 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-sqla-latest-per-customer" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="st_timestamp_ties_choose_largest_id _____________________&#10;&#10;conn = &lt;sqlalchemy.engine.base.Connection object at 0x7428985ba570&gt;&#10;&#10;    def test_timestamp_ties_choose_largest_id(conn):&#10;        conn.exec_driver_sql(&quot;INSERT INTO events VALUES (90, 8, '2026-01-09', 'x'), (4, 8, '2026-01-09', 'y'), (5, 2, '2026-01-08', 'x')&quot;)&#10;&gt;       assert ids(conn) == [(2, 5), (8, 90)]&#10;E       AssertionError: assert [(2, 5), (8, 90), (8, 4)] == [(2, 5), (8, 90)]&#10;E         &#10;E         Left contains one more item: (8, 4)&#10;E         &#10;E         Full diff:&#10;E           [&#10;E               (&#10;E                   2,...&#10;E         &#10;E         ...Full output truncated (11 lines hidden), use '-vv' to show&#10;&#10;tests/test_private.py:16: AssertionError&#10;_____________________ test_one_statement_on_many_customers _____________________&#10;&#10;conn = &lt;sqlalchemy.engine.base.Connection object at 0x7428985cd5b0&gt;&#10;&#10;    def test_one_statement_on_many_customers(conn):&#10;        conn.exec_driver_sql(&quot;INSERT INTO events SELECT x, mod(x, 71), '2026-01-0">st_timestamp_ties_choose_largest_id _____________________
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x7428985ba570&gt;
+
+    def test_timestamp_ties_choose_largest_id(conn):
+        conn.exec_driver_sql("INSERT INTO events VALUES (90, 8, '2026-01-09', 'x'), (4, 8, '2026-01-09', 'y'), (5, 2, '2026-01-08', 'x')")
+&gt;       assert ids(conn) == [(2, 5), (8, 90)]
+E       AssertionError: assert [(2, 5), (8, 90), (8, 4)] == [(2, 5), (8, 90)]
+E         
+E         Left contains one more item: (8, 4)
+E         
+E         Full diff:
+E           [
+E               (
+E                   2,...
+E         
+E         ...Full output truncated (11 lines hidden), use '-vv' to show
+
+tests/test_private.py:16: AssertionError
+_____________________ test_one_statement_on_many_customers _____________________
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x7428985cd5b0&gt;
+
+    def test_one_statement_on_many_customers(conn):
+        conn.exec_driver_sql("INSERT INTO events SELECT x, mod(x, 71), '2026-01-01'::timestamptz + (mod(x, 13)) * interval '1 hour', 'x' FROM generate_series(1, 997) x")
+        expected = list(conn.exec_driver_sql("SELECT DISTINCT ON (customer_id) customer_id, id FROM events ORDER BY customer_id, occurred_at DESC, id DESC"))
+        seen = []
+        def observe(*args):
+            seen.append(args[2])
+        event.listen(conn, 'before_cursor_execute', observe)
+        try:
+            actual = ids(conn)
+        finally:
+            event.remove(conn, 'before_cursor_execute', observe)
+&gt;       assert actual == expected
+E       AssertionError: assert [(0, 142), (1...(5, 857), ...] == [(0, 142), (1...(5, 857), ...]
+E         
+E         At index 13 diff: (12, 12) != (13, 155)
+E         Left contains 5 more items, first extra item: (66, 350)
+E         
+E         Full diff:
+E           [
+E         -     (0, 142),...
+E         
+E         ...Full output truncated (375 lines hidden), use '-vv' to show
+
+tests/test_private.py:40: AssertionError
+______________ test_timestamp_projection_preserves_exact_instant _______________
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x7428985cd820&gt;
+
+    def test_timestamp_projection_preserves_exact_instant(conn):
+        conn.exec_driver_sql("INSERT INTO events VALUES (1, 3, '2026-01-08 23:42:17.123456-05:00', 'new'), (2, 3, '2026-01-09 04:42:17.123456+00', 'closed'), (3, 4, '2026-01-11 15:06:07.654321+05:45', 'new')")
+&gt;       assert list(latest_per_customer(conn, START, END)) == [
+            (3, 2, datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=timezone.utc)),
+            (4, 3, datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=timezone.utc)),
+        ]
+E       AssertionError: assert [(3, 1, datet...='Etc/UTC')))] == [(3, 2, datet...imezone.utc))]
+E         
+E         At index 0 diff: (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) != (3, 2, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=datetime.timezone.utc))
+E         Left contains one more item: (4, 3, datetime.datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))
+E         
+E         Full diff:
+E           [
+E         +     (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))),...
+E         
+E         ...Full output truncated (13 lines hidden), use '-vv' to show
+
+tests/test_private.py:46: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_id_is_not_chronology
+PASSED tests/test_private.py::test_window_precedes_ranking_and_is_half_open
+FAILED tests/test_private.py::test_timestamp_ties_choose_largest_id - Asserti...
+FAILED tests/test_private.py::test_one_statement_on_many_customers - Assertio...
+FAILED tests/test_private.py::test_timestamp_projection_preserves_exact_instant
+========================= 3 failed, 2 passed in 0.39s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_private.py::test_timestamp_ties_choose_largest_id FAILED      [ 20%]
+tests/test_private.py::test_id_is_not_chronology PASSED                  [ 40%]
+tests/test_private.py::test_window_precedes_ranking_and_is_half_open PASSED [ 60%]
+tests/test_private.py::test_one_statement_on_many_customers FAILED       [ 80%]
+tests/test_private.py::test_timestamp_projection_preserves_exact_instant FAILED [100%]
+
+=================================== FAILURES ===================================
+____________________ test_timestamp_ties_choose_largest_id _____________________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x7428985ba570>
+
+    def test_timestamp_ties_choose_largest_id(conn):
+        conn.exec_driver_sql("INSERT INTO events VALUES (90, 8, '2026-01-09', 'x'), (4, 8, '2026-01-09', 'y'), (5, 2, '2026-01-08', 'x')")
+>       assert ids(conn) == [(2, 5), (8, 90)]
+E       AssertionError: assert [(2, 5), (8, 90), (8, 4)] == [(2, 5), (8, 90)]
+E         
+E         Left contains one more item: (8, 4)
+E         
+E         Full diff:
+E           [
+E               (
+E                   2,...
+E         
+E         ...Full output truncated (11 lines hidden), use '-vv' to show
+
+tests/test_private.py:16: AssertionError
+_____________________ test_one_statement_on_many_customers _____________________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x7428985cd5b0>
+
+    def test_one_statement_on_many_customers(conn):
+        conn.exec_driver_sql("INSERT INTO events SELECT x, mod(x, 71), '2026-01-01'::timestamptz + (mod(x, 13)) * interval '1 hour', 'x' FROM generate_series(1, 997) x")
+        expected = list(conn.exec_driver_sql("SELECT DISTINCT ON (customer_id) customer_id, id FROM events ORDER BY customer_id, occurred_at DESC, id DESC"))
+        seen = []
+        def observe(*args):
+            seen.append(args[2])
+        event.listen(conn, 'before_cursor_execute', observe)
+        try:
+            actual = ids(conn)
+        finally:
+            event.remove(conn, 'before_cursor_execute', observe)
+>       assert actual == expected
+E       AssertionError: assert [(0, 142), (1...(5, 857), ...] == [(0, 142), (1...(5, 857), ...]
+E         
+E         At index 13 diff: (12, 12) != (13, 155)
+E         Left contains 5 more items, first extra item: (66, 350)
+E         
+E         Full diff:
+E           [
+E         -     (0, 142),...
+E         
+E         ...Full output truncated (375 lines hidden), use '-vv' to show
+
+tests/test_private.py:40: AssertionError
+______________ test_timestamp_projection_preserves_exact_instant _______________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x7428985cd820>
+
+    def test_timestamp_projection_preserves_exact_instant(conn):
+        conn.exec_driver_sql("INSERT INTO events VALUES (1, 3, '2026-01-08 23:42:17.123456-05:00', 'new'), (2, 3, '2026-01-09 04:42:17.123456+00', 'closed'), (3, 4, '2026-01-11 15:06:07.654321+05:45', 'new')")
+>       assert list(latest_per_customer(conn, START, END)) == [
+            (3, 2, datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=timezone.utc)),
+            (4, 3, datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=timezone.utc)),
+        ]
+E       AssertionError: assert [(3, 1, datet...='Etc/UTC')))] == [(3, 2, datet...imezone.utc))]
+E         
+E         At index 0 diff: (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) != (3, 2, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=datetime.timezone.utc))
+E         Left contains one more item: (4, 3, datetime.datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))
+E         
+E         Full diff:
+E           [
+E         +     (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))),...
+E         
+E         ...Full output truncated (13 lines hidden), use '-vv' to show
+
+tests/test_private.py:46: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_id_is_not_chronology
+PASSED tests/test_private.py::test_window_precedes_ranking_and_is_half_open
+FAILED tests/test_private.py::test_timestamp_ties_choose_largest_id - Asserti...
+FAILED tests/test_private.py::test_one_statement_on_many_customers - Assertio...
+FAILED tests/test_private.py::test_timestamp_projection_preserves_exact_instant
+========================= 3 failed, 2 passed in 0.39s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_sample PASSED                                [ 50%]
+tests/test_visible.py::test_empty PASSED                                 [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_sample
+PASSED tests/test_visible.py::test_empty
+============================== 2 passed in 0.15s ===============================

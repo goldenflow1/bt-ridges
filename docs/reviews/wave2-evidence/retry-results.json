@@ -1,0 +1,29 @@
+[
+  {
+    "task": "ch-py-uniq-exact",
+    "exit_code": 0,
+    "wall_sec": 310.7,
+    "log": "ch-py-uniq-exact.retry1.validation.log",
+    "artifacts": "ch-py-uniq-exact.retry1.artifacts",
+    "source_digest": "task-tree-v1:172dac98a34a7a273aeb2e20f1c8ed583d6c87e7a435c3662ec55fd028a7fa32",
+    "source_unchanged": true
+  },
+  {
+    "task": "ts-knex-window-frame",
+    "exit_code": 0,
+    "wall_sec": 662.1,
+    "log": "ts-knex-window-frame.retry1.validation.log",
+    "artifacts": "ts-knex-window-frame.retry1.artifacts",
+    "source_digest": "task-tree-v1:e0c7fcb1f4249ca5bea14b11a3c96dea690ddc904078f98e37adaebce256c71f",
+    "source_unchanged": true
+  },
+  {
+    "task": "ts-ch-client-limit-by",
+    "exit_code": 0,
+    "wall_sec": 640.2,
+    "log": "ts-ch-client-limit-by.retry1.validation.log",
+    "artifacts": "ts-ch-client-limit-by.retry1.artifacts",
+    "source_digest": "task-tree-v1:b4d376974fbb191d0d5b4018dfd232b09d605e5eab8a9c7683f30b90288537de",
+    "source_unchanged": true
+  }
+]

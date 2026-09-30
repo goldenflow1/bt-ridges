@@ -1,0 +1,87 @@
+{
+  "reason": "Expose an existing checker size restriction; no checker/app/decoy/solution/check-command changes",
+  "docker_rerun_performed": false,
+  "inference_trials_performed": false,
+  "tasks": [
+    {
+      "task": "py-sqla-latest-per-customer",
+      "bound_applies": true,
+      "bound": {
+        "scope": "entire app/reports.py",
+        "condition": "len(Path(file).read_text()) < 15000",
+        "unit": "Unicode code points after text-mode newline normalization"
+      },
+      "validation_source_digest": "task-tree-v1:29ec14de1c940927f991fd17e6fd48b1ffa535d6608d9b9e9e8dd948ebe195cf",
+      "before_clarification_digest": "task-tree-v1:29ec14de1c940927f991fd17e6fd48b1ffa535d6608d9b9e9e8dd948ebe195cf",
+      "current_source_digest": "task-tree-v1:bb76c3b05d29854a00efb4ec8b9b09bd7eb1dcbee9a34dfae06fe278353682dc",
+      "changed_entries": [
+        "instruction.md"
+      ],
+      "regression_block_unchanged": true,
+      "regression_block": "pytest tests/test_visible.py\nruff check --no-cache app/reports.py",
+      "regression_block_sha256": "f195431ab043fc70a47c496b9f45cb86d3f6c265e796eb5d9f5336dc3b2233bc",
+      "before_instruction_sha256": "0e1d20e13ae5806909f2243168f4be450f4f3a1f39ba6b8b98a2a8d7d2fe36de",
+      "after_instruction_sha256": "d49efd4b0326b25388a1e0ca64102f3cc52a55944358d961058152492333fc3b",
+      "inserted_statement": "The complete `app/reports.py` file must contain fewer than 15,000 Unicode characters (code points), including imports, docstrings and whitespace. Newlines are counted after text-mode normalization to a single LF character.",
+      "non_instruction_entries_unchanged": true,
+      "validated_digest_reconstructed_from_current_minus_inserted_paragraph": true
+    },
+    {
+      "task": "py-psycopg-left-join-filter",
+      "bound_applies": false,
+      "bound": null,
+      "validation_source_digest": "task-tree-v1:86116c31a4af16c6f78b893560755d8aef2a68446c36dfda013e072bb9ce0a2d",
+      "before_clarification_digest": "task-tree-v1:86116c31a4af16c6f78b893560755d8aef2a68446c36dfda013e072bb9ce0a2d",
+      "current_source_digest": "task-tree-v1:86116c31a4af16c6f78b893560755d8aef2a68446c36dfda013e072bb9ce0a2d",
+      "changed_entries": [],
+      "regression_block_unchanged": true,
+      "regression_block": "pytest tests/test_visible.py\nruff check --no-cache app/api.py app/queries.py",
+      "regression_block_sha256": "0f8ab7e0535e28120d1c3d60eacd0b54d5675a0fd56429cdd7401cf67f29fb45",
+      "before_instruction_sha256": "b614af8341caeada3c26538f1aa3ab79d1c508341b1c195d89e1602740696f3e",
+      "after_instruction_sha256": "b614af8341caeada3c26538f1aa3ab79d1c508341b1c195d89e1602740696f3e",
+      "inserted_statement": null,
+      "non_instruction_entries_unchanged": true,
+      "validated_digest_reconstructed_from_current_minus_inserted_paragraph": true
+    },
+    {
+      "task": "py-django-not-in-null",
+      "bound_applies": true,
+      "bound": {
+        "scope": "entire app/reports.py",
+        "condition": "len(Path(file).read_text()) < 15000",
+        "unit": "Unicode code points after text-mode newline normalization"
+      },
+      "validation_source_digest": "task-tree-v1:608f360ff037939a5be225a967b600bc0e2df4094c28183c871bd0477168a773",
+      "before_clarification_digest": "task-tree-v1:608f360ff037939a5be225a967b600bc0e2df4094c28183c871bd0477168a773",
+      "current_source_digest": "task-tree-v1:333a0eb20a45fb2d00ad9ea8367ea48a21fa33f8b13c22cb2b90af20243afe44",
+      "changed_entries": [
+        "instruction.md"
+      ],
+      "regression_block_unchanged": true,
+      "regression_block": "pytest tests/test_visible.py\nruff check --no-cache app/reports.py",
+      "regression_block_sha256": "f195431ab043fc70a47c496b9f45cb86d3f6c265e796eb5d9f5336dc3b2233bc",
+      "before_instruction_sha256": "be78981160c90c5215dcf74dd086ceac56f3da9c5a1515638c95b892d30ae92a",
+      "after_instruction_sha256": "617ef9285614906ed7ced8a3355983d5e287ab004a99348e49d6259d6ae09b12",
+      "inserted_statement": "The complete `app/reports.py` file must contain fewer than 15,000 Unicode characters (code points), including imports, docstrings and whitespace. Newlines are counted after text-mode normalization to a single LF character.",
+      "non_instruction_entries_unchanged": true,
+      "validated_digest_reconstructed_from_current_minus_inserted_paragraph": true
+    },
+    {
+      "task": "py-sqla-partial-index",
+      "bound_applies": false,
+      "bound": null,
+      "validation_source_digest": "task-tree-v1:a9aa1f67a4398181328b2e6802d06f5b7f2c9702f0801dde272674937d1c315e",
+      "before_clarification_digest": "task-tree-v1:a9aa1f67a4398181328b2e6802d06f5b7f2c9702f0801dde272674937d1c315e",
+      "current_source_digest": "task-tree-v1:a9aa1f67a4398181328b2e6802d06f5b7f2c9702f0801dde272674937d1c315e",
+      "changed_entries": [],
+      "regression_block_unchanged": true,
+      "regression_block": "pytest tests/test_visible.py\nruff check --no-cache migrations/ready_jobs.py",
+      "regression_block_sha256": "9d9685c18abc59ec7fe98a4b151db3ec53fa610203409f2fed725ab92167a422",
+      "before_instruction_sha256": "a2ffc5333ea8cea94eb2dd99f2ec23b426a56d518ca59eee84593d68fea9af7a",
+      "after_instruction_sha256": "a2ffc5333ea8cea94eb2dd99f2ec23b426a56d518ca59eee84593d68fea9af7a",
+      "inserted_statement": null,
+      "non_instruction_entries_unchanged": true,
+      "validated_digest_reconstructed_from_current_minus_inserted_paragraph": true
+    }
+  ]
+}

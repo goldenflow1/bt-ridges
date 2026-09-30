@@ -1,0 +1,42 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-sqla-latest-per-customer" tests="7" failures="0"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_private.py::test_timestamp_ties_choose_largest_id PASSED      [ 20%]
+tests/test_private.py::test_id_is_not_chronology PASSED                  [ 40%]
+tests/test_private.py::test_window_precedes_ranking_and_is_half_open PASSED [ 60%]
+tests/test_private.py::test_one_statement_on_many_customers PASSED       [ 80%]
+tests/test_private.py::test_timestamp_projection_preserves_exact_instant PASSED [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_timestamp_ties_choose_largest_id
+PASSED tests/test_private.py::test_id_is_not_chronology
+PASSED tests/test_private.py::test_window_precedes_ranking_and_is_half_open
+PASSED tests/test_private.py::test_one_statement_on_many_customers
+PASSED tests/test_private.py::test_timestamp_projection_preserves_exact_instant
+============================== 5 passed in 0.19s ===============================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_sample PASSED                                [ 50%]
+tests/test_visible.py::test_empty PASSED                                 [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_sample
+PASSED tests/test_visible.py::test_empty
+============================== 2 passed in 0.17s ===============================

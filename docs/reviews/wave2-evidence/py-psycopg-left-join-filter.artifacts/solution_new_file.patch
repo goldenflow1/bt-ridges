@@ -1,0 +1,22 @@
+diff --git a/app/extra_helper.py b/app/extra_helper.py
+new file mode 100644
+index 0000000..e25f87f
+--- /dev/null
++++ b/app/extra_helper.py
+@@ -0,0 +1 @@
++# extra helper
+diff --git a/app/queries.py b/app/queries.py
+index d2663b4..72a2ba3 100644
+--- a/app/queries.py
++++ b/app/queries.py
+@@ -3,7 +3,8 @@ def department_counts(conn, tenant_id, since, until):
+     query = """
+         SELECT d.id, COUNT(b.id), COALESCE(SUM(b.minutes), 0)
+         FROM departments d LEFT JOIN bookings b ON b.department_id = d.id
+-        WHERE d.tenant_id = %s AND b.cancelled = false AND b.starts_at >= %s AND b.starts_at < %s
++          AND b.cancelled = false AND b.starts_at >= %s AND b.starts_at < %s
++        WHERE d.tenant_id = %s
+         GROUP BY d.id ORDER BY d.id
+     """
+-    return conn.execute(query, (tenant_id, since, until)).fetchall()
++    return conn.execute(query, (since, until, tenant_id)).fetchall()

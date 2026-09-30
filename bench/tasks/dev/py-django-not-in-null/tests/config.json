@@ -1,0 +1,9 @@
+{
+  "task": "py-django-not-in-null",
+  "allowed": [
+    "app/reports.py"
+  ],
+  "bounded": {
+    "app/reports.py": "eligible_customers"
+  }
+}

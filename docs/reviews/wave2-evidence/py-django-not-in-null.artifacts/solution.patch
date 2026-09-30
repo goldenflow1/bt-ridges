@@ -1,0 +1,13 @@
+diff --git a/app/reports.py b/app/reports.py
+index 4747f2d..b4322fa 100644
+--- a/app/reports.py
++++ b/app/reports.py
+@@ -7,6 +7,6 @@ __all__ = ["Exists", "OuterRef", "eligible_customers"]
+ 
+ def eligible_customers(tenant_id, as_of):
+     """Return eligible customer IDs in ascending order for one tenant at as_of."""
+-    blocked = Block.objects.filter(tenant_id=tenant_id, active=True).filter(
++    blocked = Block.objects.filter(tenant_id=tenant_id, active=True, customer_id=OuterRef('pk')).filter(
+         Q(expires_at__isnull=True) | Q(expires_at__gt=as_of)).values('customer_id')
+-    return list(Customer.objects.filter(tenant_id=tenant_id).exclude(pk__in=blocked).order_by('id').values_list('id', flat=True))
++    return list(Customer.objects.filter(tenant_id=tenant_id).filter(~Exists(blocked)).order_by('id').values_list('id', flat=True))

@@ -1,0 +1,13 @@
+diff --git a/observatory/report.py b/observatory/report.py
+index 4cfbc07..dfabae7 100644
+--- a/observatory/report.py
++++ b/observatory/report.py
+@@ -3,7 +3,7 @@
+ 
+ def missing_devices(client, tenant):
+     """List events without an enabled device registration."""
+-    return client.query('SELECT e.event_id AS event_id, e.device AS device FROM events e LEFT JOIN (SELECT tenant, device, device_id, label, 1 AS matched FROM devices WHERE enabled = 1) d ON e.tenant = d.tenant AND e.device = d.device WHERE e.tenant = {tenant:String} AND isNull(d.device_id) ORDER BY e.event_id', {"tenant": tenant})
++    return client.query('SELECT e.event_id AS event_id, e.device AS device FROM events e LEFT JOIN (SELECT tenant, device, device_id, label, 1 AS matched FROM devices WHERE enabled = 1) d ON e.tenant = d.tenant AND e.device = d.device WHERE e.tenant = {tenant:String} AND isNull(d.matched) ORDER BY e.event_id SETTINGS join_use_nulls = 1', {"tenant": tenant})
+ 
+ 
+ def service_name():

@@ -1,0 +1,23 @@
+diff --git a/README.md b/README.md
+index 20a2c18..26e8924 100644
+--- a/README.md
++++ b/README.md
+@@ -3,3 +3,4 @@
+ Repair nullable aggregate accounting in a database/sql telemetry report.
+ 
+ Visible tests reset a disposable task test database. Verification runs in a fresh, separate environment and database.
++
+diff --git a/internal/store/report.go b/internal/store/report.go
+index 2ac4e6d..f9c3318 100644
+--- a/internal/store/report.go
++++ b/internal/store/report.go
+@@ -15,8 +15,6 @@ type Summary struct {
+ // Summarize returns all matching rows and their non-null measurement aggregate.
+ func (s *Store) Summarize(ctx context.Context, tenant string, start, end int64) (Summary, error) {
+ 	var out Summary
+-	var total int64
+-	err := s.DB.QueryRowContext(ctx, `SELECT COUNT(value), COUNT(value), SUM(value) FROM readings WHERE tenant=$1 AND observed_at >= $2 AND observed_at < $3`, tenant, start, end).Scan(&out.Rows, &out.Measured, &total)
+-	out.Total = sql.NullInt64{Int64: total, Valid: true}
++	err := s.DB.QueryRowContext(ctx, `SELECT COUNT(*), COUNT(value), SUM(value) FROM readings WHERE tenant=$1 AND observed_at >= $2 AND observed_at < $3`, tenant, start, end).Scan(&out.Rows, &out.Measured, &out.Total)
+ 	return out, err
+ }

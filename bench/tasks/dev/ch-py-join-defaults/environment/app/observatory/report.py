@@ -1,0 +1,10 @@
+"""Tenant analytics backed by ClickHouse."""
+
+
+def missing_devices(client, tenant):
+    """List events without an enabled device registration."""
+    return client.query('SELECT e.event_id AS event_id, e.device AS device FROM events e LEFT JOIN (SELECT tenant, device, device_id, label, 1 AS matched FROM devices WHERE enabled = 1) d ON e.tenant = d.tenant AND e.device = d.device WHERE e.tenant = {tenant:String} AND isNull(d.device_id) ORDER BY e.event_id', {"tenant": tenant})
+
+
+def service_name():
+    return "observatory"

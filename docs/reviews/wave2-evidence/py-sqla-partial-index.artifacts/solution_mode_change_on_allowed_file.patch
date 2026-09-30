@@ -1,0 +1,15 @@
+diff --git a/migrations/ready_jobs.py b/migrations/ready_jobs.py
+old mode 100644
+new mode 100755
+index 8e03237..de1f9fe
+--- a/migrations/ready_jobs.py
++++ b/migrations/ready_jobs.py
+@@ -9,7 +9,7 @@ depends_on = None
+ 
+ def upgrade():
+     op.create_index('ix_jobs_ready', 'jobs', ['tenant_id', 'created_at', 'id'],
+-                    postgresql_where=sa.text("status = 'waiting' AND deleted_at IS NULL"))
++                    postgresql_where=sa.text("status = 'ready' AND deleted_at IS NULL"))
+ 
+ 
+ def downgrade():

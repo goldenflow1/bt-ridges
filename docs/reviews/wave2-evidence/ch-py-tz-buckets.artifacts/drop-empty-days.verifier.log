@@ -1,0 +1,182 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-tz-buckets" tests="11" failures="1" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>03e042e2bfc7a6aba45eaebf4052752c5e5c66d151daeb766b8893f8b0a80271</system-out></testcase><testcase name="bounded_daily_events_function"><system-out>{"function_sha256": "c61a7fbe1ff82caa8e089bc552eaa2ee2452bad7cfb71d0ef863c4e0ff04d1eb"}</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>02e15b0488939fd74e9242da5b61e667aedac4e57d69d1d7837394ea52bd3ff7</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "ea86f31c4bb695faa3f53311bd01c04e5376944c1b5838c21b0be5c7feaa0f15", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><failure message="AssertionError: test command failed (1); tail============================== test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 5 items&#10;&#10;tests/test_ridges_report.py::test_empty_days_are_materialized FAILED     [ 20%]&#10;tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open PASSED [ 40%]&#10;tests/test_ridges_report.py::test_fall_back_day_includes_last_hour PASSED [ 60%]&#10;tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day PASSED [ 80%]&#10;tests/test_ridges_report.py::test_no_events_and_reverse_range FAILED     [100%]&#10;&#10;=================================== FAILURES ===================================&#10;_______________________ test_empty_days_are_materialized _______________________&#10;&#10;ch = &lt;observatory.chclient.ClickHouse object at 0x7a829610a180&gt;&#10;&#10;    def test_empty_days_are_materialized(ch">AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized FAILED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open PASSED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour PASSED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day PASSED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range FAILED     [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_empty_days_are_materialized _______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7a829610a180&gt;
+
+    def test_empty_days_are_materialized(ch):
+        add(ch, 't', ['2026-02-02 12:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-02-01', '2026-02-04', 'UTC') == [{'day':'2026-02-01','events':0}, {'day':'2026-02-02','events':1}, {'day':'2026-02-03','events':0}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 0}]
+E         
+E         At index 0 diff: {'day': '2026-02-02', 'events': 1} != {'day': '2026-02-01', 'events': 0}
+E         Right contains 2 more items, first extra item: {'day': '2026-02-02', 'events': 1}
+E         
+E         Full diff:
+E           [
+E         -     {...
+E         
+E         ...Full output truncated (12 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:27: AssertionError
+_______________________ test_no_events_and_reverse_range _______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7a829610a180&gt;
+
+    def test_no_events_and_reverse_range(ch):
+&gt;       assert daily_events(ch, 'absent', '2026-05-01', '2026-05-03', 'Europe/Berlin') == [{'day':'2026-05-01','events':0}, {'day':'2026-05-02','events':0}]
+E       AssertionError: assert [] == [{'day': '202... 'events': 0}]
+E         
+E         Right contains 2 more items, first extra item: {'day': '2026-05-01', 'events': 0}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:43: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_days_are_materialized - Assert...
+FAILED tests/test_ridges_report.py::test_no_events_and_reverse_range - Assert...
+========================= 2 failed, 3 passed in 0.78s ==========================
+</failure><system-out>AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized FAILED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open PASSED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour PASSED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day PASSED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range FAILED     [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_empty_days_are_materialized _______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7a829610a180&gt;
+
+    def test_empty_days_are_materialized(ch):
+        add(ch, 't', ['2026-02-02 12:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-02-01', '2026-02-04', 'UTC') == [{'day':'2026-02-01','events':0}, {'day':'2026-02-02','events':1}, {'day':'2026-02-03','events':0}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 0}]
+E         
+E         At index 0 diff: {'day': '2026-02-02', 'events': 1} != {'day': '2026-02-01', 'events': 0}
+E         Right contains 2 more items, first extra item: {'day': '2026-02-02', 'events': 1}
+E         
+E         Full diff:
+E           [
+E         -     {...
+E         
+E         ...Full output truncated (12 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:27: AssertionError
+_______________________ test_no_events_and_reverse_range _______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7a829610a180&gt;
+
+    def test_no_events_and_reverse_range(ch):
+&gt;       assert daily_events(ch, 'absent', '2026-05-01', '2026-05-03', 'Europe/Berlin') == [{'day':'2026-05-01','events':0}, {'day':'2026-05-02','events':0}]
+E       AssertionError: assert [] == [{'day': '202... 'events': 0}]
+E         
+E         Right contains 2 more items, first extra item: {'day': '2026-05-01', 'events': 0}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:43: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_days_are_materialized - Assert...
+FAILED tests/test_ridges_report.py::test_no_events_and_reverse_range - Assert...
+========================= 2 failed, 3 passed in 0.78s ==========================
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>02e15b0488939fd74e9242da5b61e667aedac4e57d69d1d7837394ea52bd3ff7</system-out></testcase><testcase name="database_schema_conservation"><system-out>de6c48543aac5876f690d924f6a2d972ed12e0a283b1512781ef99e1d3a254f0</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized FAILED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open PASSED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour PASSED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day PASSED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range FAILED     [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_empty_days_are_materialized _______________________
+
+ch = <observatory.chclient.ClickHouse object at 0x7a829610a180>
+
+    def test_empty_days_are_materialized(ch):
+        add(ch, 't', ['2026-02-02 12:00:00.000'])
+>       assert daily_events(ch, 't', '2026-02-01', '2026-02-04', 'UTC') == [{'day':'2026-02-01','events':0}, {'day':'2026-02-02','events':1}, {'day':'2026-02-03','events':0}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 0}]
+E         
+E         At index 0 diff: {'day': '2026-02-02', 'events': 1} != {'day': '2026-02-01', 'events': 0}
+E         Right contains 2 more items, first extra item: {'day': '2026-02-02', 'events': 1}
+E         
+E         Full diff:
+E           [
+E         -     {...
+E         
+E         ...Full output truncated (12 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:27: AssertionError
+_______________________ test_no_events_and_reverse_range _______________________
+
+ch = <observatory.chclient.ClickHouse object at 0x7a829610a180>
+
+    def test_no_events_and_reverse_range(ch):
+>       assert daily_events(ch, 'absent', '2026-05-01', '2026-05-03', 'Europe/Berlin') == [{'day':'2026-05-01','events':0}, {'day':'2026-05-02','events':0}]
+E       AssertionError: assert [] == [{'day': '202... 'events': 0}]
+E         
+E         Right contains 2 more items, first extra item: {'day': '2026-05-01', 'events': 0}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:43: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_days_are_materialized - Assert...
+FAILED tests/test_ridges_report.py::test_no_events_and_reverse_range - Assert...
+========================= 2 failed, 3 passed in 0.78s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_empty_requested_interval PASSED               [ 50%]
+tests/test_report.py::test_service_identity PASSED                       [100%]
+
+============================== 2 passed in 0.42s ===============================
+All checks passed!

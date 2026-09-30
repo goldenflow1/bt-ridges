@@ -1,0 +1,7 @@
+{
+  "task": "py-sqla-partial-index",
+  "allowed": [
+    "migrations/ready_jobs.py"
+  ],
+  "bounded": {}
+}

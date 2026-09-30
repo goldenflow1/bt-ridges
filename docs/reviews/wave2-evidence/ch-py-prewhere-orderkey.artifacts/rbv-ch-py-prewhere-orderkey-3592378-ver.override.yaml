@@ -1,0 +1,15 @@
+services:
+  clickhouse:
+    image: rbv-ch-py-prewhere-orderkey-ver-clickhouse:latest
+  main:
+    image: rbv-ch-py-prewhere-orderkey-ver-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/dev/ch-py-prewhere-orderkey/tests
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

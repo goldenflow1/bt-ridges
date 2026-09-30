@@ -1,0 +1,21 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="go-dbsql-null-scan" tests="6" failures="2" errors="0" skipped="0"><testcase name="bounded_function"><system-out>ok</system-out></testcase><testcase name="source_tree_conservation_before_tests"><failure message="AssertionError: source drift: missing=[], added=['internal/store/extra_helper.go'], changed=[]">AssertionError: source drift: missing=[], added=['internal/store/extra_helper.go'], changed=[]</failure><system-out>AssertionError: source drift: missing=[], added=['internal/store/extra_helper.go'], changed=[]</system-out></testcase><testcase name="compilation"><system-out>0</system-out></testcase><testcase name="regression_tests"><system-out>ok</system-out></testcase><testcase name="hidden_behavior"><system-out>ok</system-out></testcase><testcase name="source_tree_conservation_after_tests"><failure message="AssertionError: source drift: missing=[], added=['internal/store/extra_helper.go'], changed=[]">AssertionError: source drift: missing=[], added=['internal/store/extra_helper.go'], changed=[]</failure><system-out>AssertionError: source drift: missing=[], added=['internal/store/extra_helper.go'], changed=[]</system-out></testcase></testsuite>
+
+=== RUN   TestVisibleSummary
+--- PASS: TestVisibleSummary (0.08s)
+PASS
+ok  	practice/internal/store	0.107s
+{"found":1,"start":167,"end":597,"header":"func (s *Store) Summarize(ctx context.Context, tenant string, start, end int64) (Summary, error) ","doc":"Summarize returns all matching rows and their non-null measurement aggregate.\n","calls":{"QueryRowContext":1,"Scan":1},"idents":{"DB":1,"Measured":1,"QueryRowContext":1,"Rows":1,"Scan":1,"Summary":1,"Total":1,"ctx":1,"end":1,"err":2,"out":5,"s":1,"start":1,"tenant":1},"loops":0,"go_stmts":0,"func_lits":0,"nodes":37,"string_lits":["`SELECT COUNT(*), COUNT(value), SUM(value) FROM readings WHERE tenant=$1 AND observed_at \u003e= $2 AND observed_at \u003c $3`"],"imports":"import (\n\t\"context\"\n\t\"database/sql\"\n)"}
+=== RUN   TestHiddenNullPopulation
+--- PASS: TestHiddenNullPopulation (0.05s)
+=== RUN   TestHiddenAbsentSum
+--- PASS: TestHiddenAbsentSum (0.04s)
+=== RUN   TestHiddenRangeAndWideSum
+--- PASS: TestHiddenRangeAndWideSum (0.05s)
+=== RUN   TestHiddenPropagatesDatabaseErrors
+--- PASS: TestHiddenPropagatesDatabaseErrors (0.04s)
+PASS
+ok  	practice/internal/store	0.185s
+{"found":1,"start":167,"end":668,"header":"func (s *Store) Summarize(ctx context.Context, tenant string, start, end int64) (Summary, error) ","doc":"Summarize returns all matching rows and their non-null measurement aggregate.\n","calls":{"QueryRowContext":1,"Scan":1},"idents":{"DB":1,"Int64":1,"Measured":1,"NullInt64":1,"QueryRowContext":1,"Rows":1,"Scan":1,"Summary":1,"Total":1,"Valid":1,"ctx":1,"end":1,"err":2,"int64":1,"out":5,"s":1,"sql":1,"start":1,"tenant":1,"total":3,"true":1},"loops":0,"go_stmts":0,"func_lits":0,"nodes":54,"string_lits":["`SELECT COUNT(value), COUNT(value), SUM(value) FROM readings WHERE tenant=$1 AND observed_at \u003e= $2 AND observed_at \u003c $3`"],"imports":"import (\n\t\"context\"\n\t\"database/sql\"\n)"}

@@ -1,0 +1,6 @@
+{
+  "expect_failing": [
+    "hidden: peers advance one row at a time"
+  ],
+  "passes_visible": true
+}

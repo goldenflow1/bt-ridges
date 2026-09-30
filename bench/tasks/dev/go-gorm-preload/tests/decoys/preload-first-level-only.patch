@@ -1,0 +1,18 @@
+--- a/internal/store/report.go
++++ b/internal/store/report.go
+@@ -27,13 +27,11 @@
+ func (s *Store) Customers(ctx context.Context, tenant string) ([]Customer, error) {
+ 	var customers []Customer
+ 	db := s.DB.WithContext(ctx)
+-	if err := db.Where("tenant = ?", tenant).Order("id").Find(&customers).Error; err != nil {
++	err := db.Where("tenant = ?", tenant).Order("id").Preload("Orders", func(q *gorm.DB) *gorm.DB { return q.Where("cancelled = false").Order("id") }).Find(&customers).Error
++	if err != nil {
+ 		return nil, err
+ 	}
+ 	for i := range customers {
+-		if err := db.Where("customer_id = ? AND cancelled = false", customers[i].ID).Order("id").Find(&customers[i].Orders).Error; err != nil {
+-			return nil, err
+-		}
+ 		for j := range customers[i].Orders {
+ 			if err := db.Where("order_id = ?", customers[i].Orders[j].ID).Order("id").Find(&customers[i].Orders[j].Items).Error; err != nil {
+ 				return nil, err

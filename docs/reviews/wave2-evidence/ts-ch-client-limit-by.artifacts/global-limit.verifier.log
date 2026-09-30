@@ -1,0 +1,246 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ts-ch-client-limit-by" tests="6" failures="2" errors="0" skipped="0"><testcase name="bounded_function"><system-out>ok</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>58442963fd771ec82caae3b0834592e9a7a9056e7d261b01d5b564b478ae14de</system-out></testcase><testcase name="compilation"><system-out>0</system-out></testcase><testcase name="regression_tests"><failure message="AssertionError: TAP version 13&#10;# Subtest: visible: highest scoring item&#10;not ok 1 - visible: highest scoring item&#10;  ---&#10;  duration_ms: 193.552015&#10;  location: '/app/test/reports.test.ts:1:533'&#10;  failureType: 'testCodeFailure'&#10;  error: |-&#10;    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} &#10;    FORMAT JSONEachRow. Expected one of: BY, end of query. &#10;  code: '62'&#10;  stack: |-&#10;    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)&#10;    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)&#10;    process.processTicksAndRejections (node:internal/process/task_queues:95:5)&#10;  ...&#10;1..1&#10;# tests 1&#10;# suites 0&#10;# pass 0&#10;# fail 1&#10;# cancelled 0&#10;# skipped 0&#10;# todo 0&#10;# duration_ms 1298.69812&#10;">AssertionError: TAP version 13
+# Subtest: visible: highest scoring item
+not ok 1 - visible: highest scoring item
+  ---
+  duration_ms: 193.552015
+  location: '/app/test/reports.test.ts:1:533'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1298.69812
+</failure><system-out>AssertionError: TAP version 13
+# Subtest: visible: highest scoring item
+not ok 1 - visible: highest scoring item
+  ---
+  duration_ms: 193.552015
+  location: '/app/test/reports.test.ts:1:533'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1298.69812
+</system-out></testcase><testcase name="hidden_behavior"><failure message="AssertionError: TAP version 13&#10;# Subtest: hidden: each category gets its own quota&#10;not ok 1 - hidden: each category gets its own quota&#10;  ---&#10;  duration_ms: 202.08742&#10;  location: '/app/test/ridges_report_hidden.test.ts:1:533'&#10;  failureType: 'testCodeFailure'&#10;  error: |-&#10;    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} &#10;    FORMAT JSONEachRow. Expected one of: BY, end of query. &#10;  code: '62'&#10;  stack: |-&#10;    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)&#10;    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)&#10;    process.processTicksAndRejections (node:internal/process/task_queues:95:5)&#10;  ...&#10;# Subtest: hidden: cutoff ties choose smaller IDs&#10;not ok 2 - hidden: cutoff ties choose smaller IDs&#10;  ---&#10;  duration_ms: 123.639239&#10;  location: '/app/test/ridges_report_hidden.test.ts:1:969'&#10;  failureType: 'testCodeFailure'&#10;  error: |-&#10;    Syntax error">AssertionError: TAP version 13
+# Subtest: hidden: each category gets its own quota
+not ok 1 - hidden: each category gets its own quota
+  ---
+  duration_ms: 202.08742
+  location: '/app/test/ridges_report_hidden.test.ts:1:533'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+# Subtest: hidden: cutoff ties choose smaller IDs
+not ok 2 - hidden: cutoff ties choose smaller IDs
+  ---
+  duration_ms: 123.639239
+  location: '/app/test/ridges_report_hidden.test.ts:1:969'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+# Subtest: hidden: filter eligibility before ranking
+not ok 3 - hidden: filter eligibility before ranking
+  ---
+  duration_ms: 98.149449
+  location: '/app/test/ridges_report_hidden.test.ts:1:1272'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 0
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1301.372199
+</failure><system-out>AssertionError: TAP version 13
+# Subtest: hidden: each category gets its own quota
+not ok 1 - hidden: each category gets its own quota
+  ---
+  duration_ms: 202.08742
+  location: '/app/test/ridges_report_hidden.test.ts:1:533'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+# Subtest: hidden: cutoff ties choose smaller IDs
+not ok 2 - hidden: cutoff ties choose smaller IDs
+  ---
+  duration_ms: 123.639239
+  location: '/app/test/ridges_report_hidden.test.ts:1:969'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+# Subtest: hidden: filter eligibility before ranking
+not ok 3 - hidden: filter eligibility before ranking
+  ---
+  duration_ms: 98.149449
+  location: '/app/test/ridges_report_hidden.test.ts:1:1272'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 0
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1301.372199
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>58442963fd771ec82caae3b0834592e9a7a9056e7d261b01d5b564b478ae14de</system-out></testcase></testsuite>
+
+{"found":1,"originalFound":1,"prefixEqual":true,"suffixEqual":true,"headerEqual":true,"bodyLength":424,"nodes":31,"loops":0,"names":{"result":2,"db":1,"query":2,"query_params":1,"tenant":1,"n":1,"format":1,"json":1,"RankedItem":1},"properties":{"query":1,"json":1},"taggedTemplates":0,"templateText":["SELECT category, id, score FROM items WHERE tenant = {tenant:String} AND active = 1 ORDER, score DESC, id ASC LIMIT {n:UInt32}","JSONEachRow"]}
+TAP version 13
+# Subtest: visible: highest scoring item
+not ok 1 - visible: highest scoring item
+  ---
+  duration_ms: 193.552015
+  location: '/app/test/reports.test.ts:1:533'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1298.69812
+TAP version 13
+# Subtest: hidden: each category gets its own quota
+not ok 1 - hidden: each category gets its own quota
+  ---
+  duration_ms: 202.08742
+  location: '/app/test/ridges_report_hidden.test.ts:1:533'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+# Subtest: hidden: cutoff ties choose smaller IDs
+not ok 2 - hidden: cutoff ties choose smaller IDs
+  ---
+  duration_ms: 123.639239
+  location: '/app/test/ridges_report_hidden.test.ts:1:969'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+# Subtest: hidden: filter eligibility before ranking
+not ok 3 - hidden: filter eligibility before ranking
+  ---
+  duration_ms: 98.149449
+  location: '/app/test/ridges_report_hidden.test.ts:1:1272'
+  failureType: 'testCodeFailure'
+  error: |-
+    Syntax error: failed at position 90 (',') (line 1, col 90): , score DESC, id ASC LIMIT {n:UInt32} 
+    FORMAT JSONEachRow. Expected one of: BY, end of query. 
+  code: '62'
+  stack: |-
+    parseError (/app/node_modules/packages/client-common/src/error/parse_error.ts:30:12)
+    ClientRequest.onResponse (/app/node_modules/packages/client-node/src/connection/node_base_connection.ts:477:28)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 0
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1301.372199

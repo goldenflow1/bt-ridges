@@ -1,0 +1,7 @@
+{
+  "description": "count-star",
+  "expect_failing": [
+    "test_empty_departments_survive"
+  ],
+  "passes_visible": true
+}

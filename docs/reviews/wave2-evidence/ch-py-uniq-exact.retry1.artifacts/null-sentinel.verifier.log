@@ -1,0 +1,182 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-uniq-exact" tests="11" failures="1" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>525f8c4f98c9d8f243438e1cc24e21ea32e096dbc6f509fc3346a7f08ca54c96</system-out></testcase><testcase name="bounded_visitor_count_function"><system-out>{"function_sha256": "08a303ad7ef3ddd930a8d60cc4d108ec1148a0ac0e3fde46d4d9031701787b32"}</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>c925c120994a20439655010eb1d93c3b1e126187982ce1ab1da890a820e62e68</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "13631074a64d07f63628e3e37563c0e6f294d6c0e0bee7ba78da1ec9b219893e", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><failure message="AssertionError: test command failed (1); tail============================== test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_ridges_report.py::test_large_exact_cardinality PASSED         [ 25%]&#10;tests/test_ridges_report.py::test_null_is_not_a_visitor FAILED           [ 50%]&#10;tests/test_ridges_report.py::test_zero_duplicates_tenants_and_half_open_bounds PASSED [ 75%]&#10;tests/test_ridges_report.py::test_all_null_and_quoted_tenant FAILED      [100%]&#10;&#10;=================================== FAILURES ===================================&#10;__________________________ test_null_is_not_a_visitor __________________________&#10;&#10;ch = &lt;observatory.chclient.ClickHouse object at 0x7f2c94400ad0&gt;&#10;&#10;    def test_null_is_not_a_visitor(ch):&#10;        ch.command(&quot;INSERT INTO visits VALUES ('nulls', NULL, '2026-01-01 12:00:00'),">AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_ridges_report.py::test_large_exact_cardinality PASSED         [ 25%]
+tests/test_ridges_report.py::test_null_is_not_a_visitor FAILED           [ 50%]
+tests/test_ridges_report.py::test_zero_duplicates_tenants_and_half_open_bounds PASSED [ 75%]
+tests/test_ridges_report.py::test_all_null_and_quoted_tenant FAILED      [100%]
+
+=================================== FAILURES ===================================
+__________________________ test_null_is_not_a_visitor __________________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7f2c94400ad0&gt;
+
+    def test_null_is_not_a_visitor(ch):
+        ch.command("INSERT INTO visits VALUES ('nulls', NULL, '2026-01-01 12:00:00'), ('nulls', 8, '2026-01-01 12:00:00'), ('nulls', 8, '2026-01-01 12:00:00')")
+&gt;       assert visitor_count(ch, 'nulls', '2026-01-01', '2026-01-02') == [{'visitors': 1}]
+E       AssertionError: assert [{'visitors': 2}] == [{'visitors': 1}]
+E         
+E         At index 0 diff: {'visitors': 2} != {'visitors': 1}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'visitors': 1,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:12: AssertionError
+_______________________ test_all_null_and_quoted_tenant ________________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7f2c94400ad0&gt;
+
+    def test_all_null_and_quoted_tenant(ch):
+        ch.insert('visits', [{'tenant': "owner's", 'visitor': None, 'happened': '2026-01-01 01:00:00'}])
+&gt;       assert visitor_count(ch, "owner's", '2026-01-01', '2026-01-02') == [{'visitors': 0}]
+E       AssertionError: assert [{'visitors': 1}] == [{'visitors': 0}]
+E         
+E         At index 0 diff: {'visitors': 1} != {'visitors': 0}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'visitors': 0,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:20: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_null_is_not_a_visitor - AssertionErr...
+FAILED tests/test_ridges_report.py::test_all_null_and_quoted_tenant - Asserti...
+========================= 2 failed, 2 passed in 1.00s ==========================
+</failure><system-out>AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_ridges_report.py::test_large_exact_cardinality PASSED         [ 25%]
+tests/test_ridges_report.py::test_null_is_not_a_visitor FAILED           [ 50%]
+tests/test_ridges_report.py::test_zero_duplicates_tenants_and_half_open_bounds PASSED [ 75%]
+tests/test_ridges_report.py::test_all_null_and_quoted_tenant FAILED      [100%]
+
+=================================== FAILURES ===================================
+__________________________ test_null_is_not_a_visitor __________________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7f2c94400ad0&gt;
+
+    def test_null_is_not_a_visitor(ch):
+        ch.command("INSERT INTO visits VALUES ('nulls', NULL, '2026-01-01 12:00:00'), ('nulls', 8, '2026-01-01 12:00:00'), ('nulls', 8, '2026-01-01 12:00:00')")
+&gt;       assert visitor_count(ch, 'nulls', '2026-01-01', '2026-01-02') == [{'visitors': 1}]
+E       AssertionError: assert [{'visitors': 2}] == [{'visitors': 1}]
+E         
+E         At index 0 diff: {'visitors': 2} != {'visitors': 1}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'visitors': 1,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:12: AssertionError
+_______________________ test_all_null_and_quoted_tenant ________________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x7f2c94400ad0&gt;
+
+    def test_all_null_and_quoted_tenant(ch):
+        ch.insert('visits', [{'tenant': "owner's", 'visitor': None, 'happened': '2026-01-01 01:00:00'}])
+&gt;       assert visitor_count(ch, "owner's", '2026-01-01', '2026-01-02') == [{'visitors': 0}]
+E       AssertionError: assert [{'visitors': 1}] == [{'visitors': 0}]
+E         
+E         At index 0 diff: {'visitors': 1} != {'visitors': 0}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'visitors': 0,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:20: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_null_is_not_a_visitor - AssertionErr...
+FAILED tests/test_ridges_report.py::test_all_null_and_quoted_tenant - Asserti...
+========================= 2 failed, 2 passed in 1.00s ==========================
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>c925c120994a20439655010eb1d93c3b1e126187982ce1ab1da890a820e62e68</system-out></testcase><testcase name="database_schema_conservation"><system-out>89939704ccb4f72d96c0846a6df9d5760f59b780620f49bfcc54ab714f07407a</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_ridges_report.py::test_large_exact_cardinality PASSED         [ 25%]
+tests/test_ridges_report.py::test_null_is_not_a_visitor FAILED           [ 50%]
+tests/test_ridges_report.py::test_zero_duplicates_tenants_and_half_open_bounds PASSED [ 75%]
+tests/test_ridges_report.py::test_all_null_and_quoted_tenant FAILED      [100%]
+
+=================================== FAILURES ===================================
+__________________________ test_null_is_not_a_visitor __________________________
+
+ch = <observatory.chclient.ClickHouse object at 0x7f2c94400ad0>
+
+    def test_null_is_not_a_visitor(ch):
+        ch.command("INSERT INTO visits VALUES ('nulls', NULL, '2026-01-01 12:00:00'), ('nulls', 8, '2026-01-01 12:00:00'), ('nulls', 8, '2026-01-01 12:00:00')")
+>       assert visitor_count(ch, 'nulls', '2026-01-01', '2026-01-02') == [{'visitors': 1}]
+E       AssertionError: assert [{'visitors': 2}] == [{'visitors': 1}]
+E         
+E         At index 0 diff: {'visitors': 2} != {'visitors': 1}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'visitors': 1,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:12: AssertionError
+_______________________ test_all_null_and_quoted_tenant ________________________
+
+ch = <observatory.chclient.ClickHouse object at 0x7f2c94400ad0>
+
+    def test_all_null_and_quoted_tenant(ch):
+        ch.insert('visits', [{'tenant': "owner's", 'visitor': None, 'happened': '2026-01-01 01:00:00'}])
+>       assert visitor_count(ch, "owner's", '2026-01-01', '2026-01-02') == [{'visitors': 0}]
+E       AssertionError: assert [{'visitors': 1}] == [{'visitors': 0}]
+E         
+E         At index 0 diff: {'visitors': 1} != {'visitors': 0}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'visitors': 0,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:20: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_null_is_not_a_visitor - AssertionErr...
+FAILED tests/test_ridges_report.py::test_all_null_and_quoted_tenant - Asserti...
+========================= 2 failed, 2 passed in 1.00s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_small_sample PASSED                           [ 50%]
+tests/test_report.py::test_empty_window PASSED                           [100%]
+
+============================== 2 passed in 0.46s ===============================
+All checks passed!

@@ -1,0 +1,7 @@
+{
+  "expect_failing": [
+    "test_spring_forward_local_days_and_half_open"
+  ],
+  "category": "assertion",
+  "passes_visible": true
+}

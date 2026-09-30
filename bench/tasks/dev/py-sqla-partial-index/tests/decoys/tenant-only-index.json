@@ -1,0 +1,7 @@
+{
+  "description": "tenant-only-index",
+  "expect_failing": [
+    "test_partial_index_used_and_work_bounded"
+  ],
+  "passes_visible": true
+}

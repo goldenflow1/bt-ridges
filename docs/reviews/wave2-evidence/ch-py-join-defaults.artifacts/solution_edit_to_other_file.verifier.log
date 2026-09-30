@@ -1,0 +1,33 @@
+/logs/verifier/graded.patch:9: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-join-defaults" tests="10" failures="2" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>1c24d0b1a49ae5df7c5c5355297a469e9c3b5181a1820d55735e812840e7ae6c</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><failure message="AssertionError: source drift: missing=[], added=[], changed=['README.md']">AssertionError: source drift: missing=[], added=[], changed=['README.md']</failure><system-out>AssertionError: source drift: missing=[], added=[], changed=['README.md']</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "5fadec3499e70902e326aa319a58c14b2c9824b996ae7183c5f19dd9c7f25da0", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><system-out>{"stdout_sha256": "ff9d97195003da757ca1a09e30f288be3dcb7a6320a3593998d2e60c6bab320c", "tests": 4}</system-out></testcase><testcase name="source_tree_conservation_after_tests"><failure message="AssertionError: source drift: missing=[], added=[], changed=['README.md']">AssertionError: source drift: missing=[], added=[], changed=['README.md']</failure><system-out>AssertionError: source drift: missing=[], added=[], changed=['README.md']</system-out></testcase><testcase name="database_schema_conservation"><system-out>4907f044f92a808ed4c7ddabc5263cd984e6d0de69b5994bd5b1835b74a18720</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_ridges_report.py::test_missing_and_valid_zero_identifier PASSED [ 25%]
+tests/test_ridges_report.py::test_empty_label_is_registered PASSED       [ 50%]
+tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code PASSED [ 75%]
+tests/test_ridges_report.py::test_repeated_events_and_quoted_tenant PASSED [100%]
+
+============================== 4 passed in 0.45s ===============================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_registered_devices_are_not_missing PASSED     [ 50%]
+tests/test_report.py::test_empty_tenant PASSED                           [100%]
+
+============================== 2 passed in 0.32s ===============================
+All checks passed!

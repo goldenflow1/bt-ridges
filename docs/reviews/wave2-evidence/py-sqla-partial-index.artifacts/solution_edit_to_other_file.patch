@@ -1,0 +1,22 @@
+diff --git a/README.md b/README.md
+index ee6a152..8935091 100644
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,4 @@
+ Repair an Alembic partial index for the live job-claim query.
+ 
+ Run the checks in the task statement. PostgreSQL is available at DATABASE_URL.
++
+diff --git a/migrations/ready_jobs.py b/migrations/ready_jobs.py
+index 8e03237..de1f9fe 100644
+--- a/migrations/ready_jobs.py
++++ b/migrations/ready_jobs.py
+@@ -9,7 +9,7 @@ depends_on = None
+ 
+ def upgrade():
+     op.create_index('ix_jobs_ready', 'jobs', ['tenant_id', 'created_at', 'id'],
+-                    postgresql_where=sa.text("status = 'waiting' AND deleted_at IS NULL"))
++                    postgresql_where=sa.text("status = 'ready' AND deleted_at IS NULL"))
+ 
+ 
+ def downgrade():

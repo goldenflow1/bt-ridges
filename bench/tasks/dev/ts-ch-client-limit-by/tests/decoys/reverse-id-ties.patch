@@ -1,0 +1,10 @@
+--- a/src/reports.ts
++++ b/src/reports.ts
+@@ -5,6 +5,6 @@
+ 
+ /** Return up to n eligible items per category, with deterministic ties. */
+ export async function topItems(tenant: string, n: number): Promise<RankedItem[]> {
+-  const result = await db.query({ query: `SELECT category, id, score FROM items WHERE tenant = {tenant:String} AND active = 1 ORDER BY category, score DESC, id ASC LIMIT 1`, query_params: { tenant, n }, format: 'JSONEachRow' });
++  const result = await db.query({ query: `SELECT category, id, score FROM items WHERE tenant = {tenant:String} AND active = 1 ORDER BY category, score DESC, id DESC LIMIT {n:UInt32} BY category`, query_params: { tenant, n }, format: 'JSONEachRow' });
+   return result.json<RankedItem>();
+ }

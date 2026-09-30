@@ -1,0 +1,364 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-sqla-latest-per-customer" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="se.py:1846: in _execute_context&#10;    return self._exec_single_context(&#10;/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1986: in _exec_single_context&#10;    self._handle_dbapi_exception(&#10;/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2355: in _handle_dbapi_exception&#10;    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e&#10;/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1967: in _exec_single_context&#10;    self.dialect.do_execute(&#10;/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py:941: in do_execute&#10;    cursor.execute(statement, parameters)&#10;_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ &#10;&#10;self = &lt;psycopg.Cursor [closed] [INTRANS] (host=postgres database=practice) at 0x7affd87c4c50&gt;&#10;query = &quot;INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x&quot;&#10;params = immutabledict({})&#10;&#10;    def execute(&#10;        self,&#10;    ">se.py:1846: in _execute_context
+    return self._exec_single_context(
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1986: in _exec_single_context
+    self._handle_dbapi_exception(
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2355: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1967: in _exec_single_context
+    self.dialect.do_execute(
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py:941: in do_execute
+    cursor.execute(statement, parameters)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;psycopg.Cursor [closed] [INTRANS] (host=postgres database=practice) at 0x7affd87c4c50&gt;
+query = "INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x"
+params = immutabledict({})
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -&gt; Self:
+        """
+        Execute a query or command to the database.
+        """
+        try:
+            with self._conn.lock:
+                self._conn.wait(
+                    self._execute_gen(query, params, prepare=prepare, binary=binary)
+                )
+        except e._NO_TRACEBACK as ex:
+&gt;           raise ex.with_traceback(None)
+E           sqlalchemy.exc.ProgrammingError: (psycopg.ProgrammingError) incomplete placeholder: '%'; if you want to use '%' as an operator you can double it up, i.e. use '%%'
+E           [SQL: INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x]
+E           (Background on this error at: https://sqlalche.me/e/20/f405)
+
+/usr/local/lib/python3.12/site-packages/psycopg/cursor.py:97: ProgrammingError
+______________ test_timestamp_projection_preserves_exact_instant _______________
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x7affd8bce810&gt;
+
+    def test_timestamp_projection_preserves_exact_instant(conn):
+        conn.exec_driver_sql("INSERT INTO events VALUES (1, 3, '2026-01-08 23:42:17.123456-05:00', 'new'), (2, 3, '2026-01-09 04:42:17.123456+00', 'closed'), (3, 4, '2026-01-11 15:06:07.654321+05:45', 'new')")
+&gt;       assert list(latest_per_customer(conn, START, END)) == [
+            (3, 2, datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=timezone.utc)),
+            (4, 3, datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=timezone.utc)),
+        ]
+E       AssertionError: assert [(3, 1, datet...='Etc/UTC')))] == [(3, 2, datet...imezone.utc))]
+E         
+E         At index 0 diff: (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) != (3, 2, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=datetime.timezone.utc))
+E         Left contains one more item: (4, 3, datetime.datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))
+E         
+E         Full diff:
+E           [
+E         +     (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))),...
+E         
+E         ...Full output truncated (13 lines hidden), use '-vv' to show
+
+tests/test_private.py:46: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_id_is_not_chronology
+PASSED tests/test_private.py::test_window_precedes_ranking_and_is_half_open
+FAILED tests/test_private.py::test_timestamp_ties_choose_largest_id - Asserti...
+FAILED tests/test_private.py::test_one_statement_on_many_customers - sqlalche...
+FAILED tests/test_private.py::test_timestamp_projection_preserves_exact_instant
+========================= 3 failed, 2 passed in 0.99s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_private.py::test_timestamp_ties_choose_largest_id FAILED      [ 20%]
+tests/test_private.py::test_id_is_not_chronology PASSED                  [ 40%]
+tests/test_private.py::test_window_precedes_ranking_and_is_half_open PASSED [ 60%]
+tests/test_private.py::test_one_statement_on_many_customers FAILED       [ 80%]
+tests/test_private.py::test_timestamp_projection_preserves_exact_instant FAILED [100%]
+
+=================================== FAILURES ===================================
+____________________ test_timestamp_ties_choose_largest_id _____________________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x7affd8bba780>
+
+    def test_timestamp_ties_choose_largest_id(conn):
+        conn.exec_driver_sql("INSERT INTO events VALUES (90, 8, '2026-01-09', 'x'), (4, 8, '2026-01-09', 'y'), (5, 2, '2026-01-08', 'x')")
+>       assert ids(conn) == [(2, 5), (8, 90)]
+E       AssertionError: assert [(2, 5), (8, 90), (8, 4)] == [(2, 5), (8, 90)]
+E         
+E         Left contains one more item: (8, 4)
+E         
+E         Full diff:
+E           [
+E               (
+E                   2,...
+E         
+E         ...Full output truncated (11 lines hidden), use '-vv' to show
+
+tests/test_private.py:16: AssertionError
+_____________________ test_one_statement_on_many_customers _____________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7affd8bcd790>
+dialect = <sqlalchemy.dialects.postgresql.psycopg.PGDialect_psycopg object at 0x7affd8f5bbf0>
+context = <sqlalchemy.dialects.postgresql.psycopg.PGExecutionContext_psycopg object at 0x7affd8bcd670>
+statement = "INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x"
+parameters = [immutabledict({})]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -> CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+>                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py:941: in do_execute
+    cursor.execute(statement, parameters)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Cursor [closed] [INTRANS] (host=postgres database=practice) at 0x7affd87c4c50>
+query = "INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x"
+params = immutabledict({})
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -> Self:
+        """
+        Execute a query or command to the database.
+        """
+        try:
+            with self._conn.lock:
+                self._conn.wait(
+                    self._execute_gen(query, params, prepare=prepare, binary=binary)
+                )
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.ProgrammingError: incomplete placeholder: '%'; if you want to use '%' as an operator you can double it up, i.e. use '%%'
+
+/usr/local/lib/python3.12/site-packages/psycopg/cursor.py:97: ProgrammingError
+
+The above exception was the direct cause of the following exception:
+
+conn = <sqlalchemy.engine.base.Connection object at 0x7affd8bcd790>
+
+    def test_one_statement_on_many_customers(conn):
+>       conn.exec_driver_sql("INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x")
+
+tests/test_private.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1779: in exec_driver_sql
+    ret = self._execute_context(
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1846: in _execute_context
+    return self._exec_single_context(
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1986: in _exec_single_context
+    self._handle_dbapi_exception(
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2355: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1967: in _exec_single_context
+    self.dialect.do_execute(
+/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py:941: in do_execute
+    cursor.execute(statement, parameters)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Cursor [closed] [INTRANS] (host=postgres database=practice) at 0x7affd87c4c50>
+query = "INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x"
+params = immutabledict({})
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -> Self:
+        """
+        Execute a query or command to the database.
+        """
+        try:
+            with self._conn.lock:
+                self._conn.wait(
+                    self._execute_gen(query, params, prepare=prepare, binary=binary)
+                )
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           sqlalchemy.exc.ProgrammingError: (psycopg.ProgrammingError) incomplete placeholder: '%'; if you want to use '%' as an operator you can double it up, i.e. use '%%'
+E           [SQL: INSERT INTO events SELECT x, x % 71, '2026-01-01'::timestamptz + (x % 13) * interval '1 hour', 'x' FROM generate_series(1, 997) x]
+E           (Background on this error at: https://sqlalche.me/e/20/f405)
+
+/usr/local/lib/python3.12/site-packages/psycopg/cursor.py:97: ProgrammingError
+______________ test_timestamp_projection_preserves_exact_instant _______________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x7affd8bce810>
+
+    def test_timestamp_projection_preserves_exact_instant(conn):
+        conn.exec_driver_sql("INSERT INTO events VALUES (1, 3, '2026-01-08 23:42:17.123456-05:00', 'new'), (2, 3, '2026-01-09 04:42:17.123456+00', 'closed'), (3, 4, '2026-01-11 15:06:07.654321+05:45', 'new')")
+>       assert list(latest_per_customer(conn, START, END)) == [
+            (3, 2, datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=timezone.utc)),
+            (4, 3, datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=timezone.utc)),
+        ]
+E       AssertionError: assert [(3, 1, datet...='Etc/UTC')))] == [(3, 2, datet...imezone.utc))]
+E         
+E         At index 0 diff: (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) != (3, 2, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=datetime.timezone.utc))
+E         Left contains one more item: (4, 3, datetime.datetime(2026, 1, 11, 9, 21, 7, 654321, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))
+E         
+E         Full diff:
+E           [
+E         +     (3, 1, datetime.datetime(2026, 1, 9, 4, 42, 17, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))),...
+E         
+E         ...Full output truncated (13 lines hidden), use '-vv' to show
+
+tests/test_private.py:46: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_id_is_not_chronology
+PASSED tests/test_private.py::test_window_precedes_ranking_and_is_half_open
+FAILED tests/test_private.py::test_timestamp_ties_choose_largest_id - Asserti...
+FAILED tests/test_private.py::test_one_statement_on_many_customers - sqlalche...
+FAILED tests/test_private.py::test_timestamp_projection_preserves_exact_instant
+========================= 3 failed, 2 passed in 0.99s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_sample PASSED                                [ 50%]
+tests/test_visible.py::test_empty PASSED                                 [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_sample
+PASSED tests/test_visible.py::test_empty
+============================== 2 passed in 0.17s ===============================

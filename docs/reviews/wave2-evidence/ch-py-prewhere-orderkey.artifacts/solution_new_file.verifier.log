@@ -1,0 +1,29 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-prewhere-orderkey" tests="11" failures="2" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>5988a64978fd9fea3fabd9fac4e55e40bc74c638485fdcf2fbe3ffd8b8f8b4c8</system-out></testcase><testcase name="bounded_settled_total_function"><system-out>{"function_sha256": "a1ca4ff84986ed7f72c11365b749f263a84d44b69cac552bb72d6b5692fc8ea8"}</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><failure message="AssertionError: source drift: missing=[], added=['observatory/extra_helper.py'], changed=[]">AssertionError: source drift: missing=[], added=['observatory/extra_helper.py'], changed=[]</failure><system-out>AssertionError: source drift: missing=[], added=['observatory/extra_helper.py'], changed=[]</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "e66d979cc6d7dac82bdab5bb11858558743e75e8a9b06e18eb5f130fe2f1706f", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><system-out>{"stdout_sha256": "f8c778ec6d37c8ecc2e5c0ab9125d88bc3eef46dd0e2b0a547c8440bec17c249", "tests": 3}</system-out></testcase><testcase name="source_tree_conservation_after_tests"><failure message="AssertionError: source drift: missing=[], added=['observatory/extra_helper.py'], changed=[]">AssertionError: source drift: missing=[], added=['observatory/extra_helper.py'], changed=[]</failure><system-out>AssertionError: source drift: missing=[], added=['observatory/extra_helper.py'], changed=[]</system-out></testcase><testcase name="database_schema_conservation"><system-out>79d1da844d738bc8c5a726c953ba4ff57342591dda520386e5f4873fada35f2c</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_ridges_report.py::test_filter_status_range_and_tenant PASSED  [ 33%]
+tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold PASSED [ 66%]
+tests/test_ridges_report.py::test_same_tenant_narrow_window PASSED       [100%]
+
+============================== 3 passed in 1.36s ===============================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_small_total PASSED                            [ 50%]
+tests/test_report.py::test_missing_tenant PASSED                         [100%]
+
+============================== 2 passed in 0.28s ===============================
+All checks passed!

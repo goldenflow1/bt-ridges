@@ -1,0 +1,18 @@
+diff --git a/app/reports.py b/app/reports.py
+--- a/app/reports.py
++++ b/app/reports.py
+@@ -17,8 +17,9 @@
+ 
+ def latest_per_customer(conn, since, until):
+     """Return (customer_id, event_id, occurred_at) for each latest event in [since, until)."""
+-    newest = select(events.c.customer_id, func.max(events.c.occurred_at).label('ts')).where(
+-        events.c.occurred_at >= since, events.c.occurred_at < until).group_by(events.c.customer_id).subquery()
+-    query = select(events.c.customer_id, events.c.id, events.c.occurred_at).join(
+-        newest, and_(events.c.customer_id == newest.c.customer_id, events.c.occurred_at == newest.c.ts))
+-    return list(conn.execute(query.order_by(events.c.customer_id)))
++    ranked = select(events.c.customer_id, events.c.id, events.c.occurred_at,
++                    func.row_number().over(partition_by=events.c.customer_id,
++                                           order_by=[events.c.occurred_at.desc(), events.c.id.asc()]).label('rn')).where(
++                        events.c.occurred_at >= since, events.c.occurred_at < until).subquery()
++    query = select(ranked.c.customer_id, ranked.c.id, ranked.c.occurred_at).where(and_(ranked.c.rn == 1))
++    return list(conn.execute(query.order_by(ranked.c.customer_id)))

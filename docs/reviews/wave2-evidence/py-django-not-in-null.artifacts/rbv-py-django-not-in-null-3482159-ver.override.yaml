@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-py-django-not-in-null-ver-postgres:latest
+  main:
+    image: rbv-py-django-not-in-null-ver-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/dev/py-django-not-in-null/tests
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

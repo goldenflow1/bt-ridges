@@ -1,0 +1,42 @@
+{
+  "recorded_projects": [
+    "rbv-ch-py-join-defaults-3533616-env",
+    "rbv-ch-py-join-defaults-3533616-ver",
+    "rbv-ch-py-prewhere-orderkey-3592378-env",
+    "rbv-ch-py-prewhere-orderkey-3592378-ver",
+    "rbv-ch-py-tz-buckets-3556925-env",
+    "rbv-ch-py-tz-buckets-3556925-ver",
+    "rbv-ch-py-uniq-exact-3502928-env",
+    "rbv-ch-py-uniq-exact-3502928-ver",
+    "rbv-ch-py-uniq-exact-3783524-env",
+    "rbv-ch-py-uniq-exact-3783524-ver",
+    "rbv-go-dbsql-null-scan-3620990-env",
+    "rbv-go-dbsql-null-scan-3620990-ver",
+    "rbv-go-gorm-preload-3654526-env",
+    "rbv-go-gorm-preload-3654526-ver",
+    "rbv-py-django-not-in-null-3482159-env",
+    "rbv-py-django-not-in-null-3482159-ver",
+    "rbv-py-psycopg-left-join-filter-3472126-env",
+    "rbv-py-psycopg-left-join-filter-3472126-ver",
+    "rbv-py-sqla-latest-per-customer-3437416-env",
+    "rbv-py-sqla-latest-per-customer-3437416-ver",
+    "rbv-py-sqla-latest-per-customer-3458216-env",
+    "rbv-py-sqla-latest-per-customer-3458216-ver",
+    "rbv-py-sqla-partial-index-3492024-env",
+    "rbv-py-sqla-partial-index-3492024-ver",
+    "rbv-ts-ch-client-limit-by-3728601-env",
+    "rbv-ts-ch-client-limit-by-3728601-ver",
+    "rbv-ts-ch-client-limit-by-3849485-env",
+    "rbv-ts-ch-client-limit-by-3849485-ver",
+    "rbv-ts-knex-window-frame-3685378-env",
+    "rbv-ts-knex-window-frame-3685378-ver",
+    "rbv-ts-knex-window-frame-3820201-env",
+    "rbv-ts-knex-window-frame-3820201-ver"
+  ],
+  "leftovers": {
+    "containers": [],
+    "networks": [],
+    "volumes": []
+  },
+  "clean": true
+}

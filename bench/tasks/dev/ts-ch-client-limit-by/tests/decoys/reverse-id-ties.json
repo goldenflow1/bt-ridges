@@ -1,0 +1,6 @@
+{
+  "expect_failing": [
+    "hidden: cutoff ties choose smaller IDs"
+  ],
+  "passes_visible": true
+}

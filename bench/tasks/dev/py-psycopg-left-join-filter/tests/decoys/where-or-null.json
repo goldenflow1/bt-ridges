@@ -1,0 +1,7 @@
+{
+  "description": "where-or-null",
+  "expect_failing": [
+    "test_only_nonqualifying_bookings_preserve_department"
+  ],
+  "passes_visible": true
+}

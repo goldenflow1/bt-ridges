@@ -1,0 +1,344 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-tz-buckets" tests="11" failures="1" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</system-out></testcase><testcase name="bounded_daily_events_function"><system-out>{"function_sha256": "202820e04f32da42e673d2eccae67681004142d2b5f11b29cfe73b4c72e6e74d"}</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>5167fd73748d768dd07ebaf5186d74a59f11924b06a066051aef1700d8d84b2a</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "3e3520a63cde29a1dd353d580c64cf984ceeb4cbe4054fcb3eca62c55dcc6da0", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><failure message="AssertionError: test command failed (1); tail=eport.QueryProbe object at 0x79d05df4d280&gt;.calls&#10;&#10;tests/test_ridges_report.py:18: AssertionError&#10;____________________ test_fall_back_day_includes_last_hour _____________________&#10;&#10;ch = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;&#10;&#10;    def test_fall_back_day_includes_last_hour(ch):&#10;        add(ch, 't', ['2026-11-01 04:00:00.000', '2026-11-01 05:30:00.000', '2026-11-01 06:30:00.000', '2026-11-02 04:59:59.999', '2026-11-02 05:00:00.000'])&#10;&gt;       assert daily_events(ch, 't', '2026-11-01', '2026-11-02', 'America/New_York') == [{'day':'2026-11-01','events':4}]&#10;&#10;tests/test_ridges_report.py:35: &#10;_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ &#10;&#10;client = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;&#10;args = ('t', '2026-11-01', '2026-11-02', 'America/New_York')&#10;probe = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05df4fce0&gt;&#10;result = [], @py_assert2 = []&#10;&#10;    def daily_events(client, *ar">AssertionError: test command failed (1); tail=eport.QueryProbe object at 0x79d05df4d280&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+____________________ test_fall_back_day_includes_last_hour _____________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+
+    def test_fall_back_day_includes_last_hour(ch):
+        add(ch, 't', ['2026-11-01 04:00:00.000', '2026-11-01 05:30:00.000', '2026-11-01 06:30:00.000', '2026-11-02 04:59:59.999', '2026-11-02 05:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-11-01', '2026-11-02', 'America/New_York') == [{'day':'2026-11-01','events':4}]
+
+tests/test_ridges_report.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+args = ('t', '2026-11-01', '2026-11-02', 'America/New_York')
+probe = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05df4fce0&gt;
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+&gt;       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05df4fce0&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+__________________ test_fractional_offset_tenant_and_leap_day __________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+
+    def test_fractional_offset_tenant_and_leap_day(ch):
+        add(ch, "owner's", ['2024-02-28 18:14:59.999', '2024-02-28 18:15:00.000', '2024-02-29 18:14:59.999', '2024-02-29 18:15:00.000'])
+        add(ch, 'other', ['2024-02-29 10:00:00.000'])
+&gt;       assert daily_events(ch, "owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu') == [{'day':'2024-02-29','events':2}]
+
+tests/test_ridges_report.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+args = ("owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu')
+probe = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3375c0&gt;
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+&gt;       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3375c0&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+_______________________ test_no_events_and_reverse_range _______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+
+    def test_no_events_and_reverse_range(ch):
+&gt;       assert daily_events(ch, 'absent', '2026-05-01', '2026-05-03', 'Europe/Berlin') == [{'day':'2026-05-01','events':0}, {'day':'2026-05-02','events':0}]
+
+tests/test_ridges_report.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+args = ('absent', '2026-05-01', '2026-05-03', 'Europe/Berlin')
+probe = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3376b0&gt;
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+&gt;       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3376b0&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_days_are_materialized - Assert...
+FAILED tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open
+FAILED tests/test_ridges_report.py::test_fall_back_day_includes_last_hour - A...
+FAILED tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day
+FAILED tests/test_ridges_report.py::test_no_events_and_reverse_range - Assert...
+============================== 5 failed in 0.33s ===============================
+</failure><system-out>AssertionError: test command failed (1); tail=eport.QueryProbe object at 0x79d05df4d280&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+____________________ test_fall_back_day_includes_last_hour _____________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+
+    def test_fall_back_day_includes_last_hour(ch):
+        add(ch, 't', ['2026-11-01 04:00:00.000', '2026-11-01 05:30:00.000', '2026-11-01 06:30:00.000', '2026-11-02 04:59:59.999', '2026-11-02 05:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-11-01', '2026-11-02', 'America/New_York') == [{'day':'2026-11-01','events':4}]
+
+tests/test_ridges_report.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+args = ('t', '2026-11-01', '2026-11-02', 'America/New_York')
+probe = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05df4fce0&gt;
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+&gt;       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05df4fce0&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+__________________ test_fractional_offset_tenant_and_leap_day __________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+
+    def test_fractional_offset_tenant_and_leap_day(ch):
+        add(ch, "owner's", ['2024-02-28 18:14:59.999', '2024-02-28 18:15:00.000', '2024-02-29 18:14:59.999', '2024-02-29 18:15:00.000'])
+        add(ch, 'other', ['2024-02-29 10:00:00.000'])
+&gt;       assert daily_events(ch, "owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu') == [{'day':'2024-02-29','events':2}]
+
+tests/test_ridges_report.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+args = ("owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu')
+probe = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3375c0&gt;
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+&gt;       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3375c0&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+_______________________ test_no_events_and_reverse_range _______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+
+    def test_no_events_and_reverse_range(ch):
+&gt;       assert daily_events(ch, 'absent', '2026-05-01', '2026-05-03', 'Europe/Berlin') == [{'day':'2026-05-01','events':0}, {'day':'2026-05-02','events':0}]
+
+tests/test_ridges_report.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = &lt;observatory.chclient.ClickHouse object at 0x79d05df4bc20&gt;
+args = ('absent', '2026-05-01', '2026-05-03', 'Europe/Berlin')
+probe = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3376b0&gt;
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+&gt;       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = &lt;tests.test_ridges_report.QueryProbe object at 0x79d05e3376b0&gt;.calls
+
+tests/test_ridges_report.py:18: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_days_are_materialized - Assert...
+FAILED tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open
+FAILED tests/test_ridges_report.py::test_fall_back_day_includes_last_hour - A...
+FAILED tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day
+FAILED tests/test_ridges_report.py::test_no_events_and_reverse_range - Assert...
+============================== 5 failed in 0.33s ===============================
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>5167fd73748d768dd07ebaf5186d74a59f11924b06a066051aef1700d8d84b2a</system-out></testcase><testcase name="database_schema_conservation"><system-out>de6c48543aac5876f690d924f6a2d972ed12e0a283b1512781ef99e1d3a254f0</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized FAILED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open FAILED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour FAILED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day FAILED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range FAILED     [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_empty_days_are_materialized _______________________
+
+ch = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+
+    def test_empty_days_are_materialized(ch):
+        add(ch, 't', ['2026-02-02 12:00:00.000'])
+>       assert daily_events(ch, 't', '2026-02-01', '2026-02-04', 'UTC') == [{'day':'2026-02-01','events':0}, {'day':'2026-02-02','events':1}, {'day':'2026-02-03','events':0}]
+
+tests/test_ridges_report.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+args = ('t', '2026-02-01', '2026-02-04', 'UTC')
+probe = <tests.test_ridges_report.QueryProbe object at 0x79d05df49b80>
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+>       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_ridges_report.QueryProbe object at 0x79d05df49b80>.calls
+
+tests/test_ridges_report.py:18: AssertionError
+_________________ test_spring_forward_local_days_and_half_open _________________
+
+ch = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+
+    def test_spring_forward_local_days_and_half_open(ch):
+        add(ch, 't', ['2026-03-08 04:59:59.999', '2026-03-08 05:00:00.000', '2026-03-09 03:59:59.999', '2026-03-09 04:00:00.000'])
+>       assert daily_events(ch, 't', '2026-03-08', '2026-03-09', 'America/New_York') == [{'day':'2026-03-08','events':2}]
+
+tests/test_ridges_report.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+args = ('t', '2026-03-08', '2026-03-09', 'America/New_York')
+probe = <tests.test_ridges_report.QueryProbe object at 0x79d05df4d280>
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+>       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_ridges_report.QueryProbe object at 0x79d05df4d280>.calls
+
+tests/test_ridges_report.py:18: AssertionError
+____________________ test_fall_back_day_includes_last_hour _____________________
+
+ch = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+
+    def test_fall_back_day_includes_last_hour(ch):
+        add(ch, 't', ['2026-11-01 04:00:00.000', '2026-11-01 05:30:00.000', '2026-11-01 06:30:00.000', '2026-11-02 04:59:59.999', '2026-11-02 05:00:00.000'])
+>       assert daily_events(ch, 't', '2026-11-01', '2026-11-02', 'America/New_York') == [{'day':'2026-11-01','events':4}]
+
+tests/test_ridges_report.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+args = ('t', '2026-11-01', '2026-11-02', 'America/New_York')
+probe = <tests.test_ridges_report.QueryProbe object at 0x79d05df4fce0>
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+>       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_ridges_report.QueryProbe object at 0x79d05df4fce0>.calls
+
+tests/test_ridges_report.py:18: AssertionError
+__________________ test_fractional_offset_tenant_and_leap_day __________________
+
+ch = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+
+    def test_fractional_offset_tenant_and_leap_day(ch):
+        add(ch, "owner's", ['2024-02-28 18:14:59.999', '2024-02-28 18:15:00.000', '2024-02-29 18:14:59.999', '2024-02-29 18:15:00.000'])
+        add(ch, 'other', ['2024-02-29 10:00:00.000'])
+>       assert daily_events(ch, "owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu') == [{'day':'2024-02-29','events':2}]
+
+tests/test_ridges_report.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+args = ("owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu')
+probe = <tests.test_ridges_report.QueryProbe object at 0x79d05e3375c0>
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+>       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_ridges_report.QueryProbe object at 0x79d05e3375c0>.calls
+
+tests/test_ridges_report.py:18: AssertionError
+_______________________ test_no_events_and_reverse_range _______________________
+
+ch = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+
+    def test_no_events_and_reverse_range(ch):
+>       assert daily_events(ch, 'absent', '2026-05-01', '2026-05-03', 'Europe/Berlin') == [{'day':'2026-05-01','events':0}, {'day':'2026-05-02','events':0}]
+
+tests/test_ridges_report.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <observatory.chclient.ClickHouse object at 0x79d05df4bc20>
+args = ('absent', '2026-05-01', '2026-05-03', 'Europe/Berlin')
+probe = <tests.test_ridges_report.QueryProbe object at 0x79d05e3376b0>
+result = [], @py_assert2 = []
+
+    def daily_events(client, *args):
+        probe = QueryProbe(client)
+        result = report_daily_events(probe, *args)
+>       assert len(probe.calls) == 1, "counting and day generation require one SQL query"
+E       AssertionError: counting and day generation require one SQL query
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_ridges_report.QueryProbe object at 0x79d05e3376b0>.calls
+
+tests/test_ridges_report.py:18: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_days_are_materialized - Assert...
+FAILED tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open
+FAILED tests/test_ridges_report.py::test_fall_back_day_includes_last_hour - A...
+FAILED tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day
+FAILED tests/test_ridges_report.py::test_no_events_and_reverse_range - Assert...
+============================== 5 failed in 0.33s ===============================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_empty_requested_interval PASSED               [ 50%]
+tests/test_report.py::test_service_identity PASSED                       [100%]
+
+============================== 2 passed in 0.23s ===============================
+All checks passed!

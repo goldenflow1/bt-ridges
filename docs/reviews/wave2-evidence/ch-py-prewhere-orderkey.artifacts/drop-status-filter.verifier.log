@@ -1,0 +1,203 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-prewhere-orderkey" tests="11" failures="1" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>42e8952bb00585d66526ae90bf1614a91d95a1b57d6c9bf814b66a9cc87c0a7c</system-out></testcase><testcase name="bounded_settled_total_function"><system-out>{"function_sha256": "a3311b333e85c867a2a76b5066fa6077ab61c2ddc7535eae097c4fe431220a9d"}</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>9d5145b094089b2690e61bdf52f85b3267c3c95b856ca60c18d4029c85592c56</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "9eb3e58f63d9aba66b12415e0d23d552eb297c2eb5ceb12c9541e85bf7c920c8", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><failure message="AssertionError: test command failed (1); tail============================== test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 3 items&#10;&#10;tests/test_ridges_report.py::test_filter_status_range_and_tenant FAILED  [ 33%]&#10;tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold FAILED [ 66%]&#10;tests/test_ridges_report.py::test_same_tenant_narrow_window PASSED       [100%]&#10;&#10;=================================== FAILURES ===================================&#10;_____________________ test_filter_status_range_and_tenant ______________________&#10;&#10;ch = &lt;observatory.chclient.ClickHouse object at 0x76cbbf48fad0&gt;&#10;&#10;    def test_filter_status_range_and_tenant(ch):&#10;        ch.command(&quot;INSERT INTO events VALUES (7, '2026-01-01 00:00:00', 1, 'settled', 8), (7, '2026-01-01 12:00:00', 2, 'settled', -3), (7, '2026-01-01 12:00:00', 3,">AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_ridges_report.py::test_filter_status_range_and_tenant FAILED  [ 33%]
+tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold FAILED [ 66%]
+tests/test_ridges_report.py::test_same_tenant_narrow_window PASSED       [100%]
+
+=================================== FAILURES ===================================
+_____________________ test_filter_status_range_and_tenant ______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x76cbbf48fad0&gt;
+
+    def test_filter_status_range_and_tenant(ch):
+        ch.command("INSERT INTO events VALUES (7, '2026-01-01 00:00:00', 1, 'settled', 8), (7, '2026-01-01 12:00:00', 2, 'settled', -3), (7, '2026-01-01 12:00:00', 3, 'pending', 999), (7, '2026-01-02 00:00:00', 4, 'settled', 100), (8, '2026-01-01 12:00:00', 5, 'settled', 1000)")
+&gt;       assert settled_total(ch, 7, '2026-01-01', '2026-01-02') == [{'total':5}]
+E       AssertionError: assert [{'total': 1004}] == [{'total': 5}]
+E         
+E         At index 0 diff: {'total': 1004} != {'total': 5}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'total': 5,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:28: AssertionError
+___________________ test_primary_key_read_rows_drop_tenfold ____________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x76cbbf48fad0&gt;
+
+    def test_primary_key_read_rows_drop_tenfold(ch):
+        size = 1048576
+        ch.command(f"INSERT INTO events SELECT toUInt32(intDiv(number,8192)), toDateTime('2026-01-01') + (number % 8192), number, if(number % 3 = 0, 'pending', 'settled'), toInt64(number % 17) - 8 FROM numbers({size})")
+        ch.command("OPTIMIZE TABLE events FINAL")
+        for tenant in (9, 71, 117):
+            params = {'tenant': tenant, 'start':'2026-01-01', 'end':'2026-01-02'}
+            slow = "SELECT sum(amount) AS total FROM events WHERE cityHash64(tenant_id) = cityHash64({tenant:UInt32}) AND happened &gt;= {start:DateTime} AND happened &lt; {end:DateTime} AND status = 'settled' SETTINGS max_threads=1, use_query_cache=0"
+            expected = ch.query(slow, params)
+            original_reads = ch.last_statistics['rows_read']
+            result, candidate_reads = measured_total(ch, tenant, params['start'], params['end'])
+&gt;           assert result == expected
+E           AssertionError: assert [{'total': -13}] == [{'total': -11}]
+E             
+E             At index 0 diff: {'total': -13} != {'total': -11}
+E             
+E             Full diff:
+E               [
+E                   {
+E             -         'total': -11,...
+E             
+E             ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_filter_status_range_and_tenant - Ass...
+FAILED tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold
+========================= 2 failed, 1 passed in 1.42s ==========================
+</failure><system-out>AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_ridges_report.py::test_filter_status_range_and_tenant FAILED  [ 33%]
+tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold FAILED [ 66%]
+tests/test_ridges_report.py::test_same_tenant_narrow_window PASSED       [100%]
+
+=================================== FAILURES ===================================
+_____________________ test_filter_status_range_and_tenant ______________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x76cbbf48fad0&gt;
+
+    def test_filter_status_range_and_tenant(ch):
+        ch.command("INSERT INTO events VALUES (7, '2026-01-01 00:00:00', 1, 'settled', 8), (7, '2026-01-01 12:00:00', 2, 'settled', -3), (7, '2026-01-01 12:00:00', 3, 'pending', 999), (7, '2026-01-02 00:00:00', 4, 'settled', 100), (8, '2026-01-01 12:00:00', 5, 'settled', 1000)")
+&gt;       assert settled_total(ch, 7, '2026-01-01', '2026-01-02') == [{'total':5}]
+E       AssertionError: assert [{'total': 1004}] == [{'total': 5}]
+E         
+E         At index 0 diff: {'total': 1004} != {'total': 5}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'total': 5,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:28: AssertionError
+___________________ test_primary_key_read_rows_drop_tenfold ____________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x76cbbf48fad0&gt;
+
+    def test_primary_key_read_rows_drop_tenfold(ch):
+        size = 1048576
+        ch.command(f"INSERT INTO events SELECT toUInt32(intDiv(number,8192)), toDateTime('2026-01-01') + (number % 8192), number, if(number % 3 = 0, 'pending', 'settled'), toInt64(number % 17) - 8 FROM numbers({size})")
+        ch.command("OPTIMIZE TABLE events FINAL")
+        for tenant in (9, 71, 117):
+            params = {'tenant': tenant, 'start':'2026-01-01', 'end':'2026-01-02'}
+            slow = "SELECT sum(amount) AS total FROM events WHERE cityHash64(tenant_id) = cityHash64({tenant:UInt32}) AND happened &gt;= {start:DateTime} AND happened &lt; {end:DateTime} AND status = 'settled' SETTINGS max_threads=1, use_query_cache=0"
+            expected = ch.query(slow, params)
+            original_reads = ch.last_statistics['rows_read']
+            result, candidate_reads = measured_total(ch, tenant, params['start'], params['end'])
+&gt;           assert result == expected
+E           AssertionError: assert [{'total': -13}] == [{'total': -11}]
+E             
+E             At index 0 diff: {'total': -13} != {'total': -11}
+E             
+E             Full diff:
+E               [
+E                   {
+E             -         'total': -11,...
+E             
+E             ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_filter_status_range_and_tenant - Ass...
+FAILED tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold
+========================= 2 failed, 1 passed in 1.42s ==========================
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>9d5145b094089b2690e61bdf52f85b3267c3c95b856ca60c18d4029c85592c56</system-out></testcase><testcase name="database_schema_conservation"><system-out>79d1da844d738bc8c5a726c953ba4ff57342591dda520386e5f4873fada35f2c</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_ridges_report.py::test_filter_status_range_and_tenant FAILED  [ 33%]
+tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold FAILED [ 66%]
+tests/test_ridges_report.py::test_same_tenant_narrow_window PASSED       [100%]
+
+=================================== FAILURES ===================================
+_____________________ test_filter_status_range_and_tenant ______________________
+
+ch = <observatory.chclient.ClickHouse object at 0x76cbbf48fad0>
+
+    def test_filter_status_range_and_tenant(ch):
+        ch.command("INSERT INTO events VALUES (7, '2026-01-01 00:00:00', 1, 'settled', 8), (7, '2026-01-01 12:00:00', 2, 'settled', -3), (7, '2026-01-01 12:00:00', 3, 'pending', 999), (7, '2026-01-02 00:00:00', 4, 'settled', 100), (8, '2026-01-01 12:00:00', 5, 'settled', 1000)")
+>       assert settled_total(ch, 7, '2026-01-01', '2026-01-02') == [{'total':5}]
+E       AssertionError: assert [{'total': 1004}] == [{'total': 5}]
+E         
+E         At index 0 diff: {'total': 1004} != {'total': 5}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'total': 5,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:28: AssertionError
+___________________ test_primary_key_read_rows_drop_tenfold ____________________
+
+ch = <observatory.chclient.ClickHouse object at 0x76cbbf48fad0>
+
+    def test_primary_key_read_rows_drop_tenfold(ch):
+        size = 1048576
+        ch.command(f"INSERT INTO events SELECT toUInt32(intDiv(number,8192)), toDateTime('2026-01-01') + (number % 8192), number, if(number % 3 = 0, 'pending', 'settled'), toInt64(number % 17) - 8 FROM numbers({size})")
+        ch.command("OPTIMIZE TABLE events FINAL")
+        for tenant in (9, 71, 117):
+            params = {'tenant': tenant, 'start':'2026-01-01', 'end':'2026-01-02'}
+            slow = "SELECT sum(amount) AS total FROM events WHERE cityHash64(tenant_id) = cityHash64({tenant:UInt32}) AND happened >= {start:DateTime} AND happened < {end:DateTime} AND status = 'settled' SETTINGS max_threads=1, use_query_cache=0"
+            expected = ch.query(slow, params)
+            original_reads = ch.last_statistics['rows_read']
+            result, candidate_reads = measured_total(ch, tenant, params['start'], params['end'])
+>           assert result == expected
+E           AssertionError: assert [{'total': -13}] == [{'total': -11}]
+E             
+E             At index 0 diff: {'total': -13} != {'total': -11}
+E             
+E             Full diff:
+E               [
+E                   {
+E             -         'total': -11,...
+E             
+E             ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_filter_status_range_and_tenant - Ass...
+FAILED tests/test_ridges_report.py::test_primary_key_read_rows_drop_tenfold
+========================= 2 failed, 1 passed in 1.42s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_small_total PASSED                            [ 50%]
+tests/test_report.py::test_missing_tenant PASSED                         [100%]
+
+============================== 2 passed in 0.24s ===============================
+All checks passed!

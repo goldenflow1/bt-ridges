@@ -1,0 +1,145 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-django-not-in-null" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_private.py::test_null_block_is_not_a_global_ban PASSED        [ 25%]&#10;tests/test_private.py::test_indefinite_blocks_and_expiration_boundary FAILED [ 50%]&#10;tests/test_private.py::test_cross_tenant_blocks_do_not_apply PASSED      [ 75%]&#10;tests/test_private.py::test_duplicates_and_single_query FAILED           [100%]&#10;&#10;=================================== FAILURES ===================================&#10;________________ test_indefinite_blocks_and_expiration_boundary ________________&#10;&#10;conn = &lt;django.db.backends.utils.CursorWrapper object at 0x73fd997f89e0&gt;&#10;&#10;    def test_indefinite_blocks_and_expiration_boundary(conn):&#10;        conn.execute(&quot;INSERT INTO customers VALUES (1, 10, 'A'), (2, 10, 'B'), (3, 10, 'C'), (4, 10, 'D')&quot;)&#10; ">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_null_block_is_not_a_global_ban PASSED        [ 25%]
+tests/test_private.py::test_indefinite_blocks_and_expiration_boundary FAILED [ 50%]
+tests/test_private.py::test_cross_tenant_blocks_do_not_apply PASSED      [ 75%]
+tests/test_private.py::test_duplicates_and_single_query FAILED           [100%]
+
+=================================== FAILURES ===================================
+________________ test_indefinite_blocks_and_expiration_boundary ________________
+
+conn = &lt;django.db.backends.utils.CursorWrapper object at 0x73fd997f89e0&gt;
+
+    def test_indefinite_blocks_and_expiration_boundary(conn):
+        conn.execute("INSERT INTO customers VALUES (1, 10, 'A'), (2, 10, 'B'), (3, 10, 'C'), (4, 10, 'D')")
+        conn.execute("INSERT INTO blocks VALUES (1, 1, 10, true, NULL), (2, 2, 10, true, '2026-01-10'), (3, 3, 10, false, NULL), (4, 4, 10, true, '2026-01-10 00:00:01+00')")
+&gt;       assert eligible_customers(10, NOW) == [2, 3]
+E       AssertionError: assert [1, 2, 3] == [2, 3]
+E         
+E         At index 0 diff: 1 != 2
+E         Left contains one more item: 3
+E         
+E         Full diff:
+E           [
+E         +     1,...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests/test_private.py:19: AssertionError
+_______________________ test_duplicates_and_single_query _______________________
+
+conn = &lt;django.db.backends.utils.CursorWrapper object at 0x73fd997d91c0&gt;
+
+    def test_duplicates_and_single_query(conn):
+        conn.execute("INSERT INTO customers SELECT x, 10, 'customer' FROM generate_series(1, 501) x")
+        conn.execute("INSERT INTO blocks SELECT x, 250, 10, true, NULL FROM generate_series(1, 99) x")
+        with CaptureQueriesContext(connection) as seen:
+            actual = eligible_customers(10, NOW)
+&gt;       assert actual == [i for i in range(1, 502) if i != 250]
+E       AssertionError: assert [1, 2, 3, 4, 5, 6, ...] == [1, 2, 3, 4, 5, 6, ...]
+E         
+E         At index 249 diff: 250 != 251
+E         Left contains one more item: 501
+E         
+E         Full diff:
+E           [
+E               1,...
+E         
+E         ...Full output truncated (501 lines hidden), use '-vv' to show
+
+tests/test_private.py:33: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_null_block_is_not_a_global_ban
+PASSED tests/test_private.py::test_cross_tenant_blocks_do_not_apply
+FAILED tests/test_private.py::test_indefinite_blocks_and_expiration_boundary
+FAILED tests/test_private.py::test_duplicates_and_single_query - AssertionErr...
+========================= 2 failed, 2 passed in 0.56s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_null_block_is_not_a_global_ban PASSED        [ 25%]
+tests/test_private.py::test_indefinite_blocks_and_expiration_boundary FAILED [ 50%]
+tests/test_private.py::test_cross_tenant_blocks_do_not_apply PASSED      [ 75%]
+tests/test_private.py::test_duplicates_and_single_query FAILED           [100%]
+
+=================================== FAILURES ===================================
+________________ test_indefinite_blocks_and_expiration_boundary ________________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x73fd997f89e0>
+
+    def test_indefinite_blocks_and_expiration_boundary(conn):
+        conn.execute("INSERT INTO customers VALUES (1, 10, 'A'), (2, 10, 'B'), (3, 10, 'C'), (4, 10, 'D')")
+        conn.execute("INSERT INTO blocks VALUES (1, 1, 10, true, NULL), (2, 2, 10, true, '2026-01-10'), (3, 3, 10, false, NULL), (4, 4, 10, true, '2026-01-10 00:00:01+00')")
+>       assert eligible_customers(10, NOW) == [2, 3]
+E       AssertionError: assert [1, 2, 3] == [2, 3]
+E         
+E         At index 0 diff: 1 != 2
+E         Left contains one more item: 3
+E         
+E         Full diff:
+E           [
+E         +     1,...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests/test_private.py:19: AssertionError
+_______________________ test_duplicates_and_single_query _______________________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x73fd997d91c0>
+
+    def test_duplicates_and_single_query(conn):
+        conn.execute("INSERT INTO customers SELECT x, 10, 'customer' FROM generate_series(1, 501) x")
+        conn.execute("INSERT INTO blocks SELECT x, 250, 10, true, NULL FROM generate_series(1, 99) x")
+        with CaptureQueriesContext(connection) as seen:
+            actual = eligible_customers(10, NOW)
+>       assert actual == [i for i in range(1, 502) if i != 250]
+E       AssertionError: assert [1, 2, 3, 4, 5, 6, ...] == [1, 2, 3, 4, 5, 6, ...]
+E         
+E         At index 249 diff: 250 != 251
+E         Left contains one more item: 501
+E         
+E         Full diff:
+E           [
+E               1,...
+E         
+E         ...Full output truncated (501 lines hidden), use '-vv' to show
+
+tests/test_private.py:33: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_null_block_is_not_a_global_ban
+PASSED tests/test_private.py::test_cross_tenant_blocks_do_not_apply
+FAILED tests/test_private.py::test_indefinite_blocks_and_expiration_boundary
+FAILED tests/test_private.py::test_duplicates_and_single_query - AssertionErr...
+========================= 2 failed, 2 passed in 0.56s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_sample PASSED                                [ 50%]
+tests/test_visible.py::test_empty PASSED                                 [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_sample
+PASSED tests/test_visible.py::test_empty
+============================== 2 passed in 0.13s ===============================

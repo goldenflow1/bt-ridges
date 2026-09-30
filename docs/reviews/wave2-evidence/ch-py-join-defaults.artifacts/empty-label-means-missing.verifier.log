@@ -1,0 +1,188 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-join-defaults" tests="10" failures="1" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>1ba6657bf96ad563cab6b8c48a620d6e7f4ad38b43ac1af28d6c1ff75a6dad38</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>b2d22610d5ac483cdae7eb117736031e815629a416d26a6834813d20415129a4</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "7dd5397cf4242663e93bed4dc23a87be3419eaa079d86e29f64a06cc521c3348", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><failure message="AssertionError: test command failed (1); tail============================== test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_ridges_report.py::test_missing_and_valid_zero_identifier PASSED [ 25%]&#10;tests/test_ridges_report.py::test_empty_label_is_registered FAILED       [ 50%]&#10;tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code FAILED [ 75%]&#10;tests/test_ridges_report.py::test_repeated_events_and_quoted_tenant PASSED [100%]&#10;&#10;=================================== FAILURES ===================================&#10;________________________ test_empty_label_is_registered ________________________&#10;&#10;ch = &lt;observatory.chclient.ClickHouse object at 0x73d5e61a8c80&gt;&#10;&#10;    def test_empty_label_is_registered(ch):&#10;        ch.command(&quot;INSERT INTO devices VALUES ('target', 'blank-label', 90, ''">AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_ridges_report.py::test_missing_and_valid_zero_identifier PASSED [ 25%]
+tests/test_ridges_report.py::test_empty_label_is_registered FAILED       [ 50%]
+tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code FAILED [ 75%]
+tests/test_ridges_report.py::test_repeated_events_and_quoted_tenant PASSED [100%]
+
+=================================== FAILURES ===================================
+________________________ test_empty_label_is_registered ________________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x73d5e61a8c80&gt;
+
+    def test_empty_label_is_registered(ch):
+        ch.command("INSERT INTO devices VALUES ('target', 'blank-label', 90, '', 1)")
+        ch.command("INSERT INTO events VALUES ('target', 10, 'absent'), ('target', 2, 'blank-label')")
+&gt;       assert missing_devices(ch, 'target') == [{'event_id': 10, 'device': 'absent'}]
+E       AssertionError: assert [{'device': '...vent_id': 10}] == [{'device': '...vent_id': 10}]
+E         
+E         At index 0 diff: {'event_id': 2, 'device': 'blank-label'} != {'event_id': 10, 'device': 'absent'}
+E         Left contains one more item: {'device': 'absent', 'event_id': 10}
+E         
+E         Full diff:
+E           [
+E         +     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:12: AssertionError
+_______________ test_disabled_cross_tenant_order_and_empty_code ________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x73d5e61a8c80&gt;
+
+    def test_disabled_cross_tenant_order_and_empty_code(ch):
+        ch.command("INSERT INTO devices VALUES ('other', 'cross', 11, 'x', 1), ('target', 'disabled', 7, 'x', 0), ('target', '', 9, '', 1)")
+        ch.command("INSERT INTO events VALUES ('target', 40, 'cross'), ('target', 9, 'disabled'), ('target', 12, 'unknown'), ('target', 3, ''), ('other', 1, 'unknown')")
+&gt;       assert missing_devices(ch, 'target') == [{'event_id': 9, 'device': 'disabled'}, {'event_id': 12, 'device': 'unknown'}, {'event_id': 40, 'device': 'cross'}]
+E       AssertionError: assert [{'device': '...vent_id': 40}] == [{'device': '...vent_id': 40}]
+E         
+E         At index 0 diff: {'event_id': 3, 'device': ''} != {'event_id': 9, 'device': 'disabled'}
+E         Left contains one more item: {'device': 'cross', 'event_id': 40}
+E         
+E         Full diff:
+E           [
+E         +     {...
+E         
+E         ...Full output truncated (16 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:17: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_label_is_registered - Assertio...
+FAILED tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code
+========================= 2 failed, 2 passed in 0.48s ==========================
+</failure><system-out>AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_ridges_report.py::test_missing_and_valid_zero_identifier PASSED [ 25%]
+tests/test_ridges_report.py::test_empty_label_is_registered FAILED       [ 50%]
+tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code FAILED [ 75%]
+tests/test_ridges_report.py::test_repeated_events_and_quoted_tenant PASSED [100%]
+
+=================================== FAILURES ===================================
+________________________ test_empty_label_is_registered ________________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x73d5e61a8c80&gt;
+
+    def test_empty_label_is_registered(ch):
+        ch.command("INSERT INTO devices VALUES ('target', 'blank-label', 90, '', 1)")
+        ch.command("INSERT INTO events VALUES ('target', 10, 'absent'), ('target', 2, 'blank-label')")
+&gt;       assert missing_devices(ch, 'target') == [{'event_id': 10, 'device': 'absent'}]
+E       AssertionError: assert [{'device': '...vent_id': 10}] == [{'device': '...vent_id': 10}]
+E         
+E         At index 0 diff: {'event_id': 2, 'device': 'blank-label'} != {'event_id': 10, 'device': 'absent'}
+E         Left contains one more item: {'device': 'absent', 'event_id': 10}
+E         
+E         Full diff:
+E           [
+E         +     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:12: AssertionError
+_______________ test_disabled_cross_tenant_order_and_empty_code ________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x73d5e61a8c80&gt;
+
+    def test_disabled_cross_tenant_order_and_empty_code(ch):
+        ch.command("INSERT INTO devices VALUES ('other', 'cross', 11, 'x', 1), ('target', 'disabled', 7, 'x', 0), ('target', '', 9, '', 1)")
+        ch.command("INSERT INTO events VALUES ('target', 40, 'cross'), ('target', 9, 'disabled'), ('target', 12, 'unknown'), ('target', 3, ''), ('other', 1, 'unknown')")
+&gt;       assert missing_devices(ch, 'target') == [{'event_id': 9, 'device': 'disabled'}, {'event_id': 12, 'device': 'unknown'}, {'event_id': 40, 'device': 'cross'}]
+E       AssertionError: assert [{'device': '...vent_id': 40}] == [{'device': '...vent_id': 40}]
+E         
+E         At index 0 diff: {'event_id': 3, 'device': ''} != {'event_id': 9, 'device': 'disabled'}
+E         Left contains one more item: {'device': 'cross', 'event_id': 40}
+E         
+E         Full diff:
+E           [
+E         +     {...
+E         
+E         ...Full output truncated (16 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:17: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_label_is_registered - Assertio...
+FAILED tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code
+========================= 2 failed, 2 passed in 0.48s ==========================
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>b2d22610d5ac483cdae7eb117736031e815629a416d26a6834813d20415129a4</system-out></testcase><testcase name="database_schema_conservation"><system-out>4907f044f92a808ed4c7ddabc5263cd984e6d0de69b5994bd5b1835b74a18720</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_ridges_report.py::test_missing_and_valid_zero_identifier PASSED [ 25%]
+tests/test_ridges_report.py::test_empty_label_is_registered FAILED       [ 50%]
+tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code FAILED [ 75%]
+tests/test_ridges_report.py::test_repeated_events_and_quoted_tenant PASSED [100%]
+
+=================================== FAILURES ===================================
+________________________ test_empty_label_is_registered ________________________
+
+ch = <observatory.chclient.ClickHouse object at 0x73d5e61a8c80>
+
+    def test_empty_label_is_registered(ch):
+        ch.command("INSERT INTO devices VALUES ('target', 'blank-label', 90, '', 1)")
+        ch.command("INSERT INTO events VALUES ('target', 10, 'absent'), ('target', 2, 'blank-label')")
+>       assert missing_devices(ch, 'target') == [{'event_id': 10, 'device': 'absent'}]
+E       AssertionError: assert [{'device': '...vent_id': 10}] == [{'device': '...vent_id': 10}]
+E         
+E         At index 0 diff: {'event_id': 2, 'device': 'blank-label'} != {'event_id': 10, 'device': 'absent'}
+E         Left contains one more item: {'device': 'absent', 'event_id': 10}
+E         
+E         Full diff:
+E           [
+E         +     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:12: AssertionError
+_______________ test_disabled_cross_tenant_order_and_empty_code ________________
+
+ch = <observatory.chclient.ClickHouse object at 0x73d5e61a8c80>
+
+    def test_disabled_cross_tenant_order_and_empty_code(ch):
+        ch.command("INSERT INTO devices VALUES ('other', 'cross', 11, 'x', 1), ('target', 'disabled', 7, 'x', 0), ('target', '', 9, '', 1)")
+        ch.command("INSERT INTO events VALUES ('target', 40, 'cross'), ('target', 9, 'disabled'), ('target', 12, 'unknown'), ('target', 3, ''), ('other', 1, 'unknown')")
+>       assert missing_devices(ch, 'target') == [{'event_id': 9, 'device': 'disabled'}, {'event_id': 12, 'device': 'unknown'}, {'event_id': 40, 'device': 'cross'}]
+E       AssertionError: assert [{'device': '...vent_id': 40}] == [{'device': '...vent_id': 40}]
+E         
+E         At index 0 diff: {'event_id': 3, 'device': ''} != {'event_id': 9, 'device': 'disabled'}
+E         Left contains one more item: {'device': 'cross', 'event_id': 40}
+E         
+E         Full diff:
+E           [
+E         +     {...
+E         
+E         ...Full output truncated (16 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:17: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_empty_label_is_registered - Assertio...
+FAILED tests/test_ridges_report.py::test_disabled_cross_tenant_order_and_empty_code
+========================= 2 failed, 2 passed in 0.48s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_registered_devices_are_not_missing PASSED     [ 50%]
+tests/test_report.py::test_empty_tenant PASSED                           [100%]
+
+============================== 2 passed in 0.25s ===============================
+All checks passed!

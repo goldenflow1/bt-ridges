@@ -1,0 +1,6 @@
+{
+  "expect_failing": [
+    "TestHiddenBoundedQueries"
+  ],
+  "passes_visible": true
+}

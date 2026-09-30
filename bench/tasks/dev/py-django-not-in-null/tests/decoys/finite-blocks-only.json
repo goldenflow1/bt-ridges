@@ -1,0 +1,7 @@
+{
+  "description": "finite-blocks-only",
+  "expect_failing": [
+    "test_indefinite_blocks_and_expiration_boundary"
+  ],
+  "passes_visible": true
+}

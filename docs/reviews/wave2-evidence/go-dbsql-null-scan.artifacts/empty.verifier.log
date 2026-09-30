@@ -1,0 +1,50 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="go-dbsql-null-scan" tests="6" failures="1" errors="0" skipped="0"><testcase name="bounded_function"><system-out>ok</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>959d644d78b37dea728edd2faf90b8c9367a69bc1e9def397a60c89a46c8b92e</system-out></testcase><testcase name="compilation"><system-out>0</system-out></testcase><testcase name="regression_tests"><system-out>ok</system-out></testcase><testcase name="hidden_behavior"><failure message="AssertionError: === RUN   TestHiddenNullPopulation&#10;    ridges_report_hidden_test.go:15: nullable population: got {Rows:2 Measured:2 Total:{Int64:-7 Valid:true}} err=&lt;nil&gt;&#10;--- FAIL: TestHiddenNullPopulation (0.06s)&#10;=== RUN   TestHiddenAbsentSum&#10;    ridges_report_hidden_test.go:30: absent sum a: got {Rows:0 Measured:0 Total:{Int64:0 Valid:true}} err=sql: Scan error on column index 2, name &quot;sum&quot;: converting NULL to int64 is unsupported&#10;--- FAIL: TestHiddenAbsentSum (0.06s)&#10;=== RUN   TestHiddenRangeAndWideSum&#10;--- PASS: TestHiddenRangeAndWideSum (0.08s)&#10;=== RUN   TestHiddenPropagatesDatabaseErrors&#10;--- PASS: TestHiddenPropagatesDatabaseErrors (0.06s)&#10;FAIL&#10;FAIL&#09;practice/internal/store&#09;0.269s&#10;FAIL&#10;">AssertionError: === RUN   TestHiddenNullPopulation
+    ridges_report_hidden_test.go:15: nullable population: got {Rows:2 Measured:2 Total:{Int64:-7 Valid:true}} err=&lt;nil&gt;
+--- FAIL: TestHiddenNullPopulation (0.06s)
+=== RUN   TestHiddenAbsentSum
+    ridges_report_hidden_test.go:30: absent sum a: got {Rows:0 Measured:0 Total:{Int64:0 Valid:true}} err=sql: Scan error on column index 2, name "sum": converting NULL to int64 is unsupported
+--- FAIL: TestHiddenAbsentSum (0.06s)
+=== RUN   TestHiddenRangeAndWideSum
+--- PASS: TestHiddenRangeAndWideSum (0.08s)
+=== RUN   TestHiddenPropagatesDatabaseErrors
+--- PASS: TestHiddenPropagatesDatabaseErrors (0.06s)
+FAIL
+FAIL	practice/internal/store	0.269s
+FAIL
+</failure><system-out>AssertionError: === RUN   TestHiddenNullPopulation
+    ridges_report_hidden_test.go:15: nullable population: got {Rows:2 Measured:2 Total:{Int64:-7 Valid:true}} err=&lt;nil&gt;
+--- FAIL: TestHiddenNullPopulation (0.06s)
+=== RUN   TestHiddenAbsentSum
+    ridges_report_hidden_test.go:30: absent sum a: got {Rows:0 Measured:0 Total:{Int64:0 Valid:true}} err=sql: Scan error on column index 2, name "sum": converting NULL to int64 is unsupported
+--- FAIL: TestHiddenAbsentSum (0.06s)
+=== RUN   TestHiddenRangeAndWideSum
+--- PASS: TestHiddenRangeAndWideSum (0.08s)
+=== RUN   TestHiddenPropagatesDatabaseErrors
+--- PASS: TestHiddenPropagatesDatabaseErrors (0.06s)
+FAIL
+FAIL	practice/internal/store	0.269s
+FAIL
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>959d644d78b37dea728edd2faf90b8c9367a69bc1e9def397a60c89a46c8b92e</system-out></testcase></testsuite>
+
+=== RUN   TestVisibleSummary
+--- PASS: TestVisibleSummary (0.07s)
+PASS
+ok  	practice/internal/store	0.080s
+{"found":1,"start":167,"end":668,"header":"func (s *Store) Summarize(ctx context.Context, tenant string, start, end int64) (Summary, error) ","doc":"Summarize returns all matching rows and their non-null measurement aggregate.\n","calls":{"QueryRowContext":1,"Scan":1},"idents":{"DB":1,"Int64":1,"Measured":1,"NullInt64":1,"QueryRowContext":1,"Rows":1,"Scan":1,"Summary":1,"Total":1,"Valid":1,"ctx":1,"end":1,"err":2,"int64":1,"out":5,"s":1,"sql":1,"start":1,"tenant":1,"total":3,"true":1},"loops":0,"go_stmts":0,"func_lits":0,"nodes":54,"string_lits":["`SELECT COUNT(value), COUNT(value), SUM(value) FROM readings WHERE tenant=$1 AND observed_at \u003e= $2 AND observed_at \u003c $3`"],"imports":"import (\n\t\"context\"\n\t\"database/sql\"\n)"}
+=== RUN   TestHiddenNullPopulation
+    ridges_report_hidden_test.go:15: nullable population: got {Rows:2 Measured:2 Total:{Int64:-7 Valid:true}} err=<nil>
+--- FAIL: TestHiddenNullPopulation (0.06s)
+=== RUN   TestHiddenAbsentSum
+    ridges_report_hidden_test.go:30: absent sum a: got {Rows:0 Measured:0 Total:{Int64:0 Valid:true}} err=sql: Scan error on column index 2, name "sum": converting NULL to int64 is unsupported
+--- FAIL: TestHiddenAbsentSum (0.06s)
+=== RUN   TestHiddenRangeAndWideSum
+--- PASS: TestHiddenRangeAndWideSum (0.08s)
+=== RUN   TestHiddenPropagatesDatabaseErrors
+--- PASS: TestHiddenPropagatesDatabaseErrors (0.06s)
+FAIL
+FAIL	practice/internal/store	0.269s
+FAIL
+{"found":1,"start":167,"end":668,"header":"func (s *Store) Summarize(ctx context.Context, tenant string, start, end int64) (Summary, error) ","doc":"Summarize returns all matching rows and their non-null measurement aggregate.\n","calls":{"QueryRowContext":1,"Scan":1},"idents":{"DB":1,"Int64":1,"Measured":1,"NullInt64":1,"QueryRowContext":1,"Rows":1,"Scan":1,"Summary":1,"Total":1,"Valid":1,"ctx":1,"end":1,"err":2,"int64":1,"out":5,"s":1,"sql":1,"start":1,"tenant":1,"total":3,"true":1},"loops":0,"go_stmts":0,"func_lits":0,"nodes":54,"string_lits":["`SELECT COUNT(value), COUNT(value), SUM(value) FROM readings WHERE tenant=$1 AND observed_at \u003e= $2 AND observed_at \u003c $3`"],"imports":"import (\n\t\"context\"\n\t\"database/sql\"\n)"}

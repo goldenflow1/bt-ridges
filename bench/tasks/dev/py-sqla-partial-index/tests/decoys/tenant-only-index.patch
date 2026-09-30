@@ -1,0 +1,14 @@
+diff --git a/migrations/ready_jobs.py b/migrations/ready_jobs.py
+--- a/migrations/ready_jobs.py
++++ b/migrations/ready_jobs.py
+@@ -8,8 +8,8 @@
+ 
+ 
+ def upgrade():
+-    op.create_index('ix_jobs_ready', 'jobs', ['tenant_id', 'created_at', 'id'],
+-                    postgresql_where=sa.text("status = 'waiting' AND deleted_at IS NULL"))
++    op.create_index('ix_jobs_ready', 'jobs', ['tenant_id'],
++                    postgresql_where=sa.text("status = 'ready' AND deleted_at IS NULL"))
+ 
+ 
+ def downgrade():

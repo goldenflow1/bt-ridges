@@ -1,0 +1,15 @@
+diff --git a/observatory/report.py b/observatory/report.py
+old mode 100644
+new mode 100755
+index c046469..3db8758
+--- a/observatory/report.py
++++ b/observatory/report.py
+@@ -3,7 +3,7 @@
+ 
+ def visitor_count(client, tenant, start, end):
+     """Count identified visitors in a half-open UTC interval."""
+-    return client.query('SELECT uniq(visitor) AS visitors FROM visits WHERE tenant = {tenant:String} AND happened >= {start:DateTime} AND happened < {end:DateTime}', {"tenant": tenant, "start": start, "end": end})
++    return client.query('SELECT uniqExact(visitor) AS visitors FROM visits WHERE tenant = {tenant:String} AND happened >= {start:DateTime} AND happened < {end:DateTime}', {"tenant": tenant, "start": start, "end": end})
+ 
+ 
+ def service_name():

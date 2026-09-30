@@ -1,0 +1,6 @@
+{
+  "expect_failing": [
+    "hidden: each category gets its own quota"
+  ],
+  "passes_visible": true
+}

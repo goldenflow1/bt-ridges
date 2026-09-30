@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-go-gorm-preload-env-postgres:latest
+  main:
+    image: rbv-go-gorm-preload-env-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/dev/go-gorm-preload/environment
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

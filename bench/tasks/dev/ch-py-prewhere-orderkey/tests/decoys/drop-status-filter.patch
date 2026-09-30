@@ -1,0 +1,11 @@
+--- a/observatory/report.py
++++ b/observatory/report.py
+@@ -3,7 +3,7 @@
+
+ def settled_total(client, tenant, start, end):
+     """Sum settled amounts for one tenant and half-open UTC interval."""
+-    return client.query("SELECT sum(amount) AS total FROM events WHERE cityHash64(tenant_id) = cityHash64({tenant:UInt32}) AND happened >= {start:DateTime} AND happened < {end:DateTime} AND status = 'settled' SETTINGS max_threads = 1, use_query_cache = 0", {"tenant": tenant, "start": start, "end": end})
++    return client.query('SELECT sum(amount) AS total FROM events WHERE tenant_id = {tenant:UInt32} AND happened >= {start:DateTime} AND happened < {end:DateTime} SETTINGS max_threads = 1, use_query_cache = 0', {"tenant": tenant, "start": start, "end": end})
+
+
+ def service_name():

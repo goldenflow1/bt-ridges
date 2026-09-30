@@ -1,0 +1,10 @@
+--- a/src/reports.ts
++++ b/src/reports.ts
+@@ -5,6 +5,6 @@
+ 
+ /** Return lifetime running balances for visible movements, in chronological ID order. */
+ export async function runningBalances(tenant: string, start: number, end: number): Promise<LedgerRow[]> {
+-  const result = await db.raw(`SELECT id, account, amount::text, SUM(amount) OVER (PARTITION BY account ORDER BY occurred_at)::text AS total FROM movements WHERE tenant = ? AND occurred_at >= ? AND occurred_at < ? ORDER BY occurred_at, id`, [tenant, start, end]);
++  const result = await db.raw(`SELECT id, account, amount::text, total::text FROM (SELECT id, account, amount, occurred_at, SUM(amount) OVER (PARTITION BY account ORDER BY occurred_at) AS total FROM movements WHERE tenant = ? AND occurred_at < ?) ledger WHERE occurred_at >= ? ORDER BY occurred_at, id`, [tenant, end, start]);
+   return result.rows;
+ }

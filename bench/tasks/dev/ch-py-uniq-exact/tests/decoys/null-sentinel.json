@@ -1,0 +1,7 @@
+{
+  "expect_failing": [
+    "test_null_is_not_a_visitor"
+  ],
+  "category": "assertion",
+  "passes_visible": true
+}

@@ -1,0 +1,99 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-django-not-in-null" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_private.py::test_null_block_is_not_a_global_ban PASSED        [ 25%]&#10;tests/test_private.py::test_indefinite_blocks_and_expiration_boundary PASSED [ 50%]&#10;tests/test_private.py::test_cross_tenant_blocks_do_not_apply FAILED      [ 75%]&#10;tests/test_private.py::test_duplicates_and_single_query PASSED           [100%]&#10;&#10;=================================== FAILURES ===================================&#10;____________________ test_cross_tenant_blocks_do_not_apply _____________________&#10;&#10;conn = &lt;django.db.backends.utils.CursorWrapper object at 0x7e9662127e90&gt;&#10;&#10;    def test_cross_tenant_blocks_do_not_apply(conn):&#10;        conn.execute(&quot;INSERT INTO customers VALUES (1, 10, 'A'), (2, 20, 'B')&quot;)&#10;        conn.execute(&quot;INSERT INTO bloc">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_null_block_is_not_a_global_ban PASSED        [ 25%]
+tests/test_private.py::test_indefinite_blocks_and_expiration_boundary PASSED [ 50%]
+tests/test_private.py::test_cross_tenant_blocks_do_not_apply FAILED      [ 75%]
+tests/test_private.py::test_duplicates_and_single_query PASSED           [100%]
+
+=================================== FAILURES ===================================
+____________________ test_cross_tenant_blocks_do_not_apply _____________________
+
+conn = &lt;django.db.backends.utils.CursorWrapper object at 0x7e9662127e90&gt;
+
+    def test_cross_tenant_blocks_do_not_apply(conn):
+        conn.execute("INSERT INTO customers VALUES (1, 10, 'A'), (2, 20, 'B')")
+        conn.execute("INSERT INTO blocks VALUES (1, 1, 20, true, '2026-02-01')")
+&gt;       assert eligible_customers(10, NOW) == [1]
+E       assert [] == [1]
+E         
+E         Right contains one more item: 1
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     1,
+E         - ]
+
+tests/test_private.py:25: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_null_block_is_not_a_global_ban
+PASSED tests/test_private.py::test_indefinite_blocks_and_expiration_boundary
+PASSED tests/test_private.py::test_duplicates_and_single_query
+FAILED tests/test_private.py::test_cross_tenant_blocks_do_not_apply - assert ...
+========================= 1 failed, 3 passed in 0.54s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_null_block_is_not_a_global_ban PASSED        [ 25%]
+tests/test_private.py::test_indefinite_blocks_and_expiration_boundary PASSED [ 50%]
+tests/test_private.py::test_cross_tenant_blocks_do_not_apply FAILED      [ 75%]
+tests/test_private.py::test_duplicates_and_single_query PASSED           [100%]
+
+=================================== FAILURES ===================================
+____________________ test_cross_tenant_blocks_do_not_apply _____________________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x7e9662127e90>
+
+    def test_cross_tenant_blocks_do_not_apply(conn):
+        conn.execute("INSERT INTO customers VALUES (1, 10, 'A'), (2, 20, 'B')")
+        conn.execute("INSERT INTO blocks VALUES (1, 1, 20, true, '2026-02-01')")
+>       assert eligible_customers(10, NOW) == [1]
+E       assert [] == [1]
+E         
+E         Right contains one more item: 1
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     1,
+E         - ]
+
+tests/test_private.py:25: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_null_block_is_not_a_global_ban
+PASSED tests/test_private.py::test_indefinite_blocks_and_expiration_boundary
+PASSED tests/test_private.py::test_duplicates_and_single_query
+FAILED tests/test_private.py::test_cross_tenant_blocks_do_not_apply - assert ...
+========================= 1 failed, 3 passed in 0.54s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_sample PASSED                                [ 50%]
+tests/test_visible.py::test_empty PASSED                                 [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_sample
+PASSED tests/test_visible.py::test_empty
+============================== 2 passed in 0.18s ===============================

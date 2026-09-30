@@ -1,0 +1,6 @@
+{
+  "expect_failing": [
+    "TestHiddenCompleteGraph"
+  ],
+  "passes_visible": true
+}

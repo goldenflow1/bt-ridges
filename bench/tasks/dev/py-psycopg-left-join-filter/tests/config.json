@@ -1,0 +1,8 @@
+{
+  "task": "py-psycopg-left-join-filter",
+  "allowed": [
+    "app/api.py",
+    "app/queries.py"
+  ],
+  "bounded": {}
+}

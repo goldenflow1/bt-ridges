@@ -1,0 +1,5 @@
+{
+  "task": "py-sqla-latest-per-customer",
+  "source_digest": "task-tree-v1:fe19fdcbbeb74052bc03b68d898422530b8d38bbaf6e764829cb331740455baf",
+  "captured": "during image build; author reports source frozen before launch"
+}

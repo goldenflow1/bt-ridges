@@ -1,0 +1,21 @@
+diff --git a/README.md b/README.md
+index a3363f7..4a5ac68 100644
+--- a/README.md
++++ b/README.md
+@@ -3,3 +3,4 @@
+ Implement exact per-account lifetime running balances with tied timestamps and a display interval.
+ 
+ Visible tests reset a disposable task test database. Verification runs in a fresh, separate environment and database.
++
+diff --git a/src/reports.ts b/src/reports.ts
+index c486bd3..e46adbf 100644
+--- a/src/reports.ts
++++ b/src/reports.ts
+@@ -5,6 +5,6 @@ export interface LedgerRow { id: number; account: string; amount: string; total:
+ 
+ /** Return lifetime running balances for visible movements, in chronological ID order. */
+ export async function runningBalances(tenant: string, start: number, end: number): Promise<LedgerRow[]> {
+-  const result = await db.raw(`SELECT id, account, amount::text, SUM(amount) OVER (PARTITION BY account ORDER BY occurred_at)::text AS total FROM movements WHERE tenant = ? AND occurred_at >= ? AND occurred_at < ? ORDER BY occurred_at, id`, [tenant, start, end]);
++  const result = await db.raw(`SELECT id, account, amount::text, total::text FROM (SELECT id, account, amount, occurred_at, SUM(amount) OVER (PARTITION BY account ORDER BY occurred_at, id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS total FROM movements WHERE tenant = ? AND occurred_at < ?) ledger WHERE occurred_at >= ? ORDER BY occurred_at, id`, [tenant, end, start]);
+   return result.rows;
+ }

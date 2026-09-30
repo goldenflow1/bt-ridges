@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-go-dbsql-null-scan-ver-postgres:latest
+  main:
+    image: rbv-go-dbsql-null-scan-ver-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/dev/go-dbsql-null-scan/tests
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

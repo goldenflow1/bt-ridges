@@ -1,0 +1,51 @@
+== validating py-sqla-latest-per-customer (logs: /tmp/validate-py-sqla-latest-per-customer-cvyc27jx)
+-- building environment
+-- building verifier
+  [PASS] B-VALID-11 miner runtime prerequisites in the task image: expected=python3 + baseline packages got=ok 
+  [PASS] B-VALID-04 named checks pass on unmodified repo: expected=exit 0, clean tree got=exit 0 
+  [PASS] B-VALID-01 empty patch: expected=0 got=0 failed=['hidden_behaviour']
+  [FAIL] B-VALID-08 empty patch fails by assertion: expected=assertions, no errors got=no assertion failures=2 errors=['test_one_statement_on_many_customers'] missing=[]
+  [FAIL] B-VALID-02 solution patch: expected=1 got=0 failed=['hidden_behaviour'] tail='==========================\nAll checks passed!\n============================= test session starts ==============================\nplatform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12\nrootdir: /app\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1\ncollecting ... collected 2 items\n\ntests/test_visible.py::test_sample PASSED                                [ 50%]\ntests/test_visible.py::test_empty PASSED                                 [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_visible.py::test_sample\nPASSED tests/test_visible.py::test_empty\n============================== 2 passed in 0.24s ===============================\n'
+  [PASS] B-VALID-03 decoy id-is-time.patch: expected=0 (semantic) got=0 failed=['hidden_behaviour']
+  [PASS] B-VALID-08 decoy id-is-time.patch fails its declared test: expected=test_id_is_not_chronology got=ok assertion failures=2 errors=[] missing=[] visible_failed=[]
+  [PASS] B-VALID-03 decoy smallest-id-tie.patch: expected=0 (semantic) got=0 failed=['hidden_behaviour']
+  [FAIL] B-VALID-08 decoy smallest-id-tie.patch fails its declared test: expected=test_timestamp_ties_choose_largest_id got=no assertion failures=2 errors=['test_one_statement_on_many_customers'] missing=[] visible_failed=[]
+  [PASS] B-VALID-03 decoy truncated-timestamp.patch: expected=0 (semantic) got=0 failed=['hidden_behaviour']
+  [FAIL] B-VALID-08 decoy truncated-timestamp.patch fails its declared test: expected=test_timestamp_projection_preserves_exact_instant got=no assertion failures=1 errors=['test_one_statement_on_many_customers'] missing=[] visible_failed=[]
+  [PASS] B-VALID-05 solution + new file: expected=0 (applied) got=0 failed=['source_tree_conservation_before', 'hidden_behaviour', 'source_tree_conservation_after']
+  [FAIL] B-VALID-09 solution + new file: only scope checks reject it: expected=scope/conservation only got=no failed=['source_tree_conservation_before', 'hidden_behaviour', 'source_tree_conservation_after']
+  [PASS] B-VALID-05 solution + edit to other file: expected=0 (applied) got=0 failed=['source_tree_conservation_before', 'hidden_behaviour', 'source_tree_conservation_after']
+  [FAIL] B-VALID-09 solution + edit to other file: only scope checks reject it: expected=scope/conservation only got=no failed=['source_tree_conservation_before', 'hidden_behaviour', 'source_tree_conservation_after']
+  [PASS] B-VALID-05 solution + mode change on allowed file: expected=0 (applied) got=0 failed=['source_tree_conservation_before', 'hidden_behaviour', 'source_tree_conservation_after']
+  [FAIL] B-VALID-09 solution + mode change on allowed file: only scope checks reject it: expected=scope/conservation only got=no failed=['source_tree_conservation_before', 'hidden_behaviour', 'source_tree_conservation_after']
+  [FAIL] B-VALID-06 named checks + grading ran without network egress: expected=B-02 and B-04 pass offline got=no 
+
+Task: py-sqla-latest-per-customer
+------------+---------------------------------------------------------------------+---------------------------------------------------+--------+--------
+ ID         | Check                                                               | Expected                                          | Got    | Result 
+------------+---------------------------------------------------------------------+---------------------------------------------------+--------+--------
+ B-VALID-11 | miner runtime prerequisites in the task image                       | python3 + baseline packages                       | ok     | PASS   
+ B-VALID-04 | named checks pass on unmodified repo                                | exit 0, clean tree                                | exit 0 | PASS   
+ B-VALID-01 | empty patch                                                         | 0                                                 | 0      | PASS   
+ B-VALID-08 | empty patch fails by assertion                                      | assertions, no errors                             | no     | FAIL   
+ B-VALID-02 | solution patch                                                      | 1                                                 | 0      | FAIL   
+ B-VALID-03 | decoy id-is-time.patch                                              | 0 (semantic)                                      | 0      | PASS   
+ B-VALID-08 | decoy id-is-time.patch fails its declared test                      | test_id_is_not_chronology                         | ok     | PASS   
+ B-VALID-03 | decoy smallest-id-tie.patch                                         | 0 (semantic)                                      | 0      | PASS   
+ B-VALID-08 | decoy smallest-id-tie.patch fails its declared test                 | test_timestamp_ties_choose_largest_id             | no     | FAIL   
+ B-VALID-03 | decoy truncated-timestamp.patch                                     | 0 (semantic)                                      | 0      | PASS   
+ B-VALID-08 | decoy truncated-timestamp.patch fails its declared test             | test_timestamp_projection_preserves_exact_instant | no     | FAIL   
+ B-VALID-05 | solution + new file                                                 | 0 (applied)                                       | 0      | PASS   
+ B-VALID-09 | solution + new file: only scope checks reject it                    | scope/conservation only                           | no     | FAIL   
+ B-VALID-05 | solution + edit to other file                                       | 0 (applied)                                       | 0      | PASS   
+ B-VALID-09 | solution + edit to other file: only scope checks reject it          | scope/conservation only                           | no     | FAIL   
+ B-VALID-05 | solution + mode change on allowed file                              | 0 (applied)                                       | 0      | PASS   
+ B-VALID-09 | solution + mode change on allowed file: only scope checks reject it | scope/conservation only                           | no     | FAIL   
+ B-VALID-06 | named checks + grading ran without network egress                   | B-02 and B-04 pass offline                        | no     | FAIL   
+------------+---------------------------------------------------------------------+---------------------------------------------------+--------+--------
+environment build: 343s
+verifier build: 5s
+environment phase: 24s
+verifier runs: 229s
+RESULT: FAIL (10/18 checks)
+logs: /tmp/validate-py-sqla-latest-per-customer-cvyc27jx

@@ -1,0 +1,6 @@
+{
+  "expect_failing": [
+    "TestHiddenAbsentSum"
+  ],
+  "passes_visible": true
+}

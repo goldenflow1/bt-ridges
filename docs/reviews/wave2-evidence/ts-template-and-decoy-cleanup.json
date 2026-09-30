@@ -1,0 +1,40 @@
+{
+  "reason": "Remove inert Prisma/PostgreSQL template settings; repair malformed global-limit decoy so rejection is behavioral. Initial validation logs retained.",
+  "files": [
+    {
+      "path": "bench/tasks/dev/ts-knex-window-frame/environment/Dockerfile",
+      "before_sha256": "6b2bd503da4de5bc8de997357169d77e9e4e1ccd8eebb4b449d9111b3f0a31cb",
+      "after_sha256": "43cca5909d1caa285dba89e5f8686ee95daa1de150267332b1b9b7fc52c541f6"
+    },
+    {
+      "path": "bench/tasks/dev/ts-knex-window-frame/tests/Dockerfile",
+      "before_sha256": "db0e1749d8967fff6d1c2d7d40caa040d484955c65d84e9061027ed13f0f523b",
+      "after_sha256": "99900c85ac1a53844477b07632890eb6d937b1f549281d119311c4d12cd01a1b"
+    },
+    {
+      "path": "bench/tasks/dev/ts-knex-window-frame/tests/verify.py",
+      "before_sha256": "b680e9d7667064a1188258909e68e0f82735733f60334206f9c27674a22608b6",
+      "after_sha256": "62c41ff3ec6cf4e9a869278deaff40d60bfc42ce885da0d0c8cd2f863b2320ee"
+    },
+    {
+      "path": "bench/tasks/dev/ts-ch-client-limit-by/environment/Dockerfile",
+      "before_sha256": "e17594fadfab168a851a6c9d488a6107e1c7480142f13ae5eee1ccb9b720b148",
+      "after_sha256": "a8561f1bdcfe619bf2d68254985db1d80a9255b252ca0e801bda06f059c633c9"
+    },
+    {
+      "path": "bench/tasks/dev/ts-ch-client-limit-by/tests/Dockerfile",
+      "before_sha256": "e71363efa6a2cd7643ad7cdc38d024c3cc52ca75c3fdb6add5b2dabfe96848ff",
+      "after_sha256": "0344712cd2f37e415dfd047c06f638659e5fb21894b1e310729ba1b9311f87f5"
+    },
+    {
+      "path": "bench/tasks/dev/ts-ch-client-limit-by/tests/verify.py",
+      "before_sha256": "96d4749162bb53805739b6f706e62be0683aaac041d7846a185dcb105f582488",
+      "after_sha256": "392ba106488334257cba04a01bb2448138a2029018f321350bf47ade5a12c82e"
+    },
+    {
+      "path": "bench/tasks/dev/ts-ch-client-limit-by/tests/decoys/global-limit.patch",
+      "before_sha256": "f7d194b360698f887f26461325ce6d645be887a81c319d8279a74e5ab1a883ac",
+      "after_sha256": "d7a3d97cc4083cc274406a3acf398ce1c9c0ae789a1029b609f42ba81978f415"
+    }
+  ]
+}

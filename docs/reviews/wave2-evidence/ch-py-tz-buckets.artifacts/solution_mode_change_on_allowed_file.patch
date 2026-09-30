@@ -1,0 +1,15 @@
+diff --git a/observatory/report.py b/observatory/report.py
+old mode 100644
+new mode 100755
+index 5eba624..3e8fde5
+--- a/observatory/report.py
++++ b/observatory/report.py
+@@ -3,7 +3,7 @@
+ 
+ def daily_events(client, tenant, start_day, end_day, zone):
+     """Count events on local calendar days, including empty days."""
+-    return []
++    return client.query("WITH toDate({start:String}) AS first, toDate({end:String}) AS stop SELECT toString(days.day) AS day, ifNull(totals.events, 0) AS events FROM (SELECT addDays(first, number) AS day FROM numbers(toUInt64(greatest(dateDiff('day', first, stop), 0)))) days LEFT JOIN (SELECT toDate(happened, {zone:String}) AS day, count() AS events FROM events WHERE tenant = {tenant:String} AND happened >= toDateTime(first, {zone:String}) AND happened < toDateTime(stop, {zone:String}) GROUP BY day) totals ON days.day = totals.day ORDER BY days.day", {"tenant": tenant, "start": start_day, "end": end_day, "zone": zone})
+ 
+ 
+ def service_name():

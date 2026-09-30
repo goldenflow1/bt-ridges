@@ -1,0 +1,17 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="go-gorm-preload" tests="6" failures="2" errors="0" skipped="0"><testcase name="bounded_function"><system-out>ok</system-out></testcase><testcase name="source_tree_conservation_before_tests"><failure message="AssertionError: editable source mode changed">AssertionError: editable source mode changed</failure><system-out>AssertionError: editable source mode changed</system-out></testcase><testcase name="compilation"><system-out>0</system-out></testcase><testcase name="regression_tests"><system-out>ok</system-out></testcase><testcase name="hidden_behavior"><system-out>ok</system-out></testcase><testcase name="source_tree_conservation_after_tests"><failure message="AssertionError: editable source mode changed">AssertionError: editable source mode changed</failure><system-out>AssertionError: editable source mode changed</system-out></testcase></testsuite>
+
+=== RUN   TestVisibleCustomers
+--- PASS: TestVisibleCustomers (0.11s)
+PASS
+ok  	practice/internal/store	0.132s
+{"public":{"*Store.Customers":"func(ctx context.Context, tenant string) ([]Customer, error)","Customer":"Customer struct {\n\tID\tint64\t`gorm:\"primaryKey\"`\n\tTenant\tstring\n\tName\tstring\n\tOrders\t[]Order\n}","Item":"Item struct {\n\tID\tint64\t`gorm:\"primaryKey\"`\n\tOrderID\tint64\n\tSKU\tstring\n}","Order":"Order struct {\n\tID\t\tint64\t`gorm:\"primaryKey\"`\n\tCustomerID\tint64\n\tCancelled\tbool\n\tItems\t\t[]Item\n}","Store":"Store struct{ DB *gorm.DB }"},"forbidden":null,"found":1,"start":394,"end":1062,"header":"func (s *Store) Customers(ctx context.Context, tenant string) ([]Customer, error) ","doc":"","calls":{"Find":3,"Order":3,"Where":3,"WithContext":1},"idents":{"Customer":1,"DB":1,"Error":3,"Find":3,"ID":2,"Items":1,"Order":3,"Orders":4,"Where":3,"WithContext":1,"ctx":1,"customers":9,"db":4,"err":9,"i":6,"j":3,"nil":7,"s":1,"tenant":1},"loops":2,"go_stmts":0,"func_lits":0,"nodes":136,"string_lits":["\"tenant = ?\"","\"id\"","\"customer_id = ? AND cancelled = false\"","\"id\"","\"order_id = ?\"","\"id\""],"imports":"import (\n\t\"context\"\n\t\"gorm.io/gorm\"\n)"}
+{"public":{"*Store.Customers":"func(ctx context.Context, tenant string) ([]Customer, error)","Customer":"Customer struct {\n\tID\tint64\t`gorm:\"primaryKey\"`\n\tTenant\tstring\n\tName\tstring\n\tOrders\t[]Order\n}","Item":"Item struct {\n\tID\tint64\t`gorm:\"primaryKey\"`\n\tOrderID\tint64\n\tSKU\tstring\n}","Order":"Order struct {\n\tID\t\tint64\t`gorm:\"primaryKey\"`\n\tCustomerID\tint64\n\tCancelled\tbool\n\tItems\t\t[]Item\n}","Store":"Store struct{ DB *gorm.DB }"},"forbidden":null,"found":1,"start":394,"end":804,"header":"func (s *Store) Customers(ctx context.Context, tenant string) ([]Customer, error) ","doc":"","calls":{"Find":1,"Order":3,"Preload":2,"Where":2,"WithContext":1},"idents":{"Customer":1,"DB":5,"Error":1,"Find":1,"Order":3,"Preload":2,"Where":2,"WithContext":1,"ctx":1,"customers":3,"db":2,"err":2,"gorm":4,"q":4,"s":1,"tenant":1},"loops":0,"go_stmts":0,"func_lits":2,"nodes":94,"string_lits":["\"tenant = ?\"","\"id\"","\"Orders\"","\"cancelled = false\"","\"id\"","\"Orders.Items\"","\"id\""],"imports":"import (\n\t\"context\"\n\t\"gorm.io/gorm\"\n)"}
+=== RUN   TestHiddenBoundedQueries
+--- PASS: TestHiddenBoundedQueries (1.11s)
+=== RUN   TestHiddenCompleteGraph
+--- PASS: TestHiddenCompleteGraph (0.15s)
+PASS
+ok  	practice/internal/store	1.273s

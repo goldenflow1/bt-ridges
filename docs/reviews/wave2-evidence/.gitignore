@@ -1,0 +1,2 @@
+# Preserve calibration logs referenced by the review and final-results records.
+!*.log

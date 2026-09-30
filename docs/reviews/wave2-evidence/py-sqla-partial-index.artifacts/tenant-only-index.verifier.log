@@ -1,0 +1,105 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-sqla-partial-index" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 2 items&#10;&#10;tests/test_private.py::test_partial_index_used_and_work_bounded FAILED   [ 50%]&#10;tests/test_private.py::test_upgrade_downgrade_conserve_schema_and_results PASSED [100%]&#10;&#10;=================================== FAILURES ===================================&#10;___________________ test_partial_index_used_and_work_bounded ___________________&#10;&#10;conn = &lt;sqlalchemy.engine.base.Connection object at 0x76294adb17c0&gt;&#10;migration = &lt;conftest.migration.&lt;locals&gt;.Runner object at 0x76294a58ff20&gt;&#10;&#10;    def test_partial_index_used_and_work_bounded(conn, migration):&#10;        seed(conn)&#10;        tenants = (7, 41, 83)&#10;        expected = {tenant: next_jobs(conn, tenant) for tenant in tenants}&#10;        before = {tenant: plan(conn, tenant) for tenant in tenants}">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_private.py::test_partial_index_used_and_work_bounded FAILED   [ 50%]
+tests/test_private.py::test_upgrade_downgrade_conserve_schema_and_results PASSED [100%]
+
+=================================== FAILURES ===================================
+___________________ test_partial_index_used_and_work_bounded ___________________
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x76294adb17c0&gt;
+migration = &lt;conftest.migration.&lt;locals&gt;.Runner object at 0x76294a58ff20&gt;
+
+    def test_partial_index_used_and_work_bounded(conn, migration):
+        seed(conn)
+        tenants = (7, 41, 83)
+        expected = {tenant: next_jobs(conn, tenant) for tenant in tenants}
+        before = {tenant: plan(conn, tenant) for tenant in tenants}
+        migration.upgrade()
+        predicate = conn.exec_driver_sql("SELECT pg_get_expr(indpred, indrelid) FROM pg_index WHERE indexrelid = 'ix_jobs_ready'::regclass").scalar()
+        assert predicate is not None, 'index must be partial'
+        assert conn.exec_driver_sql("SELECT count(*) FROM jobs WHERE (" + predicate + ") AND (status != 'ready' OR deleted_at IS NOT NULL)").scalar() == 0
+        for tenant in tenants:
+            after = plan(conn, tenant)
+            assert next_jobs(conn, tenant) == expected[tenant]
+            assert any(node.get('Index Name') == 'ix_jobs_ready' for node in nodes(after)), after
+            before_blocks = before[tenant].get('Shared Hit Blocks', 0) + before[tenant].get('Shared Read Blocks', 0)
+            after_blocks = after.get('Shared Hit Blocks', 0) + after.get('Shared Read Blocks', 0)
+            assert before_blocks &gt;= 500, before[tenant]
+&gt;           assert after_blocks &lt;= 80 and after_blocks * 10 &lt;= before_blocks, (tenant, before_blocks, after_blocks, after)
+E           AssertionError: (7, 4167, 1004, {'Actual Loops': 1, 'Actual Rows': 25, 'Actual Startup Time': 6.911, 'Actual Total Time': 6.933, ...})
+E           assert (1004 &lt;= 80)
+
+tests/test_private.py:36: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_upgrade_downgrade_conserve_schema_and_results
+FAILED tests/test_private.py::test_partial_index_used_and_work_bounded - Asse...
+========================= 1 failed, 1 passed in 5.15s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_private.py::test_partial_index_used_and_work_bounded FAILED   [ 50%]
+tests/test_private.py::test_upgrade_downgrade_conserve_schema_and_results PASSED [100%]
+
+=================================== FAILURES ===================================
+___________________ test_partial_index_used_and_work_bounded ___________________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x76294adb17c0>
+migration = <conftest.migration.<locals>.Runner object at 0x76294a58ff20>
+
+    def test_partial_index_used_and_work_bounded(conn, migration):
+        seed(conn)
+        tenants = (7, 41, 83)
+        expected = {tenant: next_jobs(conn, tenant) for tenant in tenants}
+        before = {tenant: plan(conn, tenant) for tenant in tenants}
+        migration.upgrade()
+        predicate = conn.exec_driver_sql("SELECT pg_get_expr(indpred, indrelid) FROM pg_index WHERE indexrelid = 'ix_jobs_ready'::regclass").scalar()
+        assert predicate is not None, 'index must be partial'
+        assert conn.exec_driver_sql("SELECT count(*) FROM jobs WHERE (" + predicate + ") AND (status != 'ready' OR deleted_at IS NOT NULL)").scalar() == 0
+        for tenant in tenants:
+            after = plan(conn, tenant)
+            assert next_jobs(conn, tenant) == expected[tenant]
+            assert any(node.get('Index Name') == 'ix_jobs_ready' for node in nodes(after)), after
+            before_blocks = before[tenant].get('Shared Hit Blocks', 0) + before[tenant].get('Shared Read Blocks', 0)
+            after_blocks = after.get('Shared Hit Blocks', 0) + after.get('Shared Read Blocks', 0)
+            assert before_blocks >= 500, before[tenant]
+>           assert after_blocks <= 80 and after_blocks * 10 <= before_blocks, (tenant, before_blocks, after_blocks, after)
+E           AssertionError: (7, 4167, 1004, {'Actual Loops': 1, 'Actual Rows': 25, 'Actual Startup Time': 6.911, 'Actual Total Time': 6.933, ...})
+E           assert (1004 <= 80)
+
+tests/test_private.py:36: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_upgrade_downgrade_conserve_schema_and_results
+FAILED tests/test_private.py::test_partial_index_used_and_work_bounded - Asse...
+========================= 1 failed, 1 passed in 5.15s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_sample PASSED                                [ 50%]
+tests/test_visible.py::test_upgrade_and_downgrade PASSED                 [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_sample
+PASSED tests/test_visible.py::test_upgrade_and_downgrade
+============================== 2 passed in 0.54s ===============================

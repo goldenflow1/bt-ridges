@@ -1,0 +1,12 @@
+{
+  "name": "ts-ch-client-limit-by",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "tsx": "4.19.1",
+    "typescript": "5.6.3",
+    "@types/node": "22.7.4",
+    "@clickhouse/client": "1.8.0"
+  }
+}

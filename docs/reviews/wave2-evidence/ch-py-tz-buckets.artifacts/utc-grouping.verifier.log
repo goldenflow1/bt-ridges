@@ -1,0 +1,248 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-tz-buckets" tests="11" failures="1" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>68fa69d9565c08998a59cd3990216b6e499ccd01b43ed825a38d7bb6525a4aaa</system-out></testcase><testcase name="bounded_daily_events_function"><system-out>{"function_sha256": "cf9c2482d9c84e217d85c53df7754df74dd391be06f9856e115642a02374b25d"}</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>7fb9e7a2f40d6d6958db886d7c3f6a7c968fc8f1347f8db339d78e2c01d62b73</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "f2c0bdcff3e4e523bc3428e2a88e127c0be168da5f3c96203d967e234f6df5ad", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><failure message="AssertionError: test command failed (1); tail============================== test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 5 items&#10;&#10;tests/test_ridges_report.py::test_empty_days_are_materialized PASSED     [ 20%]&#10;tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open FAILED [ 40%]&#10;tests/test_ridges_report.py::test_fall_back_day_includes_last_hour FAILED [ 60%]&#10;tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day FAILED [ 80%]&#10;tests/test_ridges_report.py::test_no_events_and_reverse_range PASSED     [100%]&#10;&#10;=================================== FAILURES ===================================&#10;_________________ test_spring_forward_local_days_and_half_open _________________&#10;&#10;ch = &lt;observatory.chclient.ClickHouse object at 0x75682e740920&gt;&#10;&#10;    def test_spring_forward_local_days_and_">AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized PASSED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open FAILED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour FAILED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day FAILED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range PASSED     [100%]
+
+=================================== FAILURES ===================================
+_________________ test_spring_forward_local_days_and_half_open _________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x75682e740920&gt;
+
+    def test_spring_forward_local_days_and_half_open(ch):
+        add(ch, 't', ['2026-03-08 04:59:59.999', '2026-03-08 05:00:00.000', '2026-03-09 03:59:59.999', '2026-03-09 04:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-03-08', '2026-03-09', 'America/New_York') == [{'day':'2026-03-08','events':2}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 2}]
+E         
+E         At index 0 diff: {'day': '2026-03-08', 'events': 1} != {'day': '2026-03-08', 'events': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2026-03-08',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:31: AssertionError
+____________________ test_fall_back_day_includes_last_hour _____________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x75682e740920&gt;
+
+    def test_fall_back_day_includes_last_hour(ch):
+        add(ch, 't', ['2026-11-01 04:00:00.000', '2026-11-01 05:30:00.000', '2026-11-01 06:30:00.000', '2026-11-02 04:59:59.999', '2026-11-02 05:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-11-01', '2026-11-02', 'America/New_York') == [{'day':'2026-11-01','events':4}]
+E       AssertionError: assert [{'day': '202... 'events': 3}] == [{'day': '202... 'events': 4}]
+E         
+E         At index 0 diff: {'day': '2026-11-01', 'events': 3} != {'day': '2026-11-01', 'events': 4}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2026-11-01',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:35: AssertionError
+__________________ test_fractional_offset_tenant_and_leap_day __________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x75682e740920&gt;
+
+    def test_fractional_offset_tenant_and_leap_day(ch):
+        add(ch, "owner's", ['2024-02-28 18:14:59.999', '2024-02-28 18:15:00.000', '2024-02-29 18:14:59.999', '2024-02-29 18:15:00.000'])
+        add(ch, 'other', ['2024-02-29 10:00:00.000'])
+&gt;       assert daily_events(ch, "owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu') == [{'day':'2024-02-29','events':2}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 2}]
+E         
+E         At index 0 diff: {'day': '2024-02-29', 'events': 1} != {'day': '2024-02-29', 'events': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2024-02-29',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open
+FAILED tests/test_ridges_report.py::test_fall_back_day_includes_last_hour - A...
+FAILED tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day
+========================= 3 failed, 2 passed in 0.67s ==========================
+</failure><system-out>AssertionError: test command failed (1); tail============================== test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized PASSED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open FAILED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour FAILED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day FAILED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range PASSED     [100%]
+
+=================================== FAILURES ===================================
+_________________ test_spring_forward_local_days_and_half_open _________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x75682e740920&gt;
+
+    def test_spring_forward_local_days_and_half_open(ch):
+        add(ch, 't', ['2026-03-08 04:59:59.999', '2026-03-08 05:00:00.000', '2026-03-09 03:59:59.999', '2026-03-09 04:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-03-08', '2026-03-09', 'America/New_York') == [{'day':'2026-03-08','events':2}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 2}]
+E         
+E         At index 0 diff: {'day': '2026-03-08', 'events': 1} != {'day': '2026-03-08', 'events': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2026-03-08',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:31: AssertionError
+____________________ test_fall_back_day_includes_last_hour _____________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x75682e740920&gt;
+
+    def test_fall_back_day_includes_last_hour(ch):
+        add(ch, 't', ['2026-11-01 04:00:00.000', '2026-11-01 05:30:00.000', '2026-11-01 06:30:00.000', '2026-11-02 04:59:59.999', '2026-11-02 05:00:00.000'])
+&gt;       assert daily_events(ch, 't', '2026-11-01', '2026-11-02', 'America/New_York') == [{'day':'2026-11-01','events':4}]
+E       AssertionError: assert [{'day': '202... 'events': 3}] == [{'day': '202... 'events': 4}]
+E         
+E         At index 0 diff: {'day': '2026-11-01', 'events': 3} != {'day': '2026-11-01', 'events': 4}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2026-11-01',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:35: AssertionError
+__________________ test_fractional_offset_tenant_and_leap_day __________________
+
+ch = &lt;observatory.chclient.ClickHouse object at 0x75682e740920&gt;
+
+    def test_fractional_offset_tenant_and_leap_day(ch):
+        add(ch, "owner's", ['2024-02-28 18:14:59.999', '2024-02-28 18:15:00.000', '2024-02-29 18:14:59.999', '2024-02-29 18:15:00.000'])
+        add(ch, 'other', ['2024-02-29 10:00:00.000'])
+&gt;       assert daily_events(ch, "owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu') == [{'day':'2024-02-29','events':2}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 2}]
+E         
+E         At index 0 diff: {'day': '2024-02-29', 'events': 1} != {'day': '2024-02-29', 'events': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2024-02-29',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open
+FAILED tests/test_ridges_report.py::test_fall_back_day_includes_last_hour - A...
+FAILED tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day
+========================= 3 failed, 2 passed in 0.67s ==========================
+</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>7fb9e7a2f40d6d6958db886d7c3f6a7c968fc8f1347f8db339d78e2c01d62b73</system-out></testcase><testcase name="database_schema_conservation"><system-out>de6c48543aac5876f690d924f6a2d972ed12e0a283b1512781ef99e1d3a254f0</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized PASSED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open FAILED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour FAILED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day FAILED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range PASSED     [100%]
+
+=================================== FAILURES ===================================
+_________________ test_spring_forward_local_days_and_half_open _________________
+
+ch = <observatory.chclient.ClickHouse object at 0x75682e740920>
+
+    def test_spring_forward_local_days_and_half_open(ch):
+        add(ch, 't', ['2026-03-08 04:59:59.999', '2026-03-08 05:00:00.000', '2026-03-09 03:59:59.999', '2026-03-09 04:00:00.000'])
+>       assert daily_events(ch, 't', '2026-03-08', '2026-03-09', 'America/New_York') == [{'day':'2026-03-08','events':2}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 2}]
+E         
+E         At index 0 diff: {'day': '2026-03-08', 'events': 1} != {'day': '2026-03-08', 'events': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2026-03-08',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:31: AssertionError
+____________________ test_fall_back_day_includes_last_hour _____________________
+
+ch = <observatory.chclient.ClickHouse object at 0x75682e740920>
+
+    def test_fall_back_day_includes_last_hour(ch):
+        add(ch, 't', ['2026-11-01 04:00:00.000', '2026-11-01 05:30:00.000', '2026-11-01 06:30:00.000', '2026-11-02 04:59:59.999', '2026-11-02 05:00:00.000'])
+>       assert daily_events(ch, 't', '2026-11-01', '2026-11-02', 'America/New_York') == [{'day':'2026-11-01','events':4}]
+E       AssertionError: assert [{'day': '202... 'events': 3}] == [{'day': '202... 'events': 4}]
+E         
+E         At index 0 diff: {'day': '2026-11-01', 'events': 3} != {'day': '2026-11-01', 'events': 4}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2026-11-01',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:35: AssertionError
+__________________ test_fractional_offset_tenant_and_leap_day __________________
+
+ch = <observatory.chclient.ClickHouse object at 0x75682e740920>
+
+    def test_fractional_offset_tenant_and_leap_day(ch):
+        add(ch, "owner's", ['2024-02-28 18:14:59.999', '2024-02-28 18:15:00.000', '2024-02-29 18:14:59.999', '2024-02-29 18:15:00.000'])
+        add(ch, 'other', ['2024-02-29 10:00:00.000'])
+>       assert daily_events(ch, "owner's", '2024-02-29', '2024-03-01', 'Asia/Kathmandu') == [{'day':'2024-02-29','events':2}]
+E       AssertionError: assert [{'day': '202... 'events': 1}] == [{'day': '202... 'events': 2}]
+E         
+E         At index 0 diff: {'day': '2024-02-29', 'events': 1} != {'day': '2024-02-29', 'events': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'day': '2024-02-29',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_ridges_report.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open
+FAILED tests/test_ridges_report.py::test_fall_back_day_includes_last_hour - A...
+FAILED tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day
+========================= 3 failed, 2 passed in 0.67s ==========================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_empty_requested_interval PASSED               [ 50%]
+tests/test_report.py::test_service_identity PASSED                       [100%]
+
+============================== 2 passed in 0.24s ===============================
+All checks passed!

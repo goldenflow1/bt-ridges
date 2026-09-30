@@ -80,6 +80,29 @@ def test_B_VALID_08_declared_test_must_fail_by_assertion():
     assert not behaviour_evidence("", [])[0]  # missing report: no evidence
 
 
+def test_B_VALID_08_sibling_summary_cannot_hide_a_runtime_error():
+    text = """
+_________________________ test_wrong_answer __________________________
+E       AssertionError: assert 1 == 2
+_________________________ test_large_fixture _________________________
+E       sqlalchemy.exc.ProgrammingError: incomplete placeholder '%'
+=========================== short test summary info ============================
+FAILED tests/test_hidden.py::test_wrong_answer - AssertionError: assert 1 == 2
+FAILED tests/test_hidden.py::test_large_fixture - sqlalchemy.exc.ProgrammingError
+"""
+    assert parse(text, "pytest") == {"test_wrong_answer": "fail", "test_large_fixture": "error"}
+    assert not behaviour_evidence(text, ["test_wrong_answer"])[0]
+
+
+def test_B_VALID_08_exception_message_and_chained_assertion_are_not_assertion_failures():
+    for error in ("E       RuntimeError: AssertionError from a nested operation",
+                  "E       AssertionError: inner\nE       RuntimeError: wrapper"):
+        text = ("_________________________ test_runtime __________________________\n" + error
+                + "\nFAILED tests/test_hidden.py::test_runtime - RuntimeError: wrapper\n")
+        assert parse(text, "pytest") == {"test_runtime": "error"}
+        assert not behaviour_evidence(text, ["test_runtime"])[0]
+
+
 def test_B_VALID_09_extra_files_are_valid_code_in_the_target_language():
     assert extra_file_content("app/extra_helper.py", "") == "# extra helper\n"
     assert extra_file_content("internal/store/extra_helper.go", "// x\npackage store\n") == "package store\n"

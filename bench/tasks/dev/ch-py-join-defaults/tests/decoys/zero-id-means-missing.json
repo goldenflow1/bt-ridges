@@ -1,0 +1,7 @@
+{
+  "expect_failing": [
+    "test_missing_and_valid_zero_identifier"
+  ],
+  "category": "assertion",
+  "passes_visible": true
+}

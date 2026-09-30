@@ -31,7 +31,10 @@ def pytest_results(text: str) -> Dict[str, str]:
     matches = list(PYTEST_SECTION.finditer(text))
     for i, match in enumerate(matches):
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-        sections[match.group(1).split("::")[-1]] = text[match.end():end]
+        # Stop before the summary (or another runner header). A sibling's
+        # summary can mention AssertionError after this test's runtime error.
+        body = re.split(r"^={3,}.*$", text[match.end():end], maxsplit=1, flags=re.M)[0]
+        sections[match.group(1).split("::")[-1]] = body
     for kind, node in PYTEST_SUMMARY.findall(text):
         name = node.split("::")[-1]
         if kind == "PASSED":
@@ -40,7 +43,9 @@ def pytest_results(text: str) -> Dict[str, str]:
             _set(results, name, "error")
         else:
             body = sections.get(name, "")
-            asserted = "AssertionError" in body or re.search(r"^E\s+assert ", body, re.M)
+            exceptions = re.findall(r"^E\s+([\w.]*(?:Error|Exception))\b", body, re.M)
+            asserted = (exceptions[-1].rsplit(".", 1)[-1] == "AssertionError" if exceptions
+                        else bool(re.search(r"^E\s+assert ", body, re.M)))
             _set(results, name, "fail" if asserted else "error")
     if re.search(r"collected \d+ items? / \d+ errors?|ERROR collecting", text):
         results["<collection>"] = "error"

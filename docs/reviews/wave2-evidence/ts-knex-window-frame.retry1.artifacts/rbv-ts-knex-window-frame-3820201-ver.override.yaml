@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-ts-knex-window-frame-ver-postgres:latest
+  main:
+    image: rbv-ts-knex-window-frame-ver-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/dev/ts-knex-window-frame/tests
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

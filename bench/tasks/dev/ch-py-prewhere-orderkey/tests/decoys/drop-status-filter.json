@@ -1,0 +1,7 @@
+{
+  "expect_failing": [
+    "test_filter_status_range_and_tenant"
+  ],
+  "category": "assertion",
+  "passes_visible": true
+}

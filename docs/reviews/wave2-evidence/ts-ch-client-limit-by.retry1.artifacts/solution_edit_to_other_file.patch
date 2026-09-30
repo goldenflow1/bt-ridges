@@ -1,0 +1,21 @@
+diff --git a/README.md b/README.md
+index 172951a..8de7749 100644
+--- a/README.md
++++ b/README.md
+@@ -3,3 +3,4 @@
+ Implement deterministic top-N per category through the TypeScript ClickHouse client.
+ 
+ Visible tests reset a disposable task test database. Verification runs in a fresh, separate environment and database.
++
+diff --git a/src/reports.ts b/src/reports.ts
+index 7647490..e92166c 100644
+--- a/src/reports.ts
++++ b/src/reports.ts
+@@ -5,6 +5,6 @@ export interface RankedItem { category: string; id: number; score: number }
+ 
+ /** Return up to n eligible items per category, with deterministic ties. */
+ export async function topItems(tenant: string, n: number): Promise<RankedItem[]> {
+-  const result = await db.query({ query: `SELECT category, id, score FROM items WHERE tenant = {tenant:String} AND active = 1 ORDER BY category, score DESC, id ASC LIMIT 1`, query_params: { tenant, n }, format: 'JSONEachRow' });
++  const result = await db.query({ query: `SELECT category, id, score FROM items WHERE tenant = {tenant:String} AND active = 1 ORDER BY category, score DESC, id ASC LIMIT {n:UInt32} BY category`, query_params: { tenant, n }, format: 'JSONEachRow' });
+   return result.json<RankedItem>();
+ }

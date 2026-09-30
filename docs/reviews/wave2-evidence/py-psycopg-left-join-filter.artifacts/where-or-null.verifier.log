@@ -1,0 +1,99 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-psycopg-left-join-filter" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_private.py::test_empty_departments_survive PASSED             [ 25%]&#10;tests/test_private.py::test_only_nonqualifying_bookings_preserve_department FAILED [ 50%]&#10;tests/test_private.py::test_equal_minutes_boundaries_and_tenant PASSED   [ 75%]&#10;tests/test_private.py::test_report_is_one_parameterized_statement PASSED [100%]&#10;&#10;=================================== FAILURES ===================================&#10;_____________ test_only_nonqualifying_bookings_preserve_department _____________&#10;&#10;conn = &lt;psycopg.Connection [INTRANS] (host=postgres database=practice) at 0x7969fd708da0&gt;&#10;&#10;    def test_only_nonqualifying_bookings_preserve_department(conn):&#10;        conn.execute(&quot;INSERT INTO departments VALUES (1, 10, 'Cancelled'), (2, 1">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_empty_departments_survive PASSED             [ 25%]
+tests/test_private.py::test_only_nonqualifying_bookings_preserve_department FAILED [ 50%]
+tests/test_private.py::test_equal_minutes_boundaries_and_tenant PASSED   [ 75%]
+tests/test_private.py::test_report_is_one_parameterized_statement PASSED [100%]
+
+=================================== FAILURES ===================================
+_____________ test_only_nonqualifying_bookings_preserve_department _____________
+
+conn = &lt;psycopg.Connection [INTRANS] (host=postgres database=practice) at 0x7969fd708da0&gt;
+
+    def test_only_nonqualifying_bookings_preserve_department(conn):
+        conn.execute("INSERT INTO departments VALUES (1, 10, 'Cancelled'), (2, 10, 'Outside')")
+        conn.execute("INSERT INTO bookings VALUES (1, 1, '2026-01-03', true, 99), (2, 2, '2026-02-01', false, 77)")
+&gt;       assert report(conn) == [(1, 0, 0), (2, 0, 0)]
+E       AssertionError: assert [] == [(1, 0, 0), (2, 0, 0)]
+E         
+E         Right contains 2 more items, first extra item: (1, 0, 0)
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     (...
+E         
+E         ...Full output truncated (10 lines hidden), use '-vv' to show
+
+tests/test_private.py:16: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_empty_departments_survive
+PASSED tests/test_private.py::test_equal_minutes_boundaries_and_tenant
+PASSED tests/test_private.py::test_report_is_one_parameterized_statement
+FAILED tests/test_private.py::test_only_nonqualifying_bookings_preserve_department
+========================= 1 failed, 3 passed in 0.33s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_empty_departments_survive PASSED             [ 25%]
+tests/test_private.py::test_only_nonqualifying_bookings_preserve_department FAILED [ 50%]
+tests/test_private.py::test_equal_minutes_boundaries_and_tenant PASSED   [ 75%]
+tests/test_private.py::test_report_is_one_parameterized_statement PASSED [100%]
+
+=================================== FAILURES ===================================
+_____________ test_only_nonqualifying_bookings_preserve_department _____________
+
+conn = <psycopg.Connection [INTRANS] (host=postgres database=practice) at 0x7969fd708da0>
+
+    def test_only_nonqualifying_bookings_preserve_department(conn):
+        conn.execute("INSERT INTO departments VALUES (1, 10, 'Cancelled'), (2, 10, 'Outside')")
+        conn.execute("INSERT INTO bookings VALUES (1, 1, '2026-01-03', true, 99), (2, 2, '2026-02-01', false, 77)")
+>       assert report(conn) == [(1, 0, 0), (2, 0, 0)]
+E       AssertionError: assert [] == [(1, 0, 0), (2, 0, 0)]
+E         
+E         Right contains 2 more items, first extra item: (1, 0, 0)
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     (...
+E         
+E         ...Full output truncated (10 lines hidden), use '-vv' to show
+
+tests/test_private.py:16: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_empty_departments_survive
+PASSED tests/test_private.py::test_equal_minutes_boundaries_and_tenant
+PASSED tests/test_private.py::test_report_is_one_parameterized_statement
+FAILED tests/test_private.py::test_only_nonqualifying_bookings_preserve_department
+========================= 1 failed, 3 passed in 0.33s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+tests/test_visible.py::test_sample PASSED                                [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_sample
+============================== 1 passed in 0.11s ===============================

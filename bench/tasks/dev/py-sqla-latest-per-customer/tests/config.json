@@ -1,0 +1,9 @@
+{
+  "task": "py-sqla-latest-per-customer",
+  "allowed": [
+    "app/reports.py"
+  ],
+  "bounded": {
+    "app/reports.py": "latest_per_customer"
+  }
+}

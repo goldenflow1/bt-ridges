@@ -1,0 +1,17 @@
+Command: .venv/bin/python tools/gate.py
+Date: 2026-09-30
+Executed outside the filesystem/network sandbox after the initial Python-cache access failure.
+
+PASS  G0 ruff  (0.2s)
+PASS  G1 unit + scenario tests  (55.7s)
+PASS  G2 bundle builds  (1.1s)
+PASS  G2b bundle imports on Python 3.9  (0.7s)
+PASS  G3 offline e2e on the bundle  (29.0s)
+PASS  G4 pre-screen lint  (0.3s)
+PASS  G4b originality vs public agents  (3.3s)
+      pending (planned, not yet counted): B-VALID-07(B2), B-RUN-01(B2), B-RUN-03(B2)
+PASS  G5 traceability: 90/90 requirements have tests  (0.1s)
+
+all automatic gates passed
+
+These gates cover the agent and shared tools. They do not replace per-task Docker validation.

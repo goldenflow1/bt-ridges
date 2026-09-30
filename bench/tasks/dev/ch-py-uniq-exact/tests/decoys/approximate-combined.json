@@ -1,0 +1,7 @@
+{
+  "expect_failing": [
+    "test_large_exact_cardinality"
+  ],
+  "category": "assertion",
+  "passes_visible": true
+}

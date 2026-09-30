@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-py-sqla-partial-index-env-postgres:latest
+  main:
+    image: rbv-py-sqla-partial-index-env-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/dev/py-sqla-partial-index/environment
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

@@ -1,0 +1,15 @@
+services:
+  clickhouse:
+    image: rbv-ts-ch-client-limit-by-ver-clickhouse:latest
+  main:
+    image: rbv-ts-ch-client-limit-by-ver-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/dev/ts-ch-client-limit-by/tests
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

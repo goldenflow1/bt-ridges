@@ -1,0 +1,31 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-tz-buckets" tests="11" failures="0" errors="0" skipped="0"><testcase name="transported_patch_recorded"><system-out>c2c63112d761ab46515d194b5c047ae198a6387188af1a32cea090aafdfffee4</system-out></testcase><testcase name="bounded_daily_events_function"><system-out>{"function_sha256": "81e8781b396a4d969aaa8a91c22b1fe1abcd63f5dc9c98afbd1fb42fd5c425a4"}</system-out></testcase><testcase name="bounded_public_contract"><system-out>None</system-out></testcase><testcase name="source_tree_conservation_before_tests"><system-out>5698236b89cc9470ccb42221a333d12ac3be75bc4fa475e063694cefab7044e7</system-out></testcase><testcase name="python_compilation"><system-out>ok</system-out></testcase><testcase name="ruff_lint"><system-out>0</system-out></testcase><testcase name="clickhouse_application_user_is_bounded"><system-out>["GRANT SELECT(active, database, name, rows, `table`) ON system.parts TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_dev.* TO meterline", "GRANT SELECT, INSERT, ALTER, CREATE TABLE, DROP TABLE, TRUNCATE, OPTIMIZE, SYSTEM MERGES ON meterline_test.* TO meterline"]</system-out></testcase><testcase name="regression_report_tests"><system-out>{"stdout_sha256": "9702556d7fad23c5142e76878f379f704f13139f608bdde6ae8cf860347c3aeb", "tests": 2}</system-out></testcase><testcase name="hidden_report_semantics"><system-out>{"stdout_sha256": "208005603239b2dccdc9da039fa93a9e972d221d32e4843bc25ee5c96aae7205", "tests": 5}</system-out></testcase><testcase name="source_tree_conservation_after_tests"><system-out>5698236b89cc9470ccb42221a333d12ac3be75bc4fa475e063694cefab7044e7</system-out></testcase><testcase name="database_schema_conservation"><system-out>de6c48543aac5876f690d924f6a2d972ed12e0a283b1512781ef99e1d3a254f0</system-out></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/test_ridges_report.py::test_empty_days_are_materialized PASSED     [ 20%]
+tests/test_ridges_report.py::test_spring_forward_local_days_and_half_open PASSED [ 40%]
+tests/test_ridges_report.py::test_fall_back_day_includes_last_hour PASSED [ 60%]
+tests/test_ridges_report.py::test_fractional_offset_tenant_and_leap_day PASSED [ 80%]
+tests/test_ridges_report.py::test_no_events_and_reverse_range PASSED     [100%]
+
+============================== 5 passed in 0.71s ===============================
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_report.py::test_empty_requested_interval PASSED               [ 50%]
+tests/test_report.py::test_service_identity PASSED                       [100%]
+
+============================== 2 passed in 0.30s ===============================
+All checks passed!

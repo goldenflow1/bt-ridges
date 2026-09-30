@@ -1,0 +1,6 @@
+{
+  "expect_failing": [
+    "hidden: lifetime balance survives display cutoff"
+  ],
+  "passes_visible": true
+}

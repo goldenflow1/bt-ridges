@@ -1,6 +1,6 @@
 # SPEC — Practice Task Catalog
 
-Status: accepted · 2026-09-29 · Wave 1 built and validated (5/5 pass B-VALID-01..06): `py-sqla-orders-fanout`, `ch-py-replacing-final`, `go-sqlx-pagination`, `ts-prisma-groupby`, `py-django-n-plus-one`
+Status: accepted · updated 2026-09-30 · Waves 1 and 2 built: 17 dev tasks. Wave 2 calibration: 12/12 tasks, 196/196 checks passed; see evidence below.
 
 The six public samples are all NetBox + Django + PostgreSQL. The competition uses other repositories, both engines, other languages and query layers. This catalog defines practice tasks that cover the niche, so we measure the agent on the niche and not on one codebase.
 
@@ -50,7 +50,7 @@ Kinds: **R** repair · **A** authoring · **O** optimization. Scope: **N** named
 | pg-expr-index-lower | heldout | Python · Django migration | PG | O | M | expression index on `lower(email)` must serve the case-insensitive lookup |
 | ch-go-skip-index | heldout | Go · clickhouse-go | CH | O | M | data-skipping index + migration; `read_rows` bounded |
 
-Mix: 24 tasks · Python 13, Go 5, TypeScript 5 (+1 Go/CH) · PG 16, CH 8 · R 13, A 5, O 6 · unnamed scope 5 · migration-only 3.
+Mix: 24 tasks · Python 15, Go 5, TypeScript 4 · PG 16, CH 8 · R 13, A 5, O 6 · unnamed scope 5 · migration-only 3.
 
 ## 4. Build order
 1. **Wave 1 (engine + stack spread):** `py-sqla-orders-fanout`, `ch-py-replacing-final`, `go-sqlx-pagination`, `ts-prisma-groupby`, `py-django-n-plus-one`.
@@ -69,6 +69,20 @@ Besides full tasks, `tests/scenario/` holds statement fixtures and repo fixtures
 - `py-django-n-plus-one` allows three files (no single-method bound); the checker instead limits imports, forbids raw SQL and caching, and runs `makemigrations --check`.
 - Validation: about 8–10 min per task with warm images; each checker run takes 45–85 s.
 - `ts-prisma-groupby` (2026-09-30): the ordering test is renamed "rounded rate, then id", the large-cohorts test creates the 1/1500 course first and asserts the tie order, and `order-by-precise-rate` is a new decoy (from the catalog review's counterexample). `tests/verify.py` lists hidden test names, so a renamed test must be updated there too.
+
+### Wave 2 construction (2026-09-30)
+
+All twelve remaining dev task directories have been built and Docker-validated under the [Wave 2 plan](../plans/wave2-practice-tasks.md): **196/196 checks passed**. All twelve references score 1; all empty patches and 26 sample-passing decoys score 0 through behavioral assertions. All 36 scope variants are rejected solely by scope/conservation checks. Named checks and grading run without network egress, and all task images pass the miner-runtime prerequisite check. No held-out cases were built or used in this pass.
+
+The [evidence index](../reviews/wave2-evidence/README.md) links the retained attempts; [final results](../reviews/wave2-evidence/final-results.json) record accepted logs and source digests. Assertion logs were replayed with the corrected parser, application copies match, and [cleanup](../reviews/wave2-evidence/cleanup.json) found no validation containers, networks or volumes remaining. Two instruction-only size-limit clarifications are explicitly distinguished from their original validated digests. This is task calibration, with zero miner inference runs, not an agent baseline.
+
+Coverage and validation records:
+
+- [Python/PostgreSQL](../reviews/wave2-python-pg.md): latest-row ties and returned timestamps, empty outer-join groups, nullable exclusion subqueries, and real Alembic index lifecycle with natural query plans.
+- [Python/ClickHouse](../reviews/wave2-clickhouse.md): exact high-cardinality counts, default-valued joins, DST and empty calendar days, and primary-key pruning measured through rows read.
+- [Go/TypeScript](../reviews/wave2-go-ts.md): nullable aggregates, bounded association queries, lifetime running balances with timestamp peers, and deterministic per-group quotas.
+
+The tasks retain matching environment/checker app copies. References, decoys, and tests are independent of the agent source. Cross-review tightened returned-value assertions, public-interface checks, and per-call query measurements. These remain synthetic practice applications; their construction does not establish difficulty or solve rate on the competition's hidden tasks.
 
 ## 7. Host constraints (2026-09-30)
 - **NetBox public samples are deferred on the current dev host** (Xeon E5-2680 v3 KVM guest, 8 GB). Their named Django check takes ≈ 23 min cold here, over the checker's own 600 s per command / 900 s total, and the checker always starts cold. Results from this host for those tasks are infrastructure-void, not agent results. Run them on a faster machine (target: cold check < 5 min).
@@ -94,4 +108,3 @@ Gate G5 reads this table. Status: `planned` (reported as pending, never as passi
 | B-RUN-02 | Trials record observations before diagnoses: execution outcome, termination, final patch hash, applicability, final guard/check status, reward, accounting coverage, validity (valid / void-infrastructure / unresolved) with a replacement cap; automatic labels per the W5 precedence. | B1 | implemented | unit | `tools/bench_records.py`; replacement loop in `tools/run_bench.py` (cap 2 per slot) not yet unit-tested |
 | B-RUN-03 | Multi-run aggregation (equal task weight, per set), paired confirmation protocol and immutable baseline promotion with compatibility checks. | B2 | implemented | unit | `tools/bench_summary.py summarize/promote/compare`; rule in `docs/process/engineering-loop.md` §5a |
 | B-RUN-04 | At execution time every trial records a unique trial ID, bundle hash, canonical task-source digest, expected task list, effective non-secret configuration and raw logs. | B1 | implemented | unit | digest `task-tree-v1` in `tools/bench_records.py` |
-
