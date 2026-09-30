@@ -1,29 +1,128 @@
 # Quarry
 
-An agent for the Ridges (SN62) **Database Query Engineering** competition: given a repository, a live PostgreSQL/ClickHouse database and a problem statement, it changes the production data path and returns a unified diff.
+An agent for the Ridges (Bittensor SN62) **Database Query Engineering** competition. Given a repository, a live PostgreSQL or ClickHouse database and a problem statement, it changes the application's production data path and returns a unified diff.
 
-| Where | What |
-|---|---|
-| `architecture.md` | System design (v3, checked against docs, `ridges@d74410d` and the sample tasks' checker code) |
-| `docs/specs/harness.md` | Requirements with IDs (H-*) — every one traced to a test |
-| `docs/specs/bench-catalog.md` | Practice-task catalog beyond the 6 public samples (24 tasks, both engines, Python/Go/TS) |
-| `docs/plans/M0-harness.md` | Current milestone plan and exit gate |
-| `docs/process/engineering-loop.md` | Spec → plan → implement → test → gate → feedback |
-| `docs/experiments/EXPERIMENTS.md` | Experiment log |
-| `src/quarry/` | Agent modules (stdlib only, Python 3.9+) + `prompts/`, `packs/` |
-| `tools/` | `build.py` (bundle), `prescreen_lint.py`, `gate.py` (G0–G5), `run_bench.py` (G6/G7) |
-| `tests/` | `unit/`, `scenario/` (statements + repos for many stacks), `e2e/` (bundle vs fake proxy) |
-| `bench/tasks/` | `public/` (6 ridges-bench samples), `dev/`, `heldout/` practice tasks; `bench/validate_task.py` |
+- **Current status:** see [Status](#status) below.
+- **Design:** [`architecture.md`](architecture.md).
+- **How work is done here:** [`docs/process/engineering-loop.md`](docs/process/engineering-loop.md) and [`CLAUDE.md`](CLAUDE.md).
 
-## Daily commands
+---
+
+## Setup on a new device
+
+### 1. Prerequisites
+| Tool | Why | Check |
+|---|---|---|
+| Linux or macOS with **Docker** (Engine + Compose v2) | practice tasks and `ridges miner run-local` run in containers | `docker compose version` |
+| **git** | this repo and the Ridges CLI | `git --version` |
+| **uv** | Python environments (installs Python itself) | `uv --version` (install: `curl -LsSf https://astral.sh/uv/install.sh \| sh`) |
+| ~20 GB free disk, 8 GB+ RAM | task images | `df -h`, `free -g` |
+| **A fast CPU**, if you want to run the NetBox public samples | their Django checks must finish in < 10 min cold; on the original dev host (Xeon E5-2680 v3 VM) they take ≈ 23 min | see step 6 |
+
+### 2. Get this repo and its dev tools
 ```bash
-uv sync                                   # dev tools (pytest, ruff)
-uv run python tools/gate.py               # G0–G5: lint, tests, bundle, py3.9 import, e2e, pre-screen lint, traceability
-uv run python tools/build.py              # -> dist/agent.py
-python3 bench/validate_task.py bench/tasks/dev/<id>          # practice-task validity (B-VALID-01..06)
-uv run python tools/run_bench.py --set public --repeats 3 --ridges "uv run --project ../ridges-cli ridges"   # live (needs key)
+mkdir -p ~/bittensor && cd ~/bittensor
+git clone <this-repo-url> ridges          # the project directory is named `ridges`
+cd ridges
+uv sync                                   # dev tools: pytest, ruff
+uv run python tools/gate.py               # G0–G5: lint, tests, bundle, Python 3.9 import, e2e, pre-screen, originality, traceability
+```
+All gates should pass before you do anything live. The bundle is written to `dist/agent.py` (git-ignored; rebuild any time with `uv run python tools/build.py`).
+
+### 3. Install the Ridges CLI (pinned commit)
+The bench runner calls `ridges miner run-local`. Keep the CLI next to this repo at the commit the design was checked against:
+```bash
+cd ~/bittensor
+git clone https://github.com/ridgesai/ridges.git ridges-cli
+cd ridges-cli && git checkout d74410d8      # pinned; see architecture.md Appendix D
+uv sync --extra miner
+```
+`bench/validate_task.py` reads the runtime's package list from `~/bittensor/ridges-cli/miners/baseline-requirements.txt`, so keep that path.
+
+### 4. Configure the CLI and your OpenRouter key
+Create the config (paths must match your home directory):
+```bash
+mkdir -p ~/.config/ridges ~/.ridges
+cat > ~/.config/ridges/miner.toml <<EOF
+[miner]
+workspace = "$HOME/.ridges"
+agent_path = "$HOME/bittensor/ridges/dist/agent.py"
+provider = "openrouter"
+EOF
+printf 'RIDGES_OPENROUTER_API_KEY=\nRIDGES_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1\n' > ~/.ridges/.env.miner
+chmod 600 ~/.ridges/.env.miner
+nano ~/.ridges/.env.miner                   # paste your key after RIDGES_OPENROUTER_API_KEY=
+```
+In the OpenRouter dashboard: turn **Input & Output Logging off** (Plugins → Observability) — the Ridges proxy rejects keys with logging on — use only zero-data-retention models, and set a per-key credit limit.
+
+Check the key without printing it:
+```bash
+python3 -c "import json,urllib.request;k=[l.split('=',1)[1].strip() for l in open('$HOME/.ridges/.env.miner') if l.startswith('RIDGES_OPENROUTER_API_KEY')][0];print(json.load(urllib.request.urlopen(urllib.request.Request('https://openrouter.ai/api/v1/key',headers={'Authorization':'Bearer '+k})))['data'])"
 ```
 
-## Live runs (not set up yet on this machine)
-1. Clone `ridgesai/ridges`, `uv sync --extra miner`, `ridges miner setup` (OpenRouter key with logging off, ZDR models).
-2. Optional local model override: `QUARRY_DRIVER_MODEL`, `QUARRY_FALLBACK_MODEL` (production uses the defaults in `src/quarry/shell.py`; verify model ids and prices on OpenRouter first).
+### 5. Validate the practice tasks (Docker, no inference cost)
+```bash
+python3 bench/validate_task.py bench/tasks/dev/py-sqla-orders-fanout    # ~5–10 min per task with warm images
+```
+Every task must end `RESULT: PASS`. Checks are defined in [`docs/specs/bench-catalog.md`](docs/specs/bench-catalog.md) §8.
+
+### 6. Live runs (costs inference money)
+```bash
+uv run python tools/build.py
+uv run python tools/run_bench.py --set dev --repeats 1 --ceiling 30 --allowance 0.29 \
+    --ridges "uv run --project $HOME/bittensor/ridges-cli --no-sync ridges"
+```
+- Results: `bench/runs/<timestamp>-<set>/results.csv`, `summary.json`, `manifest.json`, raw logs.
+- **Spending:** `bench/runs/ledger.json` is a shared envelope (default $30), reconciled against the key's own usage. It is git-ignored and **per device** — on a new device either start a fresh envelope or copy the old ledger over, and subtract what was already spent (see Status).
+- **NetBox public samples** (`--set public`): only on a fast machine. First time the check offline: bring the task up and time `python netbox/manage.py test … --keepdb --noinput`; it must take well under 600 s cold, or every run times out in the checker regardless of the patch.
+- Model override for experiments only: `QUARRY_DRIVER_MODEL=... QUARRY_FALLBACK_MODEL=...`.
+
+### 7. Keeping long runs alive
+Validation and bench runs take minutes to hours. Start them detached so a closed terminal doesn't kill them:
+```bash
+setsid nohup uv run python tools/run_bench.py ... > run.log 2>&1 < /dev/null &
+tail -f run.log
+```
+Watch the agent live: `tail -f $(ls -td ~/.ridges/runs/*/*/ | head -1)agent/runtime.log | grep --line-buffered '^\[quarry\]'`.
+
+### 8. Before any upload
+`tools/gate.py` (G0–G5, G4 pre-screen lint, G4b originality against freshly fetched public agents: `uv run python tools/fetch_references.py --set-id 28 --want 10`), the held-out set 3×, and the upload gate in [`docs/process/engineering-loop.md`](docs/process/engineering-loop.md). Uploads cost ~$5 in Alpha plus inference and have a 12 h cooldown.
+
+---
+
+## Repository map
+| Where | What |
+|---|---|
+| `architecture.md` | System design (v3.1, checked against the Ridges docs, `ridges@d74410d` and the sample checkers) |
+| `docs/specs/harness.md` | Agent requirements (H-*), each traced to a test by gate G5 |
+| `docs/specs/bench-catalog.md` | Practice-task catalog, validity checks and bench requirements (B-*, with stage/status/evidence) |
+| `docs/plans/` | Milestone plans with results: `M0-harness.md`, `M0.5-pre-smoke-hardening.md` |
+| `docs/reviews/` | External reviews and our responses |
+| `docs/experiments/EXPERIMENTS.md` | Experiment log |
+| `src/quarry/` | Agent modules (stdlib only, Python 3.9+), `prompts/`, `packs/` |
+| `tools/` | `build.py`, `gate.py`, `prescreen_lint.py`, `originality_check.py`, `fetch_references.py`, `run_bench.py`, `bench_records.py` |
+| `tests/` | `unit/`, `scenario/`, `e2e/` (bundle against a fake proxy) |
+| `bench/` | `tasks/public` (6 ridges-bench samples), `tasks/dev` (5 practice tasks), `validate_task.py`, `runner_results.py` |
+| `references/` | Other miners' public agents, read-only, for the originality check only — **never copy from here** |
+
+---
+
+## Status
+_Last updated 2026-09-30._
+
+| Area | State |
+|---|---|
+| Harness (M0) | Built; three external review rounds fixed; all gates green, 90/90 traced requirements |
+| Measurement integrity (M0.5A, B1) | Done: cost provenance, cache telemetry, key-usage ledger, run provenance, trial labels, decoy calibration |
+| Smoke test | Passed on a dev task (solved, $0.0092) |
+| Reconnaissance (dev set, 1 run each) | **5/5 solved**, $0.0102 per task on average (provider-reported = key usage), cache read share 83–95% |
+| NetBox public samples | **Deferred on the original host** (cold Django check ≈ 23 min > checker limit). Run on a faster machine, or as a clearly labelled long-timeout local variant |
+| Originality | ≈ 1% overlap with 10 public agents (limit 30%) |
+| Spend | $0.0855 of the $30 local envelope; OpenRouter key limit $100 |
+| Competition (set 28, checked 2026-09-29) | Open, no end date, 90% of emissions. Best approved agent: 0.36 at $0.091/task. To qualify: ≥ 0.36 at ≤ $0.086 (cost route) or ≥ 0.38 (performance route) |
+
+**Next steps** (see `docs/plans/M0.5-pre-smoke-hardening.md`):
+1. Wave-2 practice tasks — harder and more varied; the current dev set no longer discriminates (5/5).
+2. NetBox public samples on a fast machine (or the long-timeout local variant).
+3. M0.5B2: full runtime identity, baseline promotion tooling, four-task audit; then a 3-repeat baseline.
+4. A calibration upload to learn how local results map to validator scores.
