@@ -113,6 +113,7 @@ class Workflow:
         self.baseline: Dict[str, Dict] = {}  # command -> baseline observation (H-SHELL-11)
         self.check_log: List[Dict] = []  # every check run, for the run log and telemetry (H-SHELL-13)
         self.rounds: List[Dict] = []
+        self.still_failing: List[str] = []  # statement checks failing before the change and after it (H-SHELL-14)
         self.final: Dict = {}
 
     def note(self, text: str) -> None:
@@ -162,7 +163,7 @@ class Workflow:
             budget = min(self.settings.baseline_share * self.clock.total, self.clock.remaining() - 60)
             obs = self.run_command(command, max(self.settings.baseline_min_sec, budget), "baseline")
             self.baseline[command] = {"seconds": obs["seconds"], "ok": obs["exit"] == 0 and not obs["timed_out"],
-                                      "timed_out": obs["timed_out"]}
+                                      "timed_out": obs["timed_out"], "tail": obs["tail"]}
         if commands and self.repo.changed().all_paths():
             undone = self.repo.undo_run_changes()
             self.note(f"baseline checks changed {len(undone)} path(s); restored them before editing")
@@ -211,6 +212,7 @@ class Workflow:
         if not commands:
             return None, []
         failures: List[str] = []
+        self.still_failing = []
         unknown = False
         for command in commands:
             base = self.baseline.get(command)
@@ -232,6 +234,9 @@ class Workflow:
                 continue
             if base and not base["ok"]:
                 unknown = True  # it failed on unmodified code too: not evidence against the patch
+                self.still_failing.append(
+                    f"`{command}` failed before any change ({base['tail'][:300] or 'no output'}) and still fails "
+                    f"after your change (exit {obs['exit']}):\n{cap_output(obs['output'], 2500)}")
                 continue
             failures.append(f"`{command}` exited {obs['exit']}"
                             + (" (timed out)" if obs["timed_out"] else "") + f":\n{cap_output(obs['output'], 2500)}")
@@ -269,11 +274,17 @@ class Workflow:
                     report.repairs, checks, problems,
                 ))
                 problems += [f"{r.name}: {r.detail}" for r in report.failures() if not r.hard]
-                if report.eligible and checks is not False:
+                still = report.eligible and checks is None and self.still_failing
+                if report.eligible and checks is not False and not still:
                     break
                 if outcome.reason in ("budget", "deadline", "llm-error") or timer.expired() or self.wallet.spent:
                     break
                 ctx.finished = False
+                if still:
+                    self.note(f"round {round_no}: {len(self.still_failing)} check(s) failing before the change still fail")
+                    messages.append({"role": "user", "content": asset("prompts/checks_still_failing.md").strip()
+                                     + "\n\n" + "\n\n".join(self.still_failing)[:6000]})
+                    continue
                 feedback = asset("prompts/checks_failed.md").strip()
                 if report.repairs:
                     feedback += "\nAutomatic corrections applied to the working tree: " + "; ".join(report.repairs)
