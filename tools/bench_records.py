@@ -13,6 +13,7 @@ import os
 import re
 import stat
 import subprocess
+import threading
 from typing import Callable, Dict, List, Optional
 
 DIGEST_VERSION = "task-tree-v1"
@@ -193,18 +194,58 @@ def host_identity(ridges_root: str, run: Callable[[List[str]], str] = _run) -> D
     }
 
 
-def trial_images(trial_dir: str, run: Callable[[List[str]], str] = _run) -> Dict[str, Optional[str]]:
-    """Image IDs of the containers Harbor built for this trial (named after the trial)."""
+def image_listing(run: Callable[[List[str]], str] = _run) -> Dict[str, Optional[str]]:
+    """Every local image, `repository:tag` -> image ID."""
+    listing = run(["docker", "images", "--no-trunc", "--format", "{{.Repository}}:{{.Tag}} {{.ID}}"])
+    images: Dict[str, Optional[str]] = {}
+    for line in listing.splitlines():
+        name, _, image_id = line.partition(" ")
+        if name:
+            images[name] = image_id or None
+    return images
+
+
+def trial_images(trial_dir: str, run: Callable[[List[str]], str] = _run,
+                 seen: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Optional[str]]:
+    """Image IDs of the containers Harbor built for this trial (named after the trial). Harbor removes them when
+    the trial ends (`compose down --rmi local`), so pass the images an ImageWatcher saw while it ran."""
     if not trial_dir:
         return {}
     prefix = os.path.basename(os.path.normpath(trial_dir)).lower() + "__"
-    listing = run(["docker", "images", "--no-trunc", "--format", "{{.Repository}}:{{.Tag}} {{.ID}}"])
-    images = {}
-    for line in listing.splitlines():
-        name, _, image_id = line.partition(" ")
-        if name.startswith(prefix):
-            images[name[len(prefix):]] = image_id or None
-    return images
+    images = dict(seen) if seen is not None else image_listing(run)
+    return {name[len(prefix):]: image_id for name, image_id in images.items() if name.startswith(prefix)}
+
+
+class ImageWatcher:
+    """Polls the local images while a trial runs and keeps every image that appeared under the task's trial-name
+    prefix (Harbor truncates the task name to 32 characters), so the IDs survive Harbor's cleanup (B-RUN-01)."""
+
+    def __init__(self, task_name: str, run: Callable[[List[str]], str] = _run, interval: float = 5.0):
+        self.prefix = task_name[:32].lower() + "__"
+        self.run, self.interval = run, interval
+        self.before = set(image_listing(run))  # images of earlier trials are never attributed to this one
+        self.seen: Dict[str, Optional[str]] = {}
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+
+    def poll(self) -> None:
+        for name, image_id in image_listing(self.run).items():
+            if name.startswith(self.prefix) and name not in self.before:
+                self.seen[name] = image_id
+
+    def _loop(self) -> None:
+        while not self._stop.is_set():
+            self.poll()
+            self._stop.wait(self.interval)
+
+    def __enter__(self) -> ImageWatcher:
+        self._thread.start()
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self._stop.set()
+        self._thread.join()
+        self.poll()
 
 
 def inputs_unchanged(before: Dict[str, str], after: Dict[str, str]) -> List[str]:

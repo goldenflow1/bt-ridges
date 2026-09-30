@@ -4,10 +4,11 @@ comparison under the W6 confirmation protocol)."""
 import csv
 import json
 import os
+import time
 
 import pytest
 
-from tools.bench_records import host_identity, inputs_unchanged, trial_images
+from tools.bench_records import ImageWatcher, host_identity, inputs_unchanged, trial_images
 from tools.bench_summary import SummaryError, compare, load_run, promote, promotion_problems, summarize
 from tools.run_bench import run_slot
 
@@ -63,6 +64,23 @@ def test_B_RUN_01_runtime_identity_and_input_mutation(tmp_path):
     assert images == {"env-main:latest": "sha256:111", "env-postgres:latest": "sha256:222"}
     assert inputs_unchanged({"t": "d1", "bundle": "b1"}, {"t": "d1", "bundle": "b1"}) == []
     assert inputs_unchanged({"t": "d1", "bundle": "b1"}, {"t": "d2", "bundle": "b1"}) == ["t"]
+
+
+def test_B_RUN_01_images_are_captured_while_the_trial_runs_before_harbor_removes_them():
+    # Harbor names images <task id[:32]>__<trial>__<service> and deletes them at the end of the trial
+    # (compose down --rmi local); a stale image of an earlier trial must not be attributed to this one.
+    stale = "a-very-long-task-name-for-images__old1234__env-main:latest sha256:000"
+    state = {"listing": stale}
+
+    def run(cmd):
+        return state["listing"]
+
+    with ImageWatcher("a-very-long-task-name-for-images-001", run, interval=0.01) as watcher:
+        state["listing"] = stale + "\na-very-long-task-name-for-images__new5678__env-main:latest sha256:111"
+        time.sleep(0.1)
+        state["listing"] = stale  # removed before the trial returns
+    images = trial_images("/runs/x/a-very-long-task-name-for-images__NEW5678/", seen=watcher.seen)
+    assert images == {"env-main:latest": "sha256:111"}
 
 
 # ---------------------------------------------------------------- B-RUN-02 (replacement cap)

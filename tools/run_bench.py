@@ -31,6 +31,7 @@ sys.path.insert(0, ROOT)
 from quarry.telemetry import parse_log  # noqa: E402  (shared parser: the agent's telemetry contract)
 from tools.bench_records import (  # noqa: E402
     MAX_SETUP_REPLACEMENTS,
+    ImageWatcher,
     auto_label,
     cli_version,
     expected_tasks,
@@ -190,11 +191,12 @@ def sha256_file(path: str) -> str:
 def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: str) -> Dict:
     started = time.time()
     cmd = ridges + ["miner", "run-local", "--non-interactive", "--task-path", task, "--agent-path", agent]
-    try:
-        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout)
-        output = proc.stdout + proc.stderr
-    except subprocess.TimeoutExpired as exc:
-        output = f"FAILED: bench timeout\n{exc.stdout or ''}"
+    with ImageWatcher(os.path.basename(os.path.normpath(task))) as watcher:
+        try:
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout)
+            output = proc.stdout + proc.stderr
+        except subprocess.TimeoutExpired as exc:
+            output = f"FAILED: bench timeout\n{exc.stdout or ''}"
     with open(raw_path, "w", encoding="utf-8") as handle:
         handle.write(output)
     trial = re.search(r"^trial_dir:\s*(.+)$", output, re.M)
@@ -202,7 +204,7 @@ def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: st
     record, joined = telemetry_record(trial_dir) if trial_dir else (None, "")
     obs = observe(trial_dir, output, record)
     row = {"task": os.path.basename(task), "reward": obs["reward"], "wall_sec": round(time.time() - started),
-           "trial_dir": trial_dir}
+           "trial_dir": trial_dir, "images": json.dumps(trial_images(trial_dir, seen=watcher.seen), sort_keys=True)}
     failed = re.search(r"^FAILED:\s*(.+)$", output, re.M)
     row["error"] = failed.group(1).strip() if failed else ""
     row.update({f"obs_{k}": v for k, v in obs.items() if k != "trial_dir"})
@@ -327,7 +329,7 @@ def main() -> int:
                 row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": f"{slot}/a{attempt}",
                             "purpose": args.purpose, "bundle_sha256": manifest["agent_sha256"][:16],
                             "task_digest": manifest["tasks"][name], "inputs_changed": ",".join(changed),
-                            "images": json.dumps(trial_images(row.get("trial_dir", "")), sort_keys=True)})
+                            })
                 if changed:
                     row["validity"], row["outcome"] = "unresolved", "unknown"  # not comparable: inputs moved
                 ledger.record(row["trial_id"], args.allowance, row["reconciled_cost"], row.get("cost_accounted"))
