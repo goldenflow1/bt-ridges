@@ -114,7 +114,14 @@ All seven tasks `RESULT: PASS`; every decoy scores 0 via its declared assertion;
 
 ## 6. G7 target (declare before the first held-out run)
 
-Pending — to be fixed by the maintainer before any held-out result exists. Proposed for the first (calibration) upload: 0 agent mechanical failures; mean $/task ≤ $0.03; `prescreen_lint` and originality clean; held-out solve rate ≥ 50% of 7 × 3 trials.
+**Declared 2026-09-29 by the maintainer, before any held-out task exists or any held-out result is seen.** For the first (calibration) upload, G7 passes only if all of these hold on `run_bench --set heldout --repeats 3 --purpose evaluation` (21 trials, agent build fixed for the whole run):
+
+1. Held-out solve rate ≥ 50% of the 7 × 3 valid trials (≥ 11 of 21; void infrastructure attempts are replaced, not counted).
+2. 0 agent mechanical failures.
+3. Mean reconciled cost ≤ $0.03 per trial.
+4. `tools/gate.py` green, including G4 `prescreen_lint` and G4b originality against freshly fetched public agents.
+
+This target is not changed after the run starts. A later upload may declare a new target (for example from the local-to-validator calibration), recorded here with its date before its run.
 
 ## 7. Results
 
