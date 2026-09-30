@@ -1,0 +1,7 @@
+{
+  "description": "filter-before-current",
+  "expect_failing": [
+    "test_current_state_precedes_online_and_region_filters"
+  ],
+  "passes_visible": true
+}

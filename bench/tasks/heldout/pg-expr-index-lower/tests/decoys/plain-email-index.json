@@ -1,0 +1,7 @@
+{
+  "description": "plain-email-index",
+  "expect_failing": [
+    "test_real_lookup_index_work_and_reversible_state"
+  ],
+  "passes_visible": true
+}

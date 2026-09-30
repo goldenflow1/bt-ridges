@@ -1,0 +1,7 @@
+{
+  "description": "minmax-on-random-ids",
+  "expect_failing": [
+    "TestHiddenExistingPartsReadRowsBoundAndLifecycle"
+  ],
+  "passes_visible": true
+}

@@ -1,0 +1,7 @@
+{
+  "description": "timestamp-without-id",
+  "expect_failing": [
+    "test_timestamp_ties_choose_one_complete_greatest_id_row"
+  ],
+  "passes_visible": true
+}

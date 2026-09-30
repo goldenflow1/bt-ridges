@@ -1,0 +1,109 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-argmax-state" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_private.py::test_current_state_precedes_online_and_region_filters PASSED [ 25%]&#10;tests/test_private.py::test_version_ties_choose_the_complete_latest_payload FAILED [ 50%]&#10;tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness PASSED [ 75%]&#10;tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order PASSED [100%]&#10;&#10;=================================== FAILURES ===================================&#10;_____________ test_version_ties_choose_the_complete_latest_payload _____________&#10;&#10;ch = &lt;grid.client.ClickHouse object at 0x75dce4344ad0&gt;&#10;&#10;    def test_version_ties_choose_the_complete_latest_payload(ch):&#10;        events=[]&#10;        for i in range(40):&#10;            ev">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_current_state_precedes_online_and_region_filters PASSED [ 25%]
+tests/test_private.py::test_version_ties_choose_the_complete_latest_payload FAILED [ 50%]
+tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness PASSED [ 75%]
+tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order PASSED [100%]
+
+=================================== FAILURES ===================================
+_____________ test_version_ties_choose_the_complete_latest_payload _____________
+
+ch = &lt;grid.client.ClickHouse object at 0x75dce4344ad0&gt;
+
+    def test_version_ties_choose_the_complete_latest_payload(ch):
+        events=[]
+        for i in range(40):
+            events += [row(f'M{i:03}','2026-02-01 12:00:00.123456',1,'offline','Old',999),
+                       row(f'M{i:03}','2026-02-01 12:00:00.123456',2,'online','North',-i)]
+        ch.insert('meter_events',events)
+        result=get_connections(ch,'u','North')['meters']
+&gt;       assert result == [{'meter_id':f'M{i:03}','state':'online','region':'North','reading':-i,'version':2,'observed_us':1769947200123456} for i in range(40)]
+E       AssertionError: assert [] == [{'meter_id':...h', ...}, ...]
+E         
+E         Right contains 40 more items, first extra item: {'meter_id': 'M000', 'observed_us': 1769947200123456, 'reading': 0, 'region': 'North', ...}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (320 lines hidden), use '-vv' to show
+
+tests/test_private.py:24: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_current_state_precedes_online_and_region_filters
+PASSED tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness
+PASSED tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order
+FAILED tests/test_private.py::test_version_ties_choose_the_complete_latest_payload
+========================= 1 failed, 3 passed in 1.00s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_current_state_precedes_online_and_region_filters PASSED [ 25%]
+tests/test_private.py::test_version_ties_choose_the_complete_latest_payload FAILED [ 50%]
+tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness PASSED [ 75%]
+tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order PASSED [100%]
+
+=================================== FAILURES ===================================
+_____________ test_version_ties_choose_the_complete_latest_payload _____________
+
+ch = <grid.client.ClickHouse object at 0x75dce4344ad0>
+
+    def test_version_ties_choose_the_complete_latest_payload(ch):
+        events=[]
+        for i in range(40):
+            events += [row(f'M{i:03}','2026-02-01 12:00:00.123456',1,'offline','Old',999),
+                       row(f'M{i:03}','2026-02-01 12:00:00.123456',2,'online','North',-i)]
+        ch.insert('meter_events',events)
+        result=get_connections(ch,'u','North')['meters']
+>       assert result == [{'meter_id':f'M{i:03}','state':'online','region':'North','reading':-i,'version':2,'observed_us':1769947200123456} for i in range(40)]
+E       AssertionError: assert [] == [{'meter_id':...h', ...}, ...]
+E         
+E         Right contains 40 more items, first extra item: {'meter_id': 'M000', 'observed_us': 1769947200123456, 'reading': 0, 'region': 'North', ...}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (320 lines hidden), use '-vv' to show
+
+tests/test_private.py:24: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_current_state_precedes_online_and_region_filters
+PASSED tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness
+PASSED tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order
+FAILED tests/test_private.py::test_version_ties_choose_the_complete_latest_payload
+========================= 1 failed, 3 passed in 1.00s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_simple_online_panel_and_history PASSED       [ 50%]
+tests/test_visible.py::test_empty_utility PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_simple_online_panel_and_history
+PASSED tests/test_visible.py::test_empty_utility
+============================== 2 passed in 0.38s ===============================

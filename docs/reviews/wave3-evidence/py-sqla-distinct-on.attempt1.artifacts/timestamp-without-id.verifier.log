@@ -1,0 +1,177 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-sqla-distinct-on" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="l_id':p,'recorded_at':at.astimezone(timezone(timedelta(hours=5,minutes=30))),'depot':'current','condition':'held'}]&#10;        conn.execute(scan.insert(),records)&#10;        actual=current_scans(conn,7)&#10;        expected=[{'parcel_id':p,'scan_id':p+1000,'recorded_at':at,'depot':'current','condition':'held'} for p in range(1,49)]&#10;&gt;       assert actual == expected&#10;E       AssertionError: assert [{'condition'...)), ...}, ...] == [{'condition'...c), ...}, ...]&#10;E         &#10;E         At index 0 diff: {'parcel_id': 1, 'scan_id': 1, 'recorded_at': datetime.datetime(2026, 3, 1, 12, 0, 0, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')), 'depot': 'old', 'condition': 'moving'} != {'parcel_id': 1, 'scan_id': 1001, 'recorded_at': datetime.datetime(2026, 3, 1, 12, 0, 0, 123456, tzinfo=datetime.timezone.utc), 'depot': 'current', 'condition': 'held'}&#10;E         &#10;E         Full diff:&#10;E           [&#10;E               {&#10;E         -         'condition': 'held',...&#10;E         &#10;E         ...Full output truncated (863 li">l_id':p,'recorded_at':at.astimezone(timezone(timedelta(hours=5,minutes=30))),'depot':'current','condition':'held'}]
+        conn.execute(scan.insert(),records)
+        actual=current_scans(conn,7)
+        expected=[{'parcel_id':p,'scan_id':p+1000,'recorded_at':at,'depot':'current','condition':'held'} for p in range(1,49)]
+&gt;       assert actual == expected
+E       AssertionError: assert [{'condition'...)), ...}, ...] == [{'condition'...c), ...}, ...]
+E         
+E         At index 0 diff: {'parcel_id': 1, 'scan_id': 1, 'recorded_at': datetime.datetime(2026, 3, 1, 12, 0, 0, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')), 'depot': 'old', 'condition': 'moving'} != {'parcel_id': 1, 'scan_id': 1001, 'recorded_at': datetime.datetime(2026, 3, 1, 12, 0, 0, 123456, tzinfo=datetime.timezone.utc), 'depot': 'current', 'condition': 'held'}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'condition': 'held',...
+E         
+E         ...Full output truncated (863 lines hidden), use '-vv' to show
+
+tests/test_private.py:28: AssertionError
+______ test_large_scrambled_history_matches_domain_reference_in_one_query ______
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x798206dc75f0&gt;
+
+    def test_large_scrambled_history_matches_domain_reference_in_one_query(conn):
+        rng=random.Random(90531)
+        conn.execute(parcel.insert(),[{'id':p,'carrier_id':7 if p%3 else 8,'reference':str(p)} for p in range(1,181)])
+        at=datetime(2026,1,1,tzinfo=timezone.utc)
+        records=[{'id':i,'parcel_id':rng.randrange(1,181),'recorded_at':at+timedelta(seconds=rng.randrange(70),microseconds=rng.randrange(3)),
+                  'depot':'D'+str(i%9),'condition':['moving','held','delivered'][i%3]} for i in range(1,3001)]
+        rng.shuffle(records)
+        conn.execute(scan.insert(),records)
+        expected={}
+        for row in records:
+            p=row['parcel_id']
+            if p%3 and (p not in expected or (row['recorded_at'],row['id'])&gt;(expected[p]['recorded_at'],expected[p]['id'])):
+                expected[p]=row
+        calls=[]
+        returned=[]
+        def capture(*args):
+            calls.append(args[2])
+        def capture_rows(connection,cursor,*args):
+            returned.append(cursor.rowcount)
+        event.listen(conn,'before_cursor_execute',capture)
+        event.listen(conn,'after_cursor_execute',capture_rows)
+        try:
+            actual=current_scans(conn,7)
+        finally:
+            event.remove(conn,'before_cursor_execute',capture)
+            event.remove(conn,'after_cursor_execute',capture_rows)
+        wanted=[{'parcel_id':p,'scan_id':r['id'],'recorded_at':r['recorded_at'],'depot':r['depot'],'condition':r['condition']} for p,r in sorted(expected.items())]
+&gt;       assert actual == wanted
+E       AssertionError: assert [{'condition'...)), ...}, ...] == [{'condition'...c), ...}, ...]
+E         
+E         At index 32 diff: {'parcel_id': 49, 'scan_id': 412, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 1, 1, 1, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')), 'depot': 'D7', 'condition': 'held'} != {'parcel_id': 49, 'scan_id': 2127, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 1, 1, 1, tzinfo=datetime.timezone.utc), 'depot': 'D3', 'condition': 'moving'}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'condition': 'delivered',...
+E         
+E         ...Full output truncated (1208 lines hidden), use '-vv' to show
+
+tests/test_private.py:58: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_backfilled_scans_do_not_replace_current_state
+FAILED tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row
+FAILED tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query
+========================= 2 failed, 1 passed in 2.00s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_private.py::test_backfilled_scans_do_not_replace_current_state PASSED [ 33%]
+tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row FAILED [ 66%]
+tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query FAILED [100%]
+
+=================================== FAILURES ===================================
+___________ test_timestamp_ties_choose_one_complete_greatest_id_row ____________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x798206d9e1e0>
+
+    def test_timestamp_ties_choose_one_complete_greatest_id_row(conn):
+        at=datetime(2026,3,1,12,0,0,123456,tzinfo=timezone.utc)
+        conn.execute(parcel.insert(),[{'id':p,'carrier_id':7,'reference':str(p)} for p in range(1,49)])
+        records=[]
+        for p in range(1,49):
+            records += [{'id':p,'parcel_id':p,'recorded_at':at,'depot':'old','condition':'moving'},
+                        {'id':p+1000,'parcel_id':p,'recorded_at':at.astimezone(timezone(timedelta(hours=5,minutes=30))),'depot':'current','condition':'held'}]
+        conn.execute(scan.insert(),records)
+        actual=current_scans(conn,7)
+        expected=[{'parcel_id':p,'scan_id':p+1000,'recorded_at':at,'depot':'current','condition':'held'} for p in range(1,49)]
+>       assert actual == expected
+E       AssertionError: assert [{'condition'...)), ...}, ...] == [{'condition'...c), ...}, ...]
+E         
+E         At index 0 diff: {'parcel_id': 1, 'scan_id': 1, 'recorded_at': datetime.datetime(2026, 3, 1, 12, 0, 0, 123456, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')), 'depot': 'old', 'condition': 'moving'} != {'parcel_id': 1, 'scan_id': 1001, 'recorded_at': datetime.datetime(2026, 3, 1, 12, 0, 0, 123456, tzinfo=datetime.timezone.utc), 'depot': 'current', 'condition': 'held'}
+E         
+E         Full diff:
+E           [
+E               {
+E         -         'condition': 'held',...
+E         
+E         ...Full output truncated (863 lines hidden), use '-vv' to show
+
+tests/test_private.py:28: AssertionError
+______ test_large_scrambled_history_matches_domain_reference_in_one_query ______
+
+conn = <sqlalchemy.engine.base.Connection object at 0x798206dc75f0>
+
+    def test_large_scrambled_history_matches_domain_reference_in_one_query(conn):
+        rng=random.Random(90531)
+        conn.execute(parcel.insert(),[{'id':p,'carrier_id':7 if p%3 else 8,'reference':str(p)} for p in range(1,181)])
+        at=datetime(2026,1,1,tzinfo=timezone.utc)
+        records=[{'id':i,'parcel_id':rng.randrange(1,181),'recorded_at':at+timedelta(seconds=rng.randrange(70),microseconds=rng.randrange(3)),
+                  'depot':'D'+str(i%9),'condition':['moving','held','delivered'][i%3]} for i in range(1,3001)]
+        rng.shuffle(records)
+        conn.execute(scan.insert(),records)
+        expected={}
+        for row in records:
+            p=row['parcel_id']
+            if p%3 and (p not in expected or (row['recorded_at'],row['id'])>(expected[p]['recorded_at'],expected[p]['id'])):
+                expected[p]=row
+        calls=[]
+        returned=[]
+        def capture(*args):
+            calls.append(args[2])
+        def capture_rows(connection,cursor,*args):
+            returned.append(cursor.rowcount)
+        event.listen(conn,'before_cursor_execute',capture)
+        event.listen(conn,'after_cursor_execute',capture_rows)
+        try:
+            actual=current_scans(conn,7)
+        finally:
+            event.remove(conn,'before_cursor_execute',capture)
+            event.remove(conn,'after_cursor_execute',capture_rows)
+        wanted=[{'parcel_id':p,'scan_id':r['id'],'recorded_at':r['recorded_at'],'depot':r['depot'],'condition':r['condition']} for p,r in sorted(expected.items())]
+>       assert actual == wanted
+E       AssertionError: assert [{'condition'...)), ...}, ...] == [{'condition'...c), ...}, ...]
+E         
+E         At index 32 diff: {'parcel_id': 49, 'scan_id': 412, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 1, 1, 1, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')), 'depot': 'D7', 'condition': 'held'} != {'parcel_id': 49, 'scan_id': 2127, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 1, 1, 1, tzinfo=datetime.timezone.utc), 'depot': 'D3', 'condition': 'moving'}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'condition': 'delivered',...
+E         
+E         ...Full output truncated (1208 lines hidden), use '-vv' to show
+
+tests/test_private.py:58: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_backfilled_scans_do_not_replace_current_state
+FAILED tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row
+FAILED tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query
+========================= 2 failed, 1 passed in 2.00s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_single_parcel_and_timeline PASSED            [ 50%]
+tests/test_visible.py::test_empty_carrier PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_single_parcel_and_timeline
+PASSED tests/test_visible.py::test_empty_carrier
+============================== 2 passed in 0.43s ===============================

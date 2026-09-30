@@ -1,0 +1,10 @@
+{
+  "task": "py-sqla-distinct-on",
+  "allowed": [
+    "freight/repositories/tracking.py"
+  ],
+  "bounded": {
+    "freight/repositories/tracking.py": "current_scans"
+  },
+  "raw_sql_forbidden": true
+}

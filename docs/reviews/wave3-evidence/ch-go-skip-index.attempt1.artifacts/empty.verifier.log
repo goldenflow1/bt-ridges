@@ -1,0 +1,28 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-go-skip-index" tests="6" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_migration" /><testcase name="compilation" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="=== RUN   TestHiddenExistingPartsReadRowsBoundAndLifecycle&#10;    ridges_hidden_test.go:85: job &quot;16530523710413686345&quot; read 1048576 rows, bound 32768&#10;--- FAIL: TestHiddenExistingPartsReadRowsBoundAndLifecycle (4.03s)&#10;=== RUN   TestHiddenQuotedJobAndCompleteFields&#10;--- PASS: TestHiddenQuotedJobAndCompleteFields (0.11s)&#10;FAIL&#10;FAIL&#09;buildvault/internal/builds&#09;4.162s&#10;">=== RUN   TestHiddenExistingPartsReadRowsBoundAndLifecycle
+    ridges_hidden_test.go:85: job "16530523710413686345" read 1048576 rows, bound 32768
+--- FAIL: TestHiddenExistingPartsReadRowsBoundAndLifecycle (4.03s)
+=== RUN   TestHiddenQuotedJobAndCompleteFields
+--- PASS: TestHiddenQuotedJobAndCompleteFields (0.11s)
+FAIL
+FAIL	buildvault/internal/builds	4.162s
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+=== RUN   TestHiddenExistingPartsReadRowsBoundAndLifecycle
+    ridges_hidden_test.go:85: job "16530523710413686345" read 1048576 rows, bound 32768
+--- FAIL: TestHiddenExistingPartsReadRowsBoundAndLifecycle (4.03s)
+=== RUN   TestHiddenQuotedJobAndCompleteFields
+--- PASS: TestHiddenQuotedJobAndCompleteFields (0.11s)
+FAIL
+FAIL	buildvault/internal/builds	4.162s
+?   	buildvault/cmd/buildvault	[no test files]
+?   	buildvault/internal/connection	[no test files]
+?   	buildvault/internal/migrate	[no test files]
+=== RUN   TestVisibleJobLookupAndProjectTimeline
+--- PASS: TestVisibleJobLookupAndProjectTimeline (0.14s)
+=== RUN   TestVisibleMissingJob
+--- PASS: TestVisibleMissingJob (0.08s)
+PASS
+ok  	buildvault/internal/builds	0.240s

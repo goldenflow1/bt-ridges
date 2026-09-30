@@ -1,0 +1,102 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="pg-expr-index-lower" tests="8" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="migration_state_check" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 1 item&#10;&#10;tests/test_private.py::test_real_lookup_index_work_and_reversible_state FAILED [100%]&#10;&#10;=================================== FAILURES ===================================&#10;_______________ test_real_lookup_index_work_and_reversible_state _______________&#10;&#10;db = None&#10;&#10;    def test_real_lookup_index_work_and_reversible_state(db):&#10;        call_command('migrate','library','0001_initial',verbosity=0)&#10;        with connection.cursor() as c:&#10;            c.execute(&quot;INSERT INTO library_member(id,branch_id,email,display_name,active) SELECT n,mod(n,5)+1,'Reader'||n||'@Library.EXAMPLE','Member '||n,true FROM generate_series(1,100000) n&quot;)&#10;            c.execute('ANALYZE library_member')&#10;            c.execute(&quot;SELECT indexname,indexdef FROM pg_ind">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+tests/test_private.py::test_real_lookup_index_work_and_reversible_state FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________ test_real_lookup_index_work_and_reversible_state _______________
+
+db = None
+
+    def test_real_lookup_index_work_and_reversible_state(db):
+        call_command('migrate','library','0001_initial',verbosity=0)
+        with connection.cursor() as c:
+            c.execute("INSERT INTO library_member(id,branch_id,email,display_name,active) SELECT n,mod(n,5)+1,'Reader'||n||'@Library.EXAMPLE','Member '||n,true FROM generate_series(1,100000) n")
+            c.execute('ANALYZE library_member')
+            c.execute("SELECT indexname,indexdef FROM pg_indexes WHERE tablename='library_member' ORDER BY indexname")
+            original_indexes=c.fetchall()
+        targets=[(3,'READER17@library.example'),(3,'reader50007@LIBRARY.EXAMPLE'),(3,'reader99997@library.example'),(3,'absent@library.example')]
+        expected=[identify_member(branch,email) for branch,email in targets]
+        before=[plan_for(branch,email)[0] for branch,email in targets]
+        original=fingerprint()
+        assert min(before)&gt;640
+        call_command('migrate',verbosity=0)
+        call_command('makemigrations',check=True,dry_run=True,stdout=StringIO())
+        with connection.cursor() as c:
+            c.execute('ANALYZE library_member')
+        for (branch,email),old,result in zip(targets,before,expected):
+            work,indexes=plan_for(branch,email)
+&gt;           assert INDEX in indexes, f'lookup did not use expression index: {indexes}'
+E           AssertionError: lookup did not use expression index: []
+E           assert 'library_member_lower_email' in []
+
+tests/test_private.py:53: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_private.py::test_real_lookup_index_work_and_reversible_state
+============================== 1 failed in 5.89s ===============================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+tests/test_private.py::test_real_lookup_index_work_and_reversible_state FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________ test_real_lookup_index_work_and_reversible_state _______________
+
+db = None
+
+    def test_real_lookup_index_work_and_reversible_state(db):
+        call_command('migrate','library','0001_initial',verbosity=0)
+        with connection.cursor() as c:
+            c.execute("INSERT INTO library_member(id,branch_id,email,display_name,active) SELECT n,mod(n,5)+1,'Reader'||n||'@Library.EXAMPLE','Member '||n,true FROM generate_series(1,100000) n")
+            c.execute('ANALYZE library_member')
+            c.execute("SELECT indexname,indexdef FROM pg_indexes WHERE tablename='library_member' ORDER BY indexname")
+            original_indexes=c.fetchall()
+        targets=[(3,'READER17@library.example'),(3,'reader50007@LIBRARY.EXAMPLE'),(3,'reader99997@library.example'),(3,'absent@library.example')]
+        expected=[identify_member(branch,email) for branch,email in targets]
+        before=[plan_for(branch,email)[0] for branch,email in targets]
+        original=fingerprint()
+        assert min(before)>640
+        call_command('migrate',verbosity=0)
+        call_command('makemigrations',check=True,dry_run=True,stdout=StringIO())
+        with connection.cursor() as c:
+            c.execute('ANALYZE library_member')
+        for (branch,email),old,result in zip(targets,before,expected):
+            work,indexes=plan_for(branch,email)
+>           assert INDEX in indexes, f'lookup did not use expression index: {indexes}'
+E           AssertionError: lookup did not use expression index: []
+E           assert 'library_member_lower_email' in []
+
+tests/test_private.py:53: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_private.py::test_real_lookup_index_work_and_reversible_state
+============================== 1 failed in 5.89s ===============================
+All checks passed!
+No changes detected
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_existing_lookup_and_export PASSED            [ 50%]
+tests/test_visible.py::test_absent_member PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_existing_lookup_and_export
+PASSED tests/test_visible.py::test_absent_member
+============================== 2 passed in 0.47s ===============================

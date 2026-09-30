@@ -1,0 +1,157 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-django-annotate-subquery" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_private.py::test_unrelated_annotations_do_not_fan_out PASSED  [ 25%]&#10;tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero FAILED [ 50%]&#10;tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state FAILED [ 75%]&#10;tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors PASSED [100%]&#10;&#10;=================================== FAILURES ===================================&#10;______________ test_empty_and_nonmatching_counts_are_integer_zero ______________&#10;&#10;conn = &lt;django.db.backends.utils.CursorWrapper object at 0x759fc99a9550&gt;&#10;&#10;    def test_empty_and_nonmatching_counts_are_integer_zero(conn):&#10;        conn.execute(&quot;INSERT INTO doctors VALUES (1,7,'Alma'),(2,7,'Bo'),(3,7,'Ca">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_unrelated_annotations_do_not_fan_out PASSED  [ 25%]
+tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero FAILED [ 50%]
+tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state FAILED [ 75%]
+tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors PASSED [100%]
+
+=================================== FAILURES ===================================
+______________ test_empty_and_nonmatching_counts_are_integer_zero ______________
+
+conn = &lt;django.db.backends.utils.CursorWrapper object at 0x759fc99a9550&gt;
+
+    def test_empty_and_nonmatching_counts_are_integer_zero(conn):
+        conn.execute("INSERT INTO doctors VALUES (1,7,'Alma'),(2,7,'Bo'),(3,7,'Cai')")
+        conn.execute("INSERT INTO appointments VALUES (1,2,'2026-01-09','open'),(2,3,'2026-02-01','closed')")
+        actual=get_roster(7,NOW)['doctors']
+&gt;       assert [row['open_appointments'] for row in actual] == [0,0,0]
+E       AssertionError: assert [None, None, None] == [0, 0, 0]
+E         
+E         At index 0 diff: None != 0
+E         
+E         Full diff:
+E           [
+E         -     0,
+E         -     0,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_private.py:25: AssertionError
+_____________ test_boundary_clinic_isolation_ties_and_fresh_state ______________
+
+conn = &lt;django.db.backends.utils.CursorWrapper object at 0x759fc950f260&gt;
+
+    def test_boundary_clinic_isolation_ties_and_fresh_state(conn):
+        Doctor.objects.bulk_create([Doctor(id=i,clinic_id=7 if i&lt;4 else 8,display_name='Same') for i in [3,2,1,4]])
+        Appointment.objects.bulk_create([
+            Appointment(id=1,doctor_id=1,starts_at=NOW,state='open'),
+            Appointment(id=2,doctor_id=1,starts_at=NOW-timedelta(microseconds=1),state='open'),
+            Appointment(id=3,doctor_id=1,starts_at=NOW+timedelta(seconds=1),state='closed'),
+            Appointment(id=4,doctor_id=4,starts_at=NOW,state='open')])
+        equivalent=NOW.astimezone(timezone(timedelta(hours=5,minutes=30)))
+        result=get_roster(7,equivalent)['doctors']
+        assert [r['id'] for r in result] == [1,2,3]
+&gt;       assert [r['open_appointments'] for r in result] == [1,0,0]
+E       AssertionError: assert [1, None, None] == [1, 0, 0]
+E         
+E         At index 1 diff: None != 0
+E         
+E         Full diff:
+E           [
+E               1,
+E         -     0,...
+E         
+E         ...Full output truncated (4 lines hidden), use '-vv' to show
+
+tests/test_private.py:40: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_unrelated_annotations_do_not_fan_out
+PASSED tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors
+FAILED tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero
+FAILED tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state
+========================= 2 failed, 2 passed in 1.03s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_unrelated_annotations_do_not_fan_out PASSED  [ 25%]
+tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero FAILED [ 50%]
+tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state FAILED [ 75%]
+tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors PASSED [100%]
+
+=================================== FAILURES ===================================
+______________ test_empty_and_nonmatching_counts_are_integer_zero ______________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x759fc99a9550>
+
+    def test_empty_and_nonmatching_counts_are_integer_zero(conn):
+        conn.execute("INSERT INTO doctors VALUES (1,7,'Alma'),(2,7,'Bo'),(3,7,'Cai')")
+        conn.execute("INSERT INTO appointments VALUES (1,2,'2026-01-09','open'),(2,3,'2026-02-01','closed')")
+        actual=get_roster(7,NOW)['doctors']
+>       assert [row['open_appointments'] for row in actual] == [0,0,0]
+E       AssertionError: assert [None, None, None] == [0, 0, 0]
+E         
+E         At index 0 diff: None != 0
+E         
+E         Full diff:
+E           [
+E         -     0,
+E         -     0,...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_private.py:25: AssertionError
+_____________ test_boundary_clinic_isolation_ties_and_fresh_state ______________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x759fc950f260>
+
+    def test_boundary_clinic_isolation_ties_and_fresh_state(conn):
+        Doctor.objects.bulk_create([Doctor(id=i,clinic_id=7 if i<4 else 8,display_name='Same') for i in [3,2,1,4]])
+        Appointment.objects.bulk_create([
+            Appointment(id=1,doctor_id=1,starts_at=NOW,state='open'),
+            Appointment(id=2,doctor_id=1,starts_at=NOW-timedelta(microseconds=1),state='open'),
+            Appointment(id=3,doctor_id=1,starts_at=NOW+timedelta(seconds=1),state='closed'),
+            Appointment(id=4,doctor_id=4,starts_at=NOW,state='open')])
+        equivalent=NOW.astimezone(timezone(timedelta(hours=5,minutes=30)))
+        result=get_roster(7,equivalent)['doctors']
+        assert [r['id'] for r in result] == [1,2,3]
+>       assert [r['open_appointments'] for r in result] == [1,0,0]
+E       AssertionError: assert [1, None, None] == [1, 0, 0]
+E         
+E         At index 1 diff: None != 0
+E         
+E         Full diff:
+E           [
+E               1,
+E         -     0,...
+E         
+E         ...Full output truncated (4 lines hidden), use '-vv' to show
+
+tests/test_private.py:40: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_unrelated_annotations_do_not_fan_out
+PASSED tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors
+FAILED tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero
+FAILED tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state
+========================= 2 failed, 2 passed in 1.03s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_existing_roster_and_calendar_contracts PASSED [ 50%]
+tests/test_visible.py::test_absent_clinic PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_existing_roster_and_calendar_contracts
+PASSED tests/test_visible.py::test_absent_clinic
+============================== 2 passed in 0.30s ===============================

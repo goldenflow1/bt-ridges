@@ -1,0 +1,10 @@
+{
+  "task": "ch-py-argmax-state",
+  "allowed": [
+    "grid/reports/current.py",
+    "grid/reports/panel.py",
+    "grid/reports/history.py"
+  ],
+  "bounded": {},
+  "raw_sql_forbidden": false
+}

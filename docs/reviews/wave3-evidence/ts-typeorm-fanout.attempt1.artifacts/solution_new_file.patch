@@ -1,0 +1,30 @@
+diff --git a/src/repositories/events.ts b/src/repositories/events.ts
+index de4fb08..395e03b 100644
+--- a/src/repositories/events.ts
++++ b/src/repositories/events.ts
+@@ -8,10 +8,14 @@ export async function listEvents(source: DataSource, tenant: number, kind: strin
+   const query = source.getRepository(EventSchema).createQueryBuilder('event')
+     .leftJoinAndSelect('event.ticketTypes', 'ticket')
+     .where('event.tenantId = :tenant', { tenant }).andWhere('event.published = true');
+-  if (kind !== null) query.andWhere('ticket.kind = :kind AND ticket.enabled = true', { kind });
+-  query.orderBy('event.startsAt', 'ASC').limit(limit).offset(offset);
+-  const total = (await query.clone().limit(undefined).offset(undefined).getRawMany()).length;
+-  return { items: await query.getMany(), total };
++  if (kind !== null) {
++    query.andWhere(builder => 'EXISTS ' + builder.subQuery().select('1')
++      .from(TicketTypeSchema, 'eligible').where('eligible.eventId = event.id')
++      .andWhere('eligible.kind = :kind AND eligible.enabled = true').getQuery(), { kind });
++  }
++  query.orderBy('event.startsAt', 'ASC').addOrderBy('event.id', 'ASC').skip(offset).take(limit);
++  const [items, total] = await query.getManyAndCount();
++  return { items, total };
+ }
+ 
+ export async function enabledTicketKinds(source: DataSource, eventId: number): Promise<string[]> {
+diff --git a/src/repositories/extra_helper.ts b/src/repositories/extra_helper.ts
+new file mode 100644
+index 0000000..cb0ff5c
+--- /dev/null
++++ b/src/repositories/extra_helper.ts
+@@ -0,0 +1 @@
++export {};

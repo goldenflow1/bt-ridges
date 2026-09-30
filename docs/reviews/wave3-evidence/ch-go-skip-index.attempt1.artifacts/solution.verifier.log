@@ -1,0 +1,20 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-go-skip-index" tests="6" failures="0"><testcase name="source_tree_conservation_before" /><testcase name="bounded_migration" /><testcase name="compilation" /><testcase name="regression_visible" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after" /></testsuite>
+
+=== RUN   TestHiddenExistingPartsReadRowsBoundAndLifecycle
+--- PASS: TestHiddenExistingPartsReadRowsBoundAndLifecycle (8.84s)
+=== RUN   TestHiddenQuotedJobAndCompleteFields
+--- PASS: TestHiddenQuotedJobAndCompleteFields (0.30s)
+PASS
+ok  	buildvault/internal/builds	9.164s
+?   	buildvault/cmd/buildvault	[no test files]
+?   	buildvault/internal/connection	[no test files]
+?   	buildvault/internal/migrate	[no test files]
+=== RUN   TestVisibleJobLookupAndProjectTimeline
+--- PASS: TestVisibleJobLookupAndProjectTimeline (0.28s)
+=== RUN   TestVisibleMissingJob
+--- PASS: TestVisibleMissingJob (0.11s)
+PASS
+ok  	buildvault/internal/builds	0.414s

@@ -1,0 +1,18 @@
+diff --git a/README.md b/README.md
+index 48f4f9f..4e05106 100644
+--- a/README.md
++++ b/README.md
+@@ -3,3 +3,4 @@
+ Regional operators use the connection panel to see which electricity meters are online in their region. The importer accepts late events and revision corrections, so ingestion order is not the current-state order. A meter may move region without changing its ID.
+ 
+ Requests enter `grid/api.py`, pass through the operations service and the reporting package, then reach ClickHouse. The reporting package also supplies a history summary used elsewhere. The HTTP transport and schema management live outside that package.
++
+diff --git a/grid/reports/current.py b/grid/reports/current.py
+index 7d2d735..82c91fc 100644
+--- a/grid/reports/current.py
++++ b/grid/reports/current.py
+@@ -1,3 +1,3 @@
+ def online_query():
+     """SQL for the regional operations panel."""
+-    return "SELECT meter_id, snapshot.1 AS state, snapshot.2 AS region, snapshot.3 AS reading,\n       toUnixTimestamp64Micro(snapshot.4) AS observed_us, snapshot.5 AS version\nFROM (\n  SELECT meter_id, argMax(tuple(state, region, reading, observed_at, version), observed_at) AS snapshot\n  FROM meter_events\n  WHERE utility = {utility:String} AND state = 'online' AND region = {region:String}\n  GROUP BY meter_id\n)\nWHERE state = 'online' AND region = {region:String}\nORDER BY meter_id"
++    return "SELECT meter_id, snapshot.1 AS state, snapshot.2 AS region, snapshot.3 AS reading,\n       toUnixTimestamp64Micro(snapshot.4) AS observed_us, snapshot.5 AS version\nFROM (\n  SELECT meter_id, argMax(tuple(state, region, reading, observed_at, version), tuple(observed_at, version)) AS snapshot\n  FROM meter_events\n  WHERE utility = {utility:String}\n  GROUP BY meter_id\n)\nWHERE state = 'online' AND region = {region:String}\nORDER BY meter_id"

@@ -1,0 +1,11 @@
+--- a/clinic/repositories/workload.py
++++ b/clinic/repositories/workload.py
+@@ -9,7 +9,7 @@
+     return (Doctor.objects.filter(clinic_id=clinic_id)
+             .annotate(approved_minutes=Coalesce(models.Sum('sessions__minutes',
+                       filter=models.Q(sessions__approved=True)), models.Value(0)),
+-                      open_appointments=models.Value(0, output_field=models.IntegerField()))
++                      open_appointments=models.Count('appointments', filter=models.Q(appointments__state='open', appointments__starts_at__gte=as_of)))
+             .order_by('display_name', 'id'))
+ 
+ 

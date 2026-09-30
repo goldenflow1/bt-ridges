@@ -1,0 +1,45 @@
+/logs/verifier/graded.patch:7: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="go-sqlc-interval" tests="7" failures="2"><testcase name="source_tree_conservation_before"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase><testcase name="bounded_query" /><testcase name="generated_query_sync" /><testcase name="compilation" /><testcase name="regression_visible" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase></testsuite>
+
+{"Time":"2026-09-30T07:57:55.765563246Z","Action":"start","Package":"salarybook/internal/api"}
+{"Time":"2026-09-30T07:57:55.774992341Z","Action":"run","Package":"salarybook/internal/api","Test":"TestHiddenFractionalEndAndExclusiveMidnight"}
+{"Time":"2026-09-30T07:57:55.775223152Z","Action":"output","Package":"salarybook/internal/api","Test":"TestHiddenFractionalEndAndExclusiveMidnight","Output":"=== RUN   TestHiddenFractionalEndAndExclusiveMidnight\n"}
+{"Time":"2026-09-30T07:57:55.840277923Z","Action":"output","Package":"salarybook/internal/api","Test":"TestHiddenFractionalEndAndExclusiveMidnight","Output":"--- PASS: TestHiddenFractionalEndAndExclusiveMidnight (0.06s)\n"}
+{"Time":"2026-09-30T07:57:55.840692159Z","Action":"pass","Package":"salarybook/internal/api","Test":"TestHiddenFractionalEndAndExclusiveMidnight","Elapsed":0.06}
+{"Time":"2026-09-30T07:57:55.840885325Z","Action":"run","Package":"salarybook/internal/api","Test":"TestHiddenDSTUsesSuppliedInstants"}
+{"Time":"2026-09-30T07:57:55.840913018Z","Action":"output","Package":"salarybook/internal/api","Test":"TestHiddenDSTUsesSuppliedInstants","Output":"=== RUN   TestHiddenDSTUsesSuppliedInstants\n"}
+{"Time":"2026-09-30T07:57:55.95688871Z","Action":"output","Package":"salarybook/internal/api","Test":"TestHiddenDSTUsesSuppliedInstants","Output":"--- PASS: TestHiddenDSTUsesSuppliedInstants (0.12s)\n"}
+{"Time":"2026-09-30T07:57:55.957112054Z","Action":"pass","Package":"salarybook/internal/api","Test":"TestHiddenDSTUsesSuppliedInstants","Elapsed":0.12}
+{"Time":"2026-09-30T07:57:55.957218959Z","Action":"run","Package":"salarybook/internal/api","Test":"TestHiddenYearChangeFractionalZoneAndTies"}
+{"Time":"2026-09-30T07:57:55.957245901Z","Action":"output","Package":"salarybook/internal/api","Test":"TestHiddenYearChangeFractionalZoneAndTies","Output":"=== RUN   TestHiddenYearChangeFractionalZoneAndTies\n"}
+{"Time":"2026-09-30T07:57:56.004468374Z","Action":"output","Package":"salarybook/internal/api","Test":"TestHiddenYearChangeFractionalZoneAndTies","Output":"--- PASS: TestHiddenYearChangeFractionalZoneAndTies (0.05s)\n"}
+{"Time":"2026-09-30T07:57:56.004599989Z","Action":"pass","Package":"salarybook/internal/api","Test":"TestHiddenYearChangeFractionalZoneAndTies","Elapsed":0.05}
+{"Time":"2026-09-30T07:57:56.004627452Z","Action":"output","Package":"salarybook/internal/api","Output":"PASS\n"}
+{"Time":"2026-09-30T07:57:56.006832508Z","Action":"output","Package":"salarybook/internal/api","Output":"ok  \tsalarybook/internal/api\t0.240s\n"}
+{"Time":"2026-09-30T07:57:56.006910991Z","Action":"pass","Package":"salarybook/internal/api","Elapsed":0.242}
+{"Time":"2026-09-30T07:57:53.600516714Z","Action":"start","Package":"salarybook/internal/api"}
+{"Time":"2026-09-30T07:57:53.601599894Z","Action":"start","Package":"salarybook/internal/calendar"}
+{"Time":"2026-09-30T07:57:53.601736479Z","Action":"output","Package":"salarybook/internal/calendar","Output":"?   \tsalarybook/internal/calendar\t[no test files]\n"}
+{"Time":"2026-09-30T07:57:53.601863351Z","Action":"skip","Package":"salarybook/internal/calendar","Elapsed":0}
+{"Time":"2026-09-30T07:57:53.6020956Z","Action":"start","Package":"salarybook/internal/db"}
+{"Time":"2026-09-30T07:57:53.602171956Z","Action":"output","Package":"salarybook/internal/db","Output":"?   \tsalarybook/internal/db\t[no test files]\n"}
+{"Time":"2026-09-30T07:57:53.602202925Z","Action":"skip","Package":"salarybook/internal/db","Elapsed":0}
+{"Time":"2026-09-30T07:57:53.602253661Z","Action":"start","Package":"salarybook/internal/payroll"}
+{"Time":"2026-09-30T07:57:53.602276138Z","Action":"output","Package":"salarybook/internal/payroll","Output":"?   \tsalarybook/internal/payroll\t[no test files]\n"}
+{"Time":"2026-09-30T07:57:53.602290678Z","Action":"skip","Package":"salarybook/internal/payroll","Elapsed":0}
+{"Time":"2026-09-30T07:57:53.611814485Z","Action":"run","Package":"salarybook/internal/api","Test":"TestVisibleMiddayExport"}
+{"Time":"2026-09-30T07:57:53.611915367Z","Action":"output","Package":"salarybook/internal/api","Test":"TestVisibleMiddayExport","Output":"=== RUN   TestVisibleMiddayExport\n"}
+{"Time":"2026-09-30T07:57:53.687883619Z","Action":"output","Package":"salarybook/internal/api","Test":"TestVisibleMiddayExport","Output":"--- PASS: TestVisibleMiddayExport (0.08s)\n"}
+{"Time":"2026-09-30T07:57:53.687984786Z","Action":"pass","Package":"salarybook/internal/api","Test":"TestVisibleMiddayExport","Elapsed":0.08}
+{"Time":"2026-09-30T07:57:53.688029868Z","Action":"run","Package":"salarybook/internal/api","Test":"TestVisibleEmptyAndInvalidPeriod"}
+{"Time":"2026-09-30T07:57:53.688038727Z","Action":"output","Package":"salarybook/internal/api","Test":"TestVisibleEmptyAndInvalidPeriod","Output":"=== RUN   TestVisibleEmptyAndInvalidPeriod\n"}
+{"Time":"2026-09-30T07:57:53.736016419Z","Action":"output","Package":"salarybook/internal/api","Test":"TestVisibleEmptyAndInvalidPeriod","Output":"--- PASS: TestVisibleEmptyAndInvalidPeriod (0.05s)\n"}
+{"Time":"2026-09-30T07:57:53.73632287Z","Action":"pass","Package":"salarybook/internal/api","Test":"TestVisibleEmptyAndInvalidPeriod","Elapsed":0.05}
+{"Time":"2026-09-30T07:57:53.736385103Z","Action":"output","Package":"salarybook/internal/api","Output":"PASS\n"}
+{"Time":"2026-09-30T07:57:53.740182893Z","Action":"output","Package":"salarybook/internal/api","Output":"ok  \tsalarybook/internal/api\t0.137s\n"}
+{"Time":"2026-09-30T07:57:53.740293478Z","Action":"pass","Package":"salarybook/internal/api","Elapsed":0.14}

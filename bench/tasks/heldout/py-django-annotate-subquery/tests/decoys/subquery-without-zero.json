@@ -1,0 +1,7 @@
+{
+  "description": "subquery-without-zero",
+  "expect_failing": [
+    "test_empty_and_nonmatching_counts_are_integer_zero"
+  ],
+  "passes_visible": true
+}

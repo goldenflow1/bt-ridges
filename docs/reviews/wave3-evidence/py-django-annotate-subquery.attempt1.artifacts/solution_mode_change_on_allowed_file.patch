@@ -1,0 +1,22 @@
+diff --git a/clinic/repositories/workload.py b/clinic/repositories/workload.py
+old mode 100644
+new mode 100755
+index 9436ae5..39dc77b
+--- a/clinic/repositories/workload.py
++++ b/clinic/repositories/workload.py
+@@ -6,10 +6,14 @@ from clinic.models import Appointment, Doctor
+ 
+ def doctor_workload(clinic_id, as_of):
+     """Return the clinic roster with approved session minutes and future open slots."""
++    counts = (Appointment.objects.filter(doctor_id=models.OuterRef('pk'), state='open', starts_at__gte=as_of)
++              .order_by().values('doctor_id').annotate(total=models.Count('id')).values('total'))
++    count_expression = Coalesce(models.Subquery(counts, output_field=models.IntegerField()),
++                                models.Value(0), output_field=models.IntegerField())
+     return (Doctor.objects.filter(clinic_id=clinic_id)
+             .annotate(approved_minutes=Coalesce(models.Sum('sessions__minutes',
+                       filter=models.Q(sessions__approved=True)), models.Value(0)),
+-                      open_appointments=models.Value(0, output_field=models.IntegerField()))
++                      open_appointments=count_expression)
+             .order_by('display_name', 'id'))
+ 
+ 

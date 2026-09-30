@@ -1,0 +1,512 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="pg-expr-index-lower" tests="8" failures="5"><testcase name="source_tree_conservation_before"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible"><failure message="self.migration_progress_callback)&#10;/usr/local/lib/python3.12/site-packages/django/db/migrations/executor.py:18: in __init__&#10;    self.loader = MigrationLoader(self.connection)&#10;/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:58: in __init__&#10;    self.build_graph()&#10;/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:229: in build_graph&#10;    self.load_disk()&#10;_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ &#10;&#10;self = &lt;django.db.migrations.loader.MigrationLoader object at 0x775633d16600&gt;&#10;&#10;    def load_disk(self):&#10;        &quot;&quot;&quot;Load the migrations from all INSTALLED_APPS from disk.&quot;&quot;&quot;&#10;        self.disk_migrations = {}&#10;        self.unmigrated_apps = set()&#10;        self.migrated_apps = set()&#10;        for app_config in apps.get_app_configs():&#10;            # Get the migrations module directory&#10;            module_name, explicit = self.migrations_module(app_config.label)&#10;            if module_name is None:&#10;                self.unmigrate">self.migration_progress_callback)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/executor.py:18: in __init__
+    self.loader = MigrationLoader(self.connection)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:58: in __init__
+    self.build_graph()
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:229: in build_graph
+    self.load_disk()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;django.db.migrations.loader.MigrationLoader object at 0x775633d16600&gt;
+
+    def load_disk(self):
+        """Load the migrations from all INSTALLED_APPS from disk."""
+        self.disk_migrations = {}
+        self.unmigrated_apps = set()
+        self.migrated_apps = set()
+        for app_config in apps.get_app_configs():
+            # Get the migrations module directory
+            module_name, explicit = self.migrations_module(app_config.label)
+            if module_name is None:
+                self.unmigrated_apps.add(app_config.label)
+                continue
+            was_loaded = module_name in sys.modules
+            try:
+                module = import_module(module_name)
+            except ModuleNotFoundError as e:
+                if (explicit and self.ignore_no_migrations) or (
+                    not explicit and MIGRATIONS_MODULE_NAME in e.name.split(".")
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                raise
+            else:
+                # Module is not a package (e.g. migrations.py).
+                if not hasattr(module, "__path__"):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Empty directories are namespaces. Namespace packages have no
+                # __file__ and don't use a list for __path__. See
+                # https://docs.python.org/3/reference/import.html#namespace-packages
+                if getattr(module, "__file__", None) is None and not isinstance(
+                    module.__path__, list
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Force a reload if it's already loaded (tests need this)
+                if was_loaded:
+                    reload(module)
+            self.migrated_apps.add(app_config.label)
+            migration_names = {
+                name
+                for _, name, is_pkg in pkgutil.iter_modules(module.__path__)
+                if not is_pkg and name[0] not in "_~"
+            }
+            # Load migrations
+            for migration_name in migration_names:
+                migration_path = "%s.%s" % (module_name, migration_name)
+                try:
+                    migration_module = import_module(migration_path)
+                except ImportError as e:
+                    if "bad magic number" in str(e):
+                        raise ImportError(
+                            "Couldn't import %r as it appears to be a stale "
+                            ".pyc file." % migration_path
+                        ) from e
+                    else:
+                        raise
+                if not hasattr(migration_module, "Migration"):
+&gt;                   raise BadMigrationError(
+                        "Migration %s in app %s has no Migration class"
+                        % (migration_name, app_config.label)
+                    )
+E                   django.db.migrations.exceptions.BadMigrationError: Migration extra_helper in app library has no Migration class
+
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:130: BadMigrationError
+=========================== short test summary info ============================
+ERROR tests/test_visible.py::test_existing_lookup_and_export - django.db.migr...
+ERROR tests/test_visible.py::test_absent_member - django.db.migrations.except...
+============================== 2 errors in 1.09s ===============================
+</failure></testcase><testcase name="migration_state_check"><failure message="Traceback (most recent call last):&#10;  File &quot;/app/manage.py&quot;, line 6, in &lt;module&gt;&#10;    execute_from_command_line(sys.argv)&#10;  File &quot;/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py&quot;, line 442, in execute_from_command_line&#10;    utility.execute()&#10;  File &quot;/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py&quot;, line 436, in execute&#10;    self.fetch_command(subcommand).run_from_argv(self.argv)&#10;  File &quot;/usr/local/lib/python3.12/site-packages/django/core/management/base.py&quot;, line 413, in run_from_argv&#10;    self.execute(*args, **cmd_options)&#10;  File &quot;/usr/local/lib/python3.12/site-packages/django/core/management/base.py&quot;, line 459, in execute&#10;    output = self.handle(*args, **options)&#10;             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/usr/local/lib/python3.12/site-packages/django/core/management/base.py&quot;, line 107, in wrapper&#10;    res = handle_func(*args, **kwargs)&#10;          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;  File &quot;/usr/local/lib/python3.12/site-packages/djang">Traceback (most recent call last):
+  File "/app/manage.py", line 6, in &lt;module&gt;
+    execute_from_command_line(sys.argv)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/base.py", line 413, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/base.py", line 459, in execute
+    output = self.handle(*args, **options)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/base.py", line 107, in wrapper
+    res = handle_func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/makemigrations.py", line 139, in handle
+    loader = MigrationLoader(None, ignore_no_migrations=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py", line 58, in __init__
+    self.build_graph()
+  File "/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py", line 229, in build_graph
+    self.load_disk()
+  File "/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py", line 130, in load_disk
+    raise BadMigrationError(
+django.db.migrations.exceptions.BadMigrationError: Migration extra_helper in app library has no Migration class
+</failure></testcase><testcase name="hidden_behaviour"><failure message="ent/commands/migrate.py:118: in handle&#10;    executor = MigrationExecutor(connection, self.migration_progress_callback)&#10;/usr/local/lib/python3.12/site-packages/django/db/migrations/executor.py:18: in __init__&#10;    self.loader = MigrationLoader(self.connection)&#10;/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:58: in __init__&#10;    self.build_graph()&#10;/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:229: in build_graph&#10;    self.load_disk()&#10;_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ &#10;&#10;self = &lt;django.db.migrations.loader.MigrationLoader object at 0x7c18a5538d70&gt;&#10;&#10;    def load_disk(self):&#10;        &quot;&quot;&quot;Load the migrations from all INSTALLED_APPS from disk.&quot;&quot;&quot;&#10;        self.disk_migrations = {}&#10;        self.unmigrated_apps = set()&#10;        self.migrated_apps = set()&#10;        for app_config in apps.get_app_configs():&#10;            # Get the migrations module directory&#10;            module_name, explicit = self.migrations_module(">ent/commands/migrate.py:118: in handle
+    executor = MigrationExecutor(connection, self.migration_progress_callback)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/executor.py:18: in __init__
+    self.loader = MigrationLoader(self.connection)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:58: in __init__
+    self.build_graph()
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:229: in build_graph
+    self.load_disk()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;django.db.migrations.loader.MigrationLoader object at 0x7c18a5538d70&gt;
+
+    def load_disk(self):
+        """Load the migrations from all INSTALLED_APPS from disk."""
+        self.disk_migrations = {}
+        self.unmigrated_apps = set()
+        self.migrated_apps = set()
+        for app_config in apps.get_app_configs():
+            # Get the migrations module directory
+            module_name, explicit = self.migrations_module(app_config.label)
+            if module_name is None:
+                self.unmigrated_apps.add(app_config.label)
+                continue
+            was_loaded = module_name in sys.modules
+            try:
+                module = import_module(module_name)
+            except ModuleNotFoundError as e:
+                if (explicit and self.ignore_no_migrations) or (
+                    not explicit and MIGRATIONS_MODULE_NAME in e.name.split(".")
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                raise
+            else:
+                # Module is not a package (e.g. migrations.py).
+                if not hasattr(module, "__path__"):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Empty directories are namespaces. Namespace packages have no
+                # __file__ and don't use a list for __path__. See
+                # https://docs.python.org/3/reference/import.html#namespace-packages
+                if getattr(module, "__file__", None) is None and not isinstance(
+                    module.__path__, list
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Force a reload if it's already loaded (tests need this)
+                if was_loaded:
+                    reload(module)
+            self.migrated_apps.add(app_config.label)
+            migration_names = {
+                name
+                for _, name, is_pkg in pkgutil.iter_modules(module.__path__)
+                if not is_pkg and name[0] not in "_~"
+            }
+            # Load migrations
+            for migration_name in migration_names:
+                migration_path = "%s.%s" % (module_name, migration_name)
+                try:
+                    migration_module = import_module(migration_path)
+                except ImportError as e:
+                    if "bad magic number" in str(e):
+                        raise ImportError(
+                            "Couldn't import %r as it appears to be a stale "
+                            ".pyc file." % migration_path
+                        ) from e
+                    else:
+                        raise
+                if not hasattr(migration_module, "Migration"):
+&gt;                   raise BadMigrationError(
+                        "Migration %s in app %s has no Migration class"
+                        % (migration_name, app_config.label)
+                    )
+E                   django.db.migrations.exceptions.BadMigrationError: Migration extra_helper in app library has no Migration class
+
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:130: BadMigrationError
+=========================== short test summary info ============================
+ERROR tests/test_private.py::test_real_lookup_index_work_and_reversible_state
+=============================== 1 error in 0.51s ===============================
+</failure></testcase><testcase name="source_tree_conservation_after"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+tests/test_private.py::test_real_lookup_index_work_and_reversible_state ERROR [100%]
+
+==================================== ERRORS ====================================
+______ ERROR at setup of test_real_lookup_index_work_and_reversible_state ______
+
+    @pytest.fixture
+    def db():
+>       call_command('migrate',verbosity=0)
+
+tests/conftest.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py:194: in call_command
+    return command.execute(*args, **defaults)
+/usr/local/lib/python3.12/site-packages/django/core/management/base.py:459: in execute
+    output = self.handle(*args, **options)
+/usr/local/lib/python3.12/site-packages/django/core/management/base.py:107: in wrapper
+    res = handle_func(*args, **kwargs)
+/usr/local/lib/python3.12/site-packages/django/core/management/commands/migrate.py:118: in handle
+    executor = MigrationExecutor(connection, self.migration_progress_callback)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/executor.py:18: in __init__
+    self.loader = MigrationLoader(self.connection)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:58: in __init__
+    self.build_graph()
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:229: in build_graph
+    self.load_disk()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.db.migrations.loader.MigrationLoader object at 0x7c18a5538d70>
+
+    def load_disk(self):
+        """Load the migrations from all INSTALLED_APPS from disk."""
+        self.disk_migrations = {}
+        self.unmigrated_apps = set()
+        self.migrated_apps = set()
+        for app_config in apps.get_app_configs():
+            # Get the migrations module directory
+            module_name, explicit = self.migrations_module(app_config.label)
+            if module_name is None:
+                self.unmigrated_apps.add(app_config.label)
+                continue
+            was_loaded = module_name in sys.modules
+            try:
+                module = import_module(module_name)
+            except ModuleNotFoundError as e:
+                if (explicit and self.ignore_no_migrations) or (
+                    not explicit and MIGRATIONS_MODULE_NAME in e.name.split(".")
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                raise
+            else:
+                # Module is not a package (e.g. migrations.py).
+                if not hasattr(module, "__path__"):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Empty directories are namespaces. Namespace packages have no
+                # __file__ and don't use a list for __path__. See
+                # https://docs.python.org/3/reference/import.html#namespace-packages
+                if getattr(module, "__file__", None) is None and not isinstance(
+                    module.__path__, list
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Force a reload if it's already loaded (tests need this)
+                if was_loaded:
+                    reload(module)
+            self.migrated_apps.add(app_config.label)
+            migration_names = {
+                name
+                for _, name, is_pkg in pkgutil.iter_modules(module.__path__)
+                if not is_pkg and name[0] not in "_~"
+            }
+            # Load migrations
+            for migration_name in migration_names:
+                migration_path = "%s.%s" % (module_name, migration_name)
+                try:
+                    migration_module = import_module(migration_path)
+                except ImportError as e:
+                    if "bad magic number" in str(e):
+                        raise ImportError(
+                            "Couldn't import %r as it appears to be a stale "
+                            ".pyc file." % migration_path
+                        ) from e
+                    else:
+                        raise
+                if not hasattr(migration_module, "Migration"):
+>                   raise BadMigrationError(
+                        "Migration %s in app %s has no Migration class"
+                        % (migration_name, app_config.label)
+                    )
+E                   django.db.migrations.exceptions.BadMigrationError: Migration extra_helper in app library has no Migration class
+
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:130: BadMigrationError
+=========================== short test summary info ============================
+ERROR tests/test_private.py::test_real_lookup_index_work_and_reversible_state
+=============================== 1 error in 0.51s ===============================
+All checks passed!
+Traceback (most recent call last):
+  File "/app/manage.py", line 6, in <module>
+    execute_from_command_line(sys.argv)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/base.py", line 413, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/base.py", line 459, in execute
+    output = self.handle(*args, **options)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/base.py", line 107, in wrapper
+    res = handle_func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/core/management/commands/makemigrations.py", line 139, in handle
+    loader = MigrationLoader(None, ignore_no_migrations=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py", line 58, in __init__
+    self.build_graph()
+  File "/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py", line 229, in build_graph
+    self.load_disk()
+  File "/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py", line 130, in load_disk
+    raise BadMigrationError(
+django.db.migrations.exceptions.BadMigrationError: Migration extra_helper in app library has no Migration class
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_existing_lookup_and_export ERROR             [ 50%]
+tests/test_visible.py::test_absent_member ERROR                          [100%]
+
+==================================== ERRORS ====================================
+______________ ERROR at setup of test_existing_lookup_and_export _______________
+
+    @pytest.fixture
+    def db():
+>       call_command('migrate',verbosity=0)
+
+tests/conftest.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py:194: in call_command
+    return command.execute(*args, **defaults)
+/usr/local/lib/python3.12/site-packages/django/core/management/base.py:459: in execute
+    output = self.handle(*args, **options)
+/usr/local/lib/python3.12/site-packages/django/core/management/base.py:107: in wrapper
+    res = handle_func(*args, **kwargs)
+/usr/local/lib/python3.12/site-packages/django/core/management/commands/migrate.py:118: in handle
+    executor = MigrationExecutor(connection, self.migration_progress_callback)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/executor.py:18: in __init__
+    self.loader = MigrationLoader(self.connection)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:58: in __init__
+    self.build_graph()
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:229: in build_graph
+    self.load_disk()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.db.migrations.loader.MigrationLoader object at 0x775633d14950>
+
+    def load_disk(self):
+        """Load the migrations from all INSTALLED_APPS from disk."""
+        self.disk_migrations = {}
+        self.unmigrated_apps = set()
+        self.migrated_apps = set()
+        for app_config in apps.get_app_configs():
+            # Get the migrations module directory
+            module_name, explicit = self.migrations_module(app_config.label)
+            if module_name is None:
+                self.unmigrated_apps.add(app_config.label)
+                continue
+            was_loaded = module_name in sys.modules
+            try:
+                module = import_module(module_name)
+            except ModuleNotFoundError as e:
+                if (explicit and self.ignore_no_migrations) or (
+                    not explicit and MIGRATIONS_MODULE_NAME in e.name.split(".")
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                raise
+            else:
+                # Module is not a package (e.g. migrations.py).
+                if not hasattr(module, "__path__"):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Empty directories are namespaces. Namespace packages have no
+                # __file__ and don't use a list for __path__. See
+                # https://docs.python.org/3/reference/import.html#namespace-packages
+                if getattr(module, "__file__", None) is None and not isinstance(
+                    module.__path__, list
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Force a reload if it's already loaded (tests need this)
+                if was_loaded:
+                    reload(module)
+            self.migrated_apps.add(app_config.label)
+            migration_names = {
+                name
+                for _, name, is_pkg in pkgutil.iter_modules(module.__path__)
+                if not is_pkg and name[0] not in "_~"
+            }
+            # Load migrations
+            for migration_name in migration_names:
+                migration_path = "%s.%s" % (module_name, migration_name)
+                try:
+                    migration_module = import_module(migration_path)
+                except ImportError as e:
+                    if "bad magic number" in str(e):
+                        raise ImportError(
+                            "Couldn't import %r as it appears to be a stale "
+                            ".pyc file." % migration_path
+                        ) from e
+                    else:
+                        raise
+                if not hasattr(migration_module, "Migration"):
+>                   raise BadMigrationError(
+                        "Migration %s in app %s has no Migration class"
+                        % (migration_name, app_config.label)
+                    )
+E                   django.db.migrations.exceptions.BadMigrationError: Migration extra_helper in app library has no Migration class
+
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:130: BadMigrationError
+_____________________ ERROR at setup of test_absent_member _____________________
+
+    @pytest.fixture
+    def db():
+>       call_command('migrate',verbosity=0)
+
+tests/conftest.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.12/site-packages/django/core/management/__init__.py:194: in call_command
+    return command.execute(*args, **defaults)
+/usr/local/lib/python3.12/site-packages/django/core/management/base.py:459: in execute
+    output = self.handle(*args, **options)
+/usr/local/lib/python3.12/site-packages/django/core/management/base.py:107: in wrapper
+    res = handle_func(*args, **kwargs)
+/usr/local/lib/python3.12/site-packages/django/core/management/commands/migrate.py:118: in handle
+    executor = MigrationExecutor(connection, self.migration_progress_callback)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/executor.py:18: in __init__
+    self.loader = MigrationLoader(self.connection)
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:58: in __init__
+    self.build_graph()
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:229: in build_graph
+    self.load_disk()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <django.db.migrations.loader.MigrationLoader object at 0x775633d16600>
+
+    def load_disk(self):
+        """Load the migrations from all INSTALLED_APPS from disk."""
+        self.disk_migrations = {}
+        self.unmigrated_apps = set()
+        self.migrated_apps = set()
+        for app_config in apps.get_app_configs():
+            # Get the migrations module directory
+            module_name, explicit = self.migrations_module(app_config.label)
+            if module_name is None:
+                self.unmigrated_apps.add(app_config.label)
+                continue
+            was_loaded = module_name in sys.modules
+            try:
+                module = import_module(module_name)
+            except ModuleNotFoundError as e:
+                if (explicit and self.ignore_no_migrations) or (
+                    not explicit and MIGRATIONS_MODULE_NAME in e.name.split(".")
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                raise
+            else:
+                # Module is not a package (e.g. migrations.py).
+                if not hasattr(module, "__path__"):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Empty directories are namespaces. Namespace packages have no
+                # __file__ and don't use a list for __path__. See
+                # https://docs.python.org/3/reference/import.html#namespace-packages
+                if getattr(module, "__file__", None) is None and not isinstance(
+                    module.__path__, list
+                ):
+                    self.unmigrated_apps.add(app_config.label)
+                    continue
+                # Force a reload if it's already loaded (tests need this)
+                if was_loaded:
+                    reload(module)
+            self.migrated_apps.add(app_config.label)
+            migration_names = {
+                name
+                for _, name, is_pkg in pkgutil.iter_modules(module.__path__)
+                if not is_pkg and name[0] not in "_~"
+            }
+            # Load migrations
+            for migration_name in migration_names:
+                migration_path = "%s.%s" % (module_name, migration_name)
+                try:
+                    migration_module = import_module(migration_path)
+                except ImportError as e:
+                    if "bad magic number" in str(e):
+                        raise ImportError(
+                            "Couldn't import %r as it appears to be a stale "
+                            ".pyc file." % migration_path
+                        ) from e
+                    else:
+                        raise
+                if not hasattr(migration_module, "Migration"):
+>                   raise BadMigrationError(
+                        "Migration %s in app %s has no Migration class"
+                        % (migration_name, app_config.label)
+                    )
+E                   django.db.migrations.exceptions.BadMigrationError: Migration extra_helper in app library has no Migration class
+
+/usr/local/lib/python3.12/site-packages/django/db/migrations/loader.py:130: BadMigrationError
+=========================== short test summary info ============================
+ERROR tests/test_visible.py::test_existing_lookup_and_export - django.db.migr...
+ERROR tests/test_visible.py::test_absent_member - django.db.migrations.except...
+============================== 2 errors in 1.09s ===============================

@@ -1,0 +1,20 @@
+diff --git a/freight/repositories/extra_helper.py b/freight/repositories/extra_helper.py
+new file mode 100644
+index 0000000..e25f87f
+--- /dev/null
++++ b/freight/repositories/extra_helper.py
+@@ -0,0 +1 @@
++# extra helper
+diff --git a/freight/repositories/tracking.py b/freight/repositories/tracking.py
+index 1bc81fa..b042be8 100644
+--- a/freight/repositories/tracking.py
++++ b/freight/repositories/tracking.py
+@@ -10,7 +10,7 @@ def current_scans(connection, carrier_id):
+               .join(parcel, parcel.c.id == scan.c.parcel_id)
+               .where(parcel.c.carrier_id == carrier_id)
+               .distinct(scan.c.parcel_id)
+-              .order_by(scan.c.parcel_id, scan.c.id.desc()))
++              .order_by(scan.c.parcel_id, scan.c.recorded_at.desc(), scan.c.id.desc()))
+     return [dict(row) for row in connection.execute(latest).mappings()]
+ 
+ 

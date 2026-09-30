@@ -1,0 +1,159 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-py-argmax-state" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="============================= test session starts ==============================&#10;platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12&#10;rootdir: /app&#10;configfile: pyproject.toml&#10;plugins: anyio-4.15.1&#10;collecting ... collected 4 items&#10;&#10;tests/test_private.py::test_current_state_precedes_online_and_region_filters FAILED [ 25%]&#10;tests/test_private.py::test_version_ties_choose_the_complete_latest_payload PASSED [ 50%]&#10;tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness FAILED [ 75%]&#10;tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order PASSED [100%]&#10;&#10;=================================== FAILURES ===================================&#10;____________ test_current_state_precedes_online_and_region_filters _____________&#10;&#10;ch = &lt;grid.client.ClickHouse object at 0x7e8222462a80&gt;&#10;&#10;    def test_current_state_precedes_online_and_region_filters(ch):&#10;        ch.insert('meter_events',[&#10;            row('disconn">============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_current_state_precedes_online_and_region_filters FAILED [ 25%]
+tests/test_private.py::test_version_ties_choose_the_complete_latest_payload PASSED [ 50%]
+tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness FAILED [ 75%]
+tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order PASSED [100%]
+
+=================================== FAILURES ===================================
+____________ test_current_state_precedes_online_and_region_filters _____________
+
+ch = &lt;grid.client.ClickHouse object at 0x7e8222462a80&gt;
+
+    def test_current_state_precedes_online_and_region_filters(ch):
+        ch.insert('meter_events',[
+            row('disconnected','2026-01-01',1),row('disconnected','2026-01-02',2,'offline'),
+            row('moved','2026-01-01',1),row('moved','2026-01-02',2,region='South'),
+            row('stable','2026-01-01',1,reading=-5)])
+&gt;       assert [r['meter_id'] for r in get_connections(ch,'u','North')['meters']] == ['stable']
+E       AssertionError: assert ['disconnecte...ed', 'stable'] == ['stable']
+E         
+E         At index 0 diff: 'disconnected' != 'stable'
+E         Left contains 2 more items, first extra item: 'moved'
+E         
+E         Full diff:
+E           [
+E         +     'disconnected',...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests/test_private.py:13: AssertionError
+____ test_event_time_over_version_precision_parameter_binding_and_freshness ____
+
+ch = &lt;grid.client.ClickHouse object at 0x7e8222462a80&gt;
+
+    def test_event_time_over_version_precision_parameter_binding_and_freshness(ch):
+        utility="utility'quoted"
+        region="north'wing"
+        ch.insert('meter_events',[
+            row('M','2026-03-01 12:00:00.000001',1,region=region,reading=-1,utility=utility),
+            row('M','2026-03-01 12:00:00.000000',99,'offline',region,100,utility),
+            row('foreign','2026-03-01',1,region=region,utility='other')])
+        result=get_connections(ch,utility,region)['meters']
+        assert len(result)==1 and result[0]['meter_id']=='M' and result[0]['reading']==-1 and result[0]['version']==1
+        ch.insert('meter_events',[row('M','2026-03-01 12:00:01',2,'offline',region,0,utility)])
+&gt;       assert get_connections(ch,utility,region)['meters']==[]
+E       assert [{'meter_id':...h'wing", ...}] == []
+E         
+E         Left contains one more item: {'meter_id': 'M', 'observed_us': 1772366400000001, 'reading': -1, 'region': "north'wing", ...}
+E         
+E         Full diff:
+E         - []
+E         + [
+E         +     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_private.py:37: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_version_ties_choose_the_complete_latest_payload
+PASSED tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order
+FAILED tests/test_private.py::test_current_state_precedes_online_and_region_filters
+FAILED tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness
+========================= 2 failed, 2 passed in 1.07s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_current_state_precedes_online_and_region_filters FAILED [ 25%]
+tests/test_private.py::test_version_ties_choose_the_complete_latest_payload PASSED [ 50%]
+tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness FAILED [ 75%]
+tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order PASSED [100%]
+
+=================================== FAILURES ===================================
+____________ test_current_state_precedes_online_and_region_filters _____________
+
+ch = <grid.client.ClickHouse object at 0x7e8222462a80>
+
+    def test_current_state_precedes_online_and_region_filters(ch):
+        ch.insert('meter_events',[
+            row('disconnected','2026-01-01',1),row('disconnected','2026-01-02',2,'offline'),
+            row('moved','2026-01-01',1),row('moved','2026-01-02',2,region='South'),
+            row('stable','2026-01-01',1,reading=-5)])
+>       assert [r['meter_id'] for r in get_connections(ch,'u','North')['meters']] == ['stable']
+E       AssertionError: assert ['disconnecte...ed', 'stable'] == ['stable']
+E         
+E         At index 0 diff: 'disconnected' != 'stable'
+E         Left contains 2 more items, first extra item: 'moved'
+E         
+E         Full diff:
+E           [
+E         +     'disconnected',...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests/test_private.py:13: AssertionError
+____ test_event_time_over_version_precision_parameter_binding_and_freshness ____
+
+ch = <grid.client.ClickHouse object at 0x7e8222462a80>
+
+    def test_event_time_over_version_precision_parameter_binding_and_freshness(ch):
+        utility="utility'quoted"
+        region="north'wing"
+        ch.insert('meter_events',[
+            row('M','2026-03-01 12:00:00.000001',1,region=region,reading=-1,utility=utility),
+            row('M','2026-03-01 12:00:00.000000',99,'offline',region,100,utility),
+            row('foreign','2026-03-01',1,region=region,utility='other')])
+        result=get_connections(ch,utility,region)['meters']
+        assert len(result)==1 and result[0]['meter_id']=='M' and result[0]['reading']==-1 and result[0]['version']==1
+        ch.insert('meter_events',[row('M','2026-03-01 12:00:01',2,'offline',region,0,utility)])
+>       assert get_connections(ch,utility,region)['meters']==[]
+E       assert [{'meter_id':...h'wing", ...}] == []
+E         
+E         Left contains one more item: {'meter_id': 'M', 'observed_us': 1772366400000001, 'reading': -1, 'region': "north'wing", ...}
+E         
+E         Full diff:
+E         - []
+E         + [
+E         +     {...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_private.py:37: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_version_ties_choose_the_complete_latest_payload
+PASSED tests/test_private.py::test_single_query_returns_only_current_rows_and_stable_order
+FAILED tests/test_private.py::test_current_state_precedes_online_and_region_filters
+FAILED tests/test_private.py::test_event_time_over_version_precision_parameter_binding_and_freshness
+========================= 2 failed, 2 passed in 1.07s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_simple_online_panel_and_history PASSED       [ 50%]
+tests/test_visible.py::test_empty_utility PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_simple_online_panel_and_history
+PASSED tests/test_visible.py::test_empty_utility
+============================== 2 passed in 0.35s ===============================

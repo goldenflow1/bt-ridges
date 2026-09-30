@@ -1,0 +1,15 @@
+--- a/src/repositories/events.ts
++++ b/src/repositories/events.ts
+@@ -9,9 +9,9 @@
+     .leftJoinAndSelect('event.ticketTypes', 'ticket')
+     .where('event.tenantId = :tenant', { tenant }).andWhere('event.published = true');
+   if (kind !== null) query.andWhere('ticket.kind = :kind AND ticket.enabled = true', { kind });
+-  query.orderBy('event.startsAt', 'ASC').limit(limit).offset(offset);
+-  const total = (await query.clone().limit(undefined).offset(undefined).getRawMany()).length;
+-  return { items: await query.getMany(), total };
++  query.orderBy('event.startsAt', 'ASC').addOrderBy('event.id', 'ASC').skip(offset).take(limit);
++  const [items, total] = await query.getManyAndCount();
++  return { items, total };
+ }
+ 
+ export async function enabledTicketKinds(source: DataSource, eventId: number): Promise<string[]> {

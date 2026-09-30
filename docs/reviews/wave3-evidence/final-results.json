@@ -1,0 +1,106 @@
+{
+  "date": "2026-09-30",
+  "tasks": [
+    {
+      "task": "py-sqla-distinct-on",
+      "accepted_attempt": 1,
+      "checks_passed": 16,
+      "decoys_passed_visible_and_failed_declared_assertion": 2,
+      "scope_only_rejections": 3,
+      "cold_environment_phase_upper_bound_sec": 42,
+      "source_manifest_sha256": "d463c3daf98e8df6ac45cf92c41fd84e0ffed034add6f08dc2a325f2ef8ebfb4",
+      "source_matches_accepted_attempt": true,
+      "app_copies_byte_and_mode_identical": true,
+      "validation_log": "py-sqla-distinct-on.attempt1.validation.log",
+      "attempt_record": "py-sqla-distinct-on.attempt1.json"
+    },
+    {
+      "task": "py-django-annotate-subquery",
+      "accepted_attempt": 1,
+      "checks_passed": 16,
+      "decoys_passed_visible_and_failed_declared_assertion": 2,
+      "scope_only_rejections": 3,
+      "cold_environment_phase_upper_bound_sec": 39,
+      "source_manifest_sha256": "853570062ad1f16b8c45d16816a1525bae4aa1d40b86f746e94d15c1e1fa6817",
+      "source_matches_accepted_attempt": true,
+      "app_copies_byte_and_mode_identical": true,
+      "validation_log": "py-django-annotate-subquery.attempt1.validation.log",
+      "attempt_record": "py-django-annotate-subquery.attempt1.json"
+    },
+    {
+      "task": "ch-py-argmax-state",
+      "accepted_attempt": 1,
+      "checks_passed": 16,
+      "decoys_passed_visible_and_failed_declared_assertion": 2,
+      "scope_only_rejections": 3,
+      "cold_environment_phase_upper_bound_sec": 39,
+      "source_manifest_sha256": "34a66d5d6f9c8288772b8d97bccdcaeb2d014ae106f7600d29155f1fa29d3661",
+      "source_matches_accepted_attempt": true,
+      "app_copies_byte_and_mode_identical": true,
+      "validation_log": "ch-py-argmax-state.attempt1.validation.log",
+      "attempt_record": "ch-py-argmax-state.attempt1.json"
+    },
+    {
+      "task": "go-sqlc-interval",
+      "accepted_attempt": 3,
+      "checks_passed": 16,
+      "decoys_passed_visible_and_failed_declared_assertion": 2,
+      "scope_only_rejections": 3,
+      "cold_environment_phase_upper_bound_sec": 33,
+      "source_manifest_sha256": "d1ef525e3e96056edef6bdd9e7d2423ffcf58b4cd43c5c9e3ba3d83ec91bb49b",
+      "source_matches_accepted_attempt": true,
+      "app_copies_byte_and_mode_identical": true,
+      "validation_log": "go-sqlc-interval.attempt3.validation.log",
+      "attempt_record": "go-sqlc-interval.attempt3.json"
+    },
+    {
+      "task": "ts-typeorm-fanout",
+      "accepted_attempt": 1,
+      "checks_passed": 16,
+      "decoys_passed_visible_and_failed_declared_assertion": 2,
+      "scope_only_rejections": 3,
+      "cold_environment_phase_upper_bound_sec": 51,
+      "source_manifest_sha256": "e587f874434ee1e63e1c297c04b7a7bf50d07f9a0d1ae523904dfcfad03285ab",
+      "source_matches_accepted_attempt": true,
+      "app_copies_byte_and_mode_identical": true,
+      "validation_log": "ts-typeorm-fanout.attempt1.validation.log",
+      "attempt_record": "ts-typeorm-fanout.attempt1.json"
+    },
+    {
+      "task": "pg-expr-index-lower",
+      "accepted_attempt": 3,
+      "checks_passed": 16,
+      "decoys_passed_visible_and_failed_declared_assertion": 2,
+      "scope_only_rejections": 3,
+      "cold_environment_phase_upper_bound_sec": 45,
+      "source_manifest_sha256": "cec0d464725f74f51462be2023bf18f09c7e7719b6f268e458a32b0285d87348",
+      "source_matches_accepted_attempt": true,
+      "app_copies_byte_and_mode_identical": true,
+      "validation_log": "pg-expr-index-lower.attempt3.validation.log",
+      "attempt_record": "pg-expr-index-lower.attempt3.json"
+    },
+    {
+      "task": "ch-go-skip-index",
+      "accepted_attempt": 1,
+      "checks_passed": 16,
+      "decoys_passed_visible_and_failed_declared_assertion": 2,
+      "scope_only_rejections": 3,
+      "cold_environment_phase_upper_bound_sec": 46,
+      "source_manifest_sha256": "62902fc21f631ae77cc17915bcd412964a27633af0686762cdb19998375d98a9",
+      "source_matches_accepted_attempt": true,
+      "app_copies_byte_and_mode_identical": true,
+      "validation_log": "ch-go-skip-index.attempt1.validation.log",
+      "attempt_record": "ch-go-skip-index.attempt1.json"
+    }
+  ],
+  "totals": {
+    "tasks": 7,
+    "checks": 112,
+    "behavioral_decoys": 14,
+    "scope_variants": 21
+  },
+  "agent_inference_runs": 0,
+  "fresh_session_authorship": false,
+  "gates": "gates.log",
+  "cleanup": "cleanup.json"
+}

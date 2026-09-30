@@ -1,0 +1,25 @@
+/logs/verifier/graded.patch:9: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="go-sqlc-interval" tests="7" failures="2"><testcase name="source_tree_conservation_before"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase><testcase name="bounded_query" /><testcase name="generated_query_sync" /><testcase name="compilation" /><testcase name="regression_visible" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase></testsuite>
+
+=== RUN   TestHiddenFractionalEndAndExclusiveMidnight
+--- PASS: TestHiddenFractionalEndAndExclusiveMidnight (0.05s)
+=== RUN   TestHiddenDSTUsesSuppliedInstants
+--- PASS: TestHiddenDSTUsesSuppliedInstants (0.13s)
+=== RUN   TestHiddenYearChangeFractionalZoneAndTies
+--- PASS: TestHiddenYearChangeFractionalZoneAndTies (0.06s)
+PASS
+ok  	salarybook/internal/api	0.253s
+?   	salarybook/internal/calendar	[no test files]
+?   	salarybook/internal/db	[no test files]
+?   	salarybook/internal/payroll	[no test files]
+=== RUN   TestVisibleMiddayExport
+--- PASS: TestVisibleMiddayExport (0.07s)
+=== RUN   TestVisibleEmptyAndInvalidPeriod
+--- PASS: TestVisibleEmptyAndInvalidPeriod (0.05s)
+PASS
+ok  	salarybook/internal/api	0.144s

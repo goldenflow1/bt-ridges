@@ -1,0 +1,7 @@
+{
+  "description": "filter-loaded-ticket-rows",
+  "expect_failing": [
+    "hidden: ticket eligibility retains all child types"
+  ],
+  "passes_visible": true
+}

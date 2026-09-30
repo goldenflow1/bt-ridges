@@ -1,0 +1,7 @@
+--- /dev/null
++++ b/migrations/0002_job_index.sql
+@@ -0,0 +1,4 @@
++-- +migrate Up
++ALTER TABLE builds ADD INDEX IF NOT EXISTS ix_build_job_id job_id TYPE bloom_filter(0.0001) GRANULARITY 1;
++-- +migrate Down
++ALTER TABLE builds DROP INDEX IF EXISTS ix_build_job_id;

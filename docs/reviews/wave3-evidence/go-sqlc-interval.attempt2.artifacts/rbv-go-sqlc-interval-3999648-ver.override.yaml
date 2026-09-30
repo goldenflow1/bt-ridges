@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-go-sqlc-interval-ver-postgres:latest
+  main:
+    image: rbv-go-sqlc-interval-ver-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/heldout/go-sqlc-interval/tests
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

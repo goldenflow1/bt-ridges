@@ -1,0 +1,7 @@
+{
+  "description": "take-skip-only",
+  "expect_failing": [
+    "hidden: totals count matching parents and pages contain complete events"
+  ],
+  "passes_visible": true
+}

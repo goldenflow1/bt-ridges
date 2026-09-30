@@ -1,0 +1,38 @@
+/logs/verifier/graded.patch:9: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="pg-expr-index-lower" tests="8" failures="2"><testcase name="source_tree_conservation_before"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="migration_state_check" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+tests/test_private.py::test_real_lookup_index_work_and_reversible_state PASSED [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_real_lookup_index_work_and_reversible_state
+============================== 1 passed in 8.62s ===============================
+All checks passed!
+No changes detected
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_existing_lookup_and_export PASSED            [ 50%]
+tests/test_visible.py::test_absent_member PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_existing_lookup_and_export
+PASSED tests/test_visible.py::test_absent_member
+============================== 2 passed in 0.34s ===============================

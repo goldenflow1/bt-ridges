@@ -1,0 +1,18 @@
+--- a/library/models.py
++++ b/library/models.py
+@@ -15,4 +15,4 @@
+ 
+     class Meta:
+         db_table = 'library_member'
+-        indexes = []
++        indexes = [models.Index(functions.Upper('email'), name='library_member_lower_email')]
+--- /dev/null
++++ b/library/schema_migrations/0002_email_lookup.py
+@@ -0,0 +1,7 @@
++from django.db import migrations, models
++from django.db.models.functions import Upper
++
++
++class Migration(migrations.Migration):
++    dependencies = [('library', '0001_initial')]
++    operations = [migrations.AddIndex(model_name='member', index=models.Index(Upper('email'), name='library_member_lower_email'))]

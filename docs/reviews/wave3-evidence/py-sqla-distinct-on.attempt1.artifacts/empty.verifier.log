@@ -1,0 +1,175 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-sqla-distinct-on" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="te ______________&#10;&#10;conn = &lt;sqlalchemy.engine.base.Connection object at 0x7014009b0260&gt;&#10;&#10;    def test_backfilled_scans_do_not_replace_current_state(conn):&#10;        conn.exec_driver_sql(&quot;INSERT INTO parcels VALUES (10,7,'X'),(20,7,'Y'),(30,8,'Z'),(40,7,'no-scans')&quot;)&#10;        conn.exec_driver_sql(&quot;INSERT INTO scans VALUES (1,10,'2026-02-02','East','delivered'),(99,10,'2026-01-01','West','moving'),(2,20,'2026-01-03','South','moving'),(3,30,'2026-01-04','Secret','held')&quot;)&#10;        result = dashboard(conn, 7)['current']&#10;&gt;       assert [(r['parcel_id'],r['scan_id'],r['depot'],r['condition']) for r in result] == [(10,1,'East','delivered'),(20,2,'South','moving')]&#10;E       AssertionError: assert [(10, 99, 'We...h', 'moving')] == [(10, 1, 'Eas...h', 'moving')]&#10;E         &#10;E         At index 0 diff: (10, 99, 'West', 'moving') != (10, 1, 'East', 'delivered')&#10;E         &#10;E         Full diff:&#10;E           [&#10;E               (&#10;E                   10,...&#10;E         &#10;E         ...Full output truncated (18 lines">te ______________
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x7014009b0260&gt;
+
+    def test_backfilled_scans_do_not_replace_current_state(conn):
+        conn.exec_driver_sql("INSERT INTO parcels VALUES (10,7,'X'),(20,7,'Y'),(30,8,'Z'),(40,7,'no-scans')")
+        conn.exec_driver_sql("INSERT INTO scans VALUES (1,10,'2026-02-02','East','delivered'),(99,10,'2026-01-01','West','moving'),(2,20,'2026-01-03','South','moving'),(3,30,'2026-01-04','Secret','held')")
+        result = dashboard(conn, 7)['current']
+&gt;       assert [(r['parcel_id'],r['scan_id'],r['depot'],r['condition']) for r in result] == [(10,1,'East','delivered'),(20,2,'South','moving')]
+E       AssertionError: assert [(10, 99, 'We...h', 'moving')] == [(10, 1, 'Eas...h', 'moving')]
+E         
+E         At index 0 diff: (10, 99, 'West', 'moving') != (10, 1, 'East', 'delivered')
+E         
+E         Full diff:
+E           [
+E               (
+E                   10,...
+E         
+E         ...Full output truncated (18 lines hidden), use '-vv' to show
+
+tests/test_private.py:15: AssertionError
+______ test_large_scrambled_history_matches_domain_reference_in_one_query ______
+
+conn = &lt;sqlalchemy.engine.base.Connection object at 0x70140099d0d0&gt;
+
+    def test_large_scrambled_history_matches_domain_reference_in_one_query(conn):
+        rng=random.Random(90531)
+        conn.execute(parcel.insert(),[{'id':p,'carrier_id':7 if p%3 else 8,'reference':str(p)} for p in range(1,181)])
+        at=datetime(2026,1,1,tzinfo=timezone.utc)
+        records=[{'id':i,'parcel_id':rng.randrange(1,181),'recorded_at':at+timedelta(seconds=rng.randrange(70),microseconds=rng.randrange(3)),
+                  'depot':'D'+str(i%9),'condition':['moving','held','delivered'][i%3]} for i in range(1,3001)]
+        rng.shuffle(records)
+        conn.execute(scan.insert(),records)
+        expected={}
+        for row in records:
+            p=row['parcel_id']
+            if p%3 and (p not in expected or (row['recorded_at'],row['id'])&gt;(expected[p]['recorded_at'],expected[p]['id'])):
+                expected[p]=row
+        calls=[]
+        returned=[]
+        def capture(*args):
+            calls.append(args[2])
+        def capture_rows(connection,cursor,*args):
+            returned.append(cursor.rowcount)
+        event.listen(conn,'before_cursor_execute',capture)
+        event.listen(conn,'after_cursor_execute',capture_rows)
+        try:
+            actual=current_scans(conn,7)
+        finally:
+            event.remove(conn,'before_cursor_execute',capture)
+            event.remove(conn,'after_cursor_execute',capture_rows)
+        wanted=[{'parcel_id':p,'scan_id':r['id'],'recorded_at':r['recorded_at'],'depot':r['depot'],'condition':r['condition']} for p,r in sorted(expected.items())]
+&gt;       assert actual == wanted
+E       AssertionError: assert [{'condition'...)), ...}, ...] == [{'condition'...c), ...}, ...]
+E         
+E         At index 0 diff: {'parcel_id': 1, 'scan_id': 2924, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 0, 17, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')), 'depot': 'D8', 'condition': 'delivered'} != {'parcel_id': 1, 'scan_id': 146, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 1, 8, 2, tzinfo=datetime.timezone.utc), 'depot': 'D2', 'condition': 'delivered'}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'condition': 'delivered',...
+E         
+E         ...Full output truncated (1790 lines hidden), use '-vv' to show
+
+tests/test_private.py:58: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row
+FAILED tests/test_private.py::test_backfilled_scans_do_not_replace_current_state
+FAILED tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query
+========================= 2 failed, 1 passed in 2.85s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_private.py::test_backfilled_scans_do_not_replace_current_state FAILED [ 33%]
+tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row PASSED [ 66%]
+tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query FAILED [100%]
+
+=================================== FAILURES ===================================
+______________ test_backfilled_scans_do_not_replace_current_state ______________
+
+conn = <sqlalchemy.engine.base.Connection object at 0x7014009b0260>
+
+    def test_backfilled_scans_do_not_replace_current_state(conn):
+        conn.exec_driver_sql("INSERT INTO parcels VALUES (10,7,'X'),(20,7,'Y'),(30,8,'Z'),(40,7,'no-scans')")
+        conn.exec_driver_sql("INSERT INTO scans VALUES (1,10,'2026-02-02','East','delivered'),(99,10,'2026-01-01','West','moving'),(2,20,'2026-01-03','South','moving'),(3,30,'2026-01-04','Secret','held')")
+        result = dashboard(conn, 7)['current']
+>       assert [(r['parcel_id'],r['scan_id'],r['depot'],r['condition']) for r in result] == [(10,1,'East','delivered'),(20,2,'South','moving')]
+E       AssertionError: assert [(10, 99, 'We...h', 'moving')] == [(10, 1, 'Eas...h', 'moving')]
+E         
+E         At index 0 diff: (10, 99, 'West', 'moving') != (10, 1, 'East', 'delivered')
+E         
+E         Full diff:
+E           [
+E               (
+E                   10,...
+E         
+E         ...Full output truncated (18 lines hidden), use '-vv' to show
+
+tests/test_private.py:15: AssertionError
+______ test_large_scrambled_history_matches_domain_reference_in_one_query ______
+
+conn = <sqlalchemy.engine.base.Connection object at 0x70140099d0d0>
+
+    def test_large_scrambled_history_matches_domain_reference_in_one_query(conn):
+        rng=random.Random(90531)
+        conn.execute(parcel.insert(),[{'id':p,'carrier_id':7 if p%3 else 8,'reference':str(p)} for p in range(1,181)])
+        at=datetime(2026,1,1,tzinfo=timezone.utc)
+        records=[{'id':i,'parcel_id':rng.randrange(1,181),'recorded_at':at+timedelta(seconds=rng.randrange(70),microseconds=rng.randrange(3)),
+                  'depot':'D'+str(i%9),'condition':['moving','held','delivered'][i%3]} for i in range(1,3001)]
+        rng.shuffle(records)
+        conn.execute(scan.insert(),records)
+        expected={}
+        for row in records:
+            p=row['parcel_id']
+            if p%3 and (p not in expected or (row['recorded_at'],row['id'])>(expected[p]['recorded_at'],expected[p]['id'])):
+                expected[p]=row
+        calls=[]
+        returned=[]
+        def capture(*args):
+            calls.append(args[2])
+        def capture_rows(connection,cursor,*args):
+            returned.append(cursor.rowcount)
+        event.listen(conn,'before_cursor_execute',capture)
+        event.listen(conn,'after_cursor_execute',capture_rows)
+        try:
+            actual=current_scans(conn,7)
+        finally:
+            event.remove(conn,'before_cursor_execute',capture)
+            event.remove(conn,'after_cursor_execute',capture_rows)
+        wanted=[{'parcel_id':p,'scan_id':r['id'],'recorded_at':r['recorded_at'],'depot':r['depot'],'condition':r['condition']} for p,r in sorted(expected.items())]
+>       assert actual == wanted
+E       AssertionError: assert [{'condition'...)), ...}, ...] == [{'condition'...c), ...}, ...]
+E         
+E         At index 0 diff: {'parcel_id': 1, 'scan_id': 2924, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 0, 17, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')), 'depot': 'D8', 'condition': 'delivered'} != {'parcel_id': 1, 'scan_id': 146, 'recorded_at': datetime.datetime(2026, 1, 1, 0, 1, 8, 2, tzinfo=datetime.timezone.utc), 'depot': 'D2', 'condition': 'delivered'}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'condition': 'delivered',...
+E         
+E         ...Full output truncated (1790 lines hidden), use '-vv' to show
+
+tests/test_private.py:58: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row
+FAILED tests/test_private.py::test_backfilled_scans_do_not_replace_current_state
+FAILED tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query
+========================= 2 failed, 1 passed in 2.85s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_single_parcel_and_timeline PASSED            [ 50%]
+tests/test_visible.py::test_empty_carrier PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_single_parcel_and_timeline
+PASSED tests/test_visible.py::test_empty_carrier
+============================== 2 passed in 0.27s ===============================

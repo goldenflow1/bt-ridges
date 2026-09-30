@@ -1,0 +1,22 @@
+diff --git a/README.md b/README.md
+index 1ed450d..97ce7a0 100644
+--- a/README.md
++++ b/README.md
+@@ -5,3 +5,4 @@ Freight operators use the carrier dashboard to inspect a parcel's current depot
+ `freight/api.py` serializes the dashboard, `freight/service.py` composes current state with the existing volume report, and `freight/repositories/tracking.py` owns query construction. `freight/repositories/history.py` serves a separate timeline endpoint. Database mappings and presentation rules live in separate modules.
+ 
+ Local development data uses the PostgreSQL service. Run `pytest tests/test_visible.py` for the public contract checks.
++
+diff --git a/freight/repositories/tracking.py b/freight/repositories/tracking.py
+index 1bc81fa..b042be8 100644
+--- a/freight/repositories/tracking.py
++++ b/freight/repositories/tracking.py
+@@ -10,7 +10,7 @@ def current_scans(connection, carrier_id):
+               .join(parcel, parcel.c.id == scan.c.parcel_id)
+               .where(parcel.c.carrier_id == carrier_id)
+               .distinct(scan.c.parcel_id)
+-              .order_by(scan.c.parcel_id, scan.c.id.desc()))
++              .order_by(scan.c.parcel_id, scan.c.recorded_at.desc(), scan.c.id.desc()))
+     return [dict(row) for row in connection.execute(latest).mappings()]
+ 
+ 

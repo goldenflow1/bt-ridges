@@ -1,0 +1,34 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="go-sqlc-interval" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_query" /><testcase name="generated_query_sync" /><testcase name="compilation" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="=== RUN   TestHiddenFractionalEndAndExclusiveMidnight&#10;--- PASS: TestHiddenFractionalEndAndExclusiveMidnight (0.07s)&#10;=== RUN   TestHiddenDSTUsesSuppliedInstants&#10;    ridges_hidden_test.go:58: entry IDs: got [4 1] want [1 2]&#10;--- FAIL: TestHiddenDSTUsesSuppliedInstants (0.04s)&#10;=== RUN   TestHiddenYearChangeFractionalZoneAndTies&#10;    ridges_hidden_test.go:77: entry IDs: got [6] want [6 7 8 9]&#10;--- FAIL: TestHiddenYearChangeFractionalZoneAndTies (0.04s)&#10;FAIL&#10;FAIL&#09;salarybook/internal/api&#09;0.166s&#10;">=== RUN   TestHiddenFractionalEndAndExclusiveMidnight
+--- PASS: TestHiddenFractionalEndAndExclusiveMidnight (0.07s)
+=== RUN   TestHiddenDSTUsesSuppliedInstants
+    ridges_hidden_test.go:58: entry IDs: got [4 1] want [1 2]
+--- FAIL: TestHiddenDSTUsesSuppliedInstants (0.04s)
+=== RUN   TestHiddenYearChangeFractionalZoneAndTies
+    ridges_hidden_test.go:77: entry IDs: got [6] want [6 7 8 9]
+--- FAIL: TestHiddenYearChangeFractionalZoneAndTies (0.04s)
+FAIL
+FAIL	salarybook/internal/api	0.166s
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+=== RUN   TestHiddenFractionalEndAndExclusiveMidnight
+--- PASS: TestHiddenFractionalEndAndExclusiveMidnight (0.07s)
+=== RUN   TestHiddenDSTUsesSuppliedInstants
+    ridges_hidden_test.go:58: entry IDs: got [4 1] want [1 2]
+--- FAIL: TestHiddenDSTUsesSuppliedInstants (0.04s)
+=== RUN   TestHiddenYearChangeFractionalZoneAndTies
+    ridges_hidden_test.go:77: entry IDs: got [6] want [6 7 8 9]
+--- FAIL: TestHiddenYearChangeFractionalZoneAndTies (0.04s)
+FAIL
+FAIL	salarybook/internal/api	0.166s
+?   	salarybook/internal/calendar	[no test files]
+?   	salarybook/internal/db	[no test files]
+?   	salarybook/internal/payroll	[no test files]
+=== RUN   TestVisibleMiddayExport
+--- PASS: TestVisibleMiddayExport (0.12s)
+=== RUN   TestVisibleEmptyAndInvalidPeriod
+--- PASS: TestVisibleEmptyAndInvalidPeriod (0.09s)
+PASS
+ok  	salarybook/internal/api	0.237s

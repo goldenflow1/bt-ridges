@@ -1,0 +1,10 @@
+PASS  G0 ruff  (0.2s)
+PASS  G1 unit + scenario tests  (68.0s)
+PASS  G2 bundle builds  (1.6s)
+PASS  G2b bundle imports on Python 3.9  (1.2s)
+PASS  G3 offline e2e on the bundle  (32.9s)
+PASS  G4 pre-screen lint  (0.4s)
+PASS  G4b originality vs public agents  (6.2s)
+PASS  G5 traceability: 92/92 requirements have tests  (0.1s)
+
+all automatic gates passed

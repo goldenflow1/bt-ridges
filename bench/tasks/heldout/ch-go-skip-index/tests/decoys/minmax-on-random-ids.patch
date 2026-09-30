@@ -1,0 +1,8 @@
+--- /dev/null
++++ b/migrations/0002_job_index.sql
+@@ -0,0 +1,5 @@
++-- +migrate Up
++ALTER TABLE builds ADD INDEX IF NOT EXISTS ix_build_job_id job_id TYPE minmax GRANULARITY 1;
++ALTER TABLE builds MATERIALIZE INDEX ix_build_job_id SETTINGS mutations_sync=2;
++-- +migrate Down
++ALTER TABLE builds DROP INDEX IF EXISTS ix_build_job_id;

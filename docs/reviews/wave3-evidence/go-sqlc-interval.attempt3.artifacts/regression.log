@@ -1,0 +1,4 @@
+?   	salarybook/internal/calendar	[no test files]
+?   	salarybook/internal/db	[no test files]
+?   	salarybook/internal/payroll	[no test files]
+ok  	salarybook/internal/api	0.176s

@@ -1,0 +1,38 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-sqla-distinct-on" tests="7" failures="2"><testcase name="source_tree_conservation_before"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 3 items
+
+tests/test_private.py::test_backfilled_scans_do_not_replace_current_state PASSED [ 33%]
+tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row PASSED [ 66%]
+tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query PASSED [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_backfilled_scans_do_not_replace_current_state
+PASSED tests/test_private.py::test_timestamp_ties_choose_one_complete_greatest_id_row
+PASSED tests/test_private.py::test_large_scrambled_history_matches_domain_reference_in_one_query
+============================== 3 passed in 1.44s ===============================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_single_parcel_and_timeline PASSED            [ 50%]
+tests/test_visible.py::test_empty_carrier PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_single_parcel_and_timeline
+PASSED tests/test_visible.py::test_empty_carrier
+============================== 2 passed in 0.33s ===============================

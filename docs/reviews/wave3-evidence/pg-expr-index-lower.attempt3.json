@@ -1,0 +1,284 @@
+{
+  "task": "pg-expr-index-lower",
+  "attempt": "3",
+  "exit_code": 0,
+  "wall_sec": 450.6,
+  "source_unchanged": true,
+  "source_manifest": {
+    "environment": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/Dockerfile": {
+      "mode": 420,
+      "sha256": "2baf777763b34f40ef634853cfb24e5c028efacae14926a701cf4eb62d8c850c"
+    },
+    "environment/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/README.md": {
+      "mode": 420,
+      "sha256": "10683e1d6e000568c234fdae1401a7081c9d6a801fd87d5a6aab8c4519a8fde3"
+    },
+    "environment/app/library": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/library/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/library/api.py": {
+      "mode": 420,
+      "sha256": "b20949d1c5e8d27da783574d10342b2b8a3340d5b9a802efa30fea0a492211a9"
+    },
+    "environment/app/library/models.py": {
+      "mode": 420,
+      "sha256": "99c25c481641fe50b3a64534629ad3d1ac2b36c4a75a7bda69c26e6f1b0635a9"
+    },
+    "environment/app/library/repositories": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/library/repositories/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/library/repositories/members.py": {
+      "mode": 420,
+      "sha256": "b883a220a14e6e32f37ff1f637cce7f4713a8a6fdf28b933c6b882b77f9fee53"
+    },
+    "environment/app/library/schema_migrations": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/library/schema_migrations/0001_initial.py": {
+      "mode": 420,
+      "sha256": "0922b236a4c9727061c5ffb75bad832362d121682d4ee34de94d97d9b8b70a33"
+    },
+    "environment/app/library/schema_migrations/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/library/services": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/library/services/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/library/services/access.py": {
+      "mode": 420,
+      "sha256": "dc46ca103ab5a487f9b0c3a8d1d0cd2e2a67f7aaf77d56edbb3ca52ace658f3d"
+    },
+    "environment/app/library/settings.py": {
+      "mode": 420,
+      "sha256": "4f76bc898a3aea9f2431c8622b5714e423d1a533a70b9161c488faf1baa225ac"
+    },
+    "environment/app/manage.py": {
+      "mode": 420,
+      "sha256": "555ee7bd531804676581e0d346970054e64c1df915afc22b9f4ca2d96a667cc5"
+    },
+    "environment/app/pyproject.toml": {
+      "mode": 420,
+      "sha256": "a80d70816eea0d56fc2ac6bffe45a37534bd65a36c78330ac63bf4b9951204de"
+    },
+    "environment/app/tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/tests/conftest.py": {
+      "mode": 420,
+      "sha256": "349463c4b1f0ea0bb295b8432e6fc8c76957e135a324df479339ed151da4ccfb"
+    },
+    "environment/app/tests/test_visible.py": {
+      "mode": 420,
+      "sha256": "e230623d83ae8a3c19c8e6ed6dd95c7dfb925118356448ea78ab408c1ee8c9ec"
+    },
+    "environment/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "environment/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "5691d08cdb7b978f363ca4ad0ef1e659008ce421127324b6b836760f0448b03f"
+    },
+    "environment/postgres-init.sh": {
+      "mode": 420,
+      "sha256": "7c223778445123ef64e4baf637400b5b32bf9868cb100bf4d1ba092e90ec22a9"
+    },
+    "environment/postgres.Dockerfile": {
+      "mode": 420,
+      "sha256": "bd9b9010827503b77e4b55112d4723a08869963cb54f05d79b763872f7458103"
+    },
+    "instruction.md": {
+      "mode": 420,
+      "sha256": "ee50b5b190be85eb02dcbbac929259e4ec7d3450fa17e6ab56513cbef94a678b"
+    },
+    "solution": {
+      "mode": 493,
+      "directory": true
+    },
+    "solution/solve.sh": {
+      "mode": 420,
+      "sha256": "b99cd7ac4b8ce6f03e0cf0db0184104c63d6cecb357d79658ea900b2b1f02848"
+    },
+    "task.toml": {
+      "mode": 420,
+      "sha256": "00936f91e9f654cc7736173ab862af7dce4795068c54a774cf004a3e745ae539"
+    },
+    "tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/Dockerfile": {
+      "mode": 420,
+      "sha256": "a53849d9223d2cf8e51e430fe0b848e8862e8dfe71e18376f339cb90df715321"
+    },
+    "tests/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/README.md": {
+      "mode": 420,
+      "sha256": "10683e1d6e000568c234fdae1401a7081c9d6a801fd87d5a6aab8c4519a8fde3"
+    },
+    "tests/app/library": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/library/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/library/api.py": {
+      "mode": 420,
+      "sha256": "b20949d1c5e8d27da783574d10342b2b8a3340d5b9a802efa30fea0a492211a9"
+    },
+    "tests/app/library/models.py": {
+      "mode": 420,
+      "sha256": "99c25c481641fe50b3a64534629ad3d1ac2b36c4a75a7bda69c26e6f1b0635a9"
+    },
+    "tests/app/library/repositories": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/library/repositories/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/library/repositories/members.py": {
+      "mode": 420,
+      "sha256": "b883a220a14e6e32f37ff1f637cce7f4713a8a6fdf28b933c6b882b77f9fee53"
+    },
+    "tests/app/library/schema_migrations": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/library/schema_migrations/0001_initial.py": {
+      "mode": 420,
+      "sha256": "0922b236a4c9727061c5ffb75bad832362d121682d4ee34de94d97d9b8b70a33"
+    },
+    "tests/app/library/schema_migrations/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/library/services": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/library/services/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/library/services/access.py": {
+      "mode": 420,
+      "sha256": "dc46ca103ab5a487f9b0c3a8d1d0cd2e2a67f7aaf77d56edbb3ca52ace658f3d"
+    },
+    "tests/app/library/settings.py": {
+      "mode": 420,
+      "sha256": "4f76bc898a3aea9f2431c8622b5714e423d1a533a70b9161c488faf1baa225ac"
+    },
+    "tests/app/manage.py": {
+      "mode": 420,
+      "sha256": "555ee7bd531804676581e0d346970054e64c1df915afc22b9f4ca2d96a667cc5"
+    },
+    "tests/app/pyproject.toml": {
+      "mode": 420,
+      "sha256": "a80d70816eea0d56fc2ac6bffe45a37534bd65a36c78330ac63bf4b9951204de"
+    },
+    "tests/app/tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/tests/conftest.py": {
+      "mode": 420,
+      "sha256": "349463c4b1f0ea0bb295b8432e6fc8c76957e135a324df479339ed151da4ccfb"
+    },
+    "tests/app/tests/test_visible.py": {
+      "mode": 420,
+      "sha256": "e230623d83ae8a3c19c8e6ed6dd95c7dfb925118356448ea78ab408c1ee8c9ec"
+    },
+    "tests/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "tests/config.json": {
+      "mode": 420,
+      "sha256": "4aaec6da7e0b6d1b51252560ff8ed3cceb6883521b9b38260160ffcb4d6c70b5"
+    },
+    "tests/create_manifest.py": {
+      "mode": 420,
+      "sha256": "238df62fc9156deaad25b05f28f2f782a1757cb994a79f83fb8b69f31af0631f"
+    },
+    "tests/decoys": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/decoys/plain-email-index.json": {
+      "mode": 420,
+      "sha256": "edbbe5a503cbceb126d8b721496ece1faa0efd088adea60e17c4f54e3af42ba2"
+    },
+    "tests/decoys/plain-email-index.patch": {
+      "mode": 420,
+      "sha256": "6a2bb440bfb99f1b7ee4e738f9f4fe132e852b159f6346791d2942c584b450f5"
+    },
+    "tests/decoys/upper-email-index.json": {
+      "mode": 420,
+      "sha256": "81f4cb6c96a2fe008fba1d4cff85ac7d04e95ab3b6f4735936cd46fb94a9c1d3"
+    },
+    "tests/decoys/upper-email-index.patch": {
+      "mode": 420,
+      "sha256": "31545e6c9df49a04cfd639974d7b994b36721398b8da7ba54692e694413d2987"
+    },
+    "tests/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "5691d08cdb7b978f363ca4ad0ef1e659008ce421127324b6b836760f0448b03f"
+    },
+    "tests/hidden.py": {
+      "mode": 420,
+      "sha256": "9616257eae87f1619fea35d222ca4e5bd1dac5096b3e042adb0b05bc67ae075d"
+    },
+    "tests/postgres-init.sh": {
+      "mode": 420,
+      "sha256": "7c223778445123ef64e4baf637400b5b32bf9868cb100bf4d1ba092e90ec22a9"
+    },
+    "tests/postgres.Dockerfile": {
+      "mode": 420,
+      "sha256": "bd9b9010827503b77e4b55112d4723a08869963cb54f05d79b763872f7458103"
+    },
+    "tests/test.sh": {
+      "mode": 420,
+      "sha256": "d1369c25a4ed60c85fd3dc0e1128dff4954efb428297786f0c5ace027befa7ce"
+    },
+    "tests/verify.py": {
+      "mode": 420,
+      "sha256": "22ef72ea9734e9cdf2bfea875a7bba253581ba9cb0428feea33ab5f85122f97c"
+    }
+  },
+  "validation_log": "pg-expr-index-lower.attempt3.validation.log",
+  "artifacts": "pg-expr-index-lower.attempt3.artifacts",
+  "agent_inference_runs": 0
+}

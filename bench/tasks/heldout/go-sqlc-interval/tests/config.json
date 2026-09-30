@@ -1,0 +1,8 @@
+{
+  "task": "go-sqlc-interval",
+  "allowed": [
+    "internal/db/payroll.sql.go",
+    "db/queries/payroll.sql"
+  ],
+  "bounded": {}
+}

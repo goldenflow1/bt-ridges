@@ -1,0 +1,268 @@
+{
+  "task": "ch-py-argmax-state",
+  "attempt": "1",
+  "exit_code": 0,
+  "wall_sec": 693.6,
+  "source_unchanged": true,
+  "source_manifest": {
+    "environment": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/Dockerfile": {
+      "mode": 420,
+      "sha256": "7edc4fe81224f78cf75b3e344193dd3d38afee522410b77054c15a7d6c028d92"
+    },
+    "environment/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/README.md": {
+      "mode": 420,
+      "sha256": "29db29f2ad795edddef9f9ce13814536d3987f9856284e582c61120744636793"
+    },
+    "environment/app/grid": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/grid/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/grid/api.py": {
+      "mode": 420,
+      "sha256": "724f7a03404e51b61a89ba29f391953887dbd8ac578829b0ae01c9948d28f42e"
+    },
+    "environment/app/grid/client.py": {
+      "mode": 420,
+      "sha256": "7a55d00d34a8aaa3140dfc45095d071dd47eb932fd58b3ecaaf932e4824944aa"
+    },
+    "environment/app/grid/reports": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/grid/reports/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/grid/reports/current.py": {
+      "mode": 420,
+      "sha256": "9e1d0687850913043a9a4736088b5e79bbcb191f056db9c5ecd5e79149119ae7"
+    },
+    "environment/app/grid/reports/history.py": {
+      "mode": 420,
+      "sha256": "4b39b74164232235876c3118ed5fca796abdd5b20fc37334f1ded4180cb88d82"
+    },
+    "environment/app/grid/reports/panel.py": {
+      "mode": 420,
+      "sha256": "f30512edd0aad85e3f650144938110f6edd0b5220bcbee1aa8ea7fb3004f7155"
+    },
+    "environment/app/grid/schema.py": {
+      "mode": 420,
+      "sha256": "5f2db7ee2062551277967dfe3e83ca702fc340cf9ada77c45922012c165ecb86"
+    },
+    "environment/app/grid/services": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/grid/services/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/grid/services/operations.py": {
+      "mode": 420,
+      "sha256": "3a6be02a2cb9aa2bd9bca2fe9f31a50e345ae3c0b34211fc4d770d65031919c2"
+    },
+    "environment/app/pyproject.toml": {
+      "mode": 420,
+      "sha256": "8739dba47cf5aef79fae53aeaccf8480337ee775b8d550176830b45af0820ea1"
+    },
+    "environment/app/tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/tests/conftest.py": {
+      "mode": 420,
+      "sha256": "c97b78da482296ff06114f1550444ab532eaf934053bc95b79713c435386f47c"
+    },
+    "environment/app/tests/test_visible.py": {
+      "mode": 420,
+      "sha256": "1554bf1d02219051c5fa3d4fceb3e09aa5f5ef77f658d3b0e811d0ef201b495f"
+    },
+    "environment/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "environment/clickhouse-init.sh": {
+      "mode": 420,
+      "sha256": "d3e16035e9e828b1baca662fd80c10697b8040dbe5b6ef448f93929df43fd29f"
+    },
+    "environment/clickhouse.Dockerfile": {
+      "mode": 420,
+      "sha256": "f98d6ef6b748d372424e5a5eb8e8150cc3fb78a612e740e7885b4d927b27099d"
+    },
+    "environment/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "c099c793a67c3d9d53c3c03b40c75537eb89e2e4c3b508a291cc4f331ff82d6b"
+    },
+    "instruction.md": {
+      "mode": 420,
+      "sha256": "1a107ffdcb0bae60dd42b1fa826c5489bdcb1a75dfcd7f78b6e2eeac7005aad5"
+    },
+    "solution": {
+      "mode": 493,
+      "directory": true
+    },
+    "solution/solve.sh": {
+      "mode": 420,
+      "sha256": "d190513482c8e82bc58d063c332bded7f9a83ce94d239ad5a8bbe7c1c09fe41a"
+    },
+    "task.toml": {
+      "mode": 420,
+      "sha256": "993db197af094bf36ac7b8053679a59de4722a96bfedee64ad7d8ac489972d19"
+    },
+    "tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/Dockerfile": {
+      "mode": 420,
+      "sha256": "7d70a3d78b0221651014fa111027be7a341d761ff0c4d157707cb3c43a602297"
+    },
+    "tests/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/README.md": {
+      "mode": 420,
+      "sha256": "29db29f2ad795edddef9f9ce13814536d3987f9856284e582c61120744636793"
+    },
+    "tests/app/grid": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/grid/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/grid/api.py": {
+      "mode": 420,
+      "sha256": "724f7a03404e51b61a89ba29f391953887dbd8ac578829b0ae01c9948d28f42e"
+    },
+    "tests/app/grid/client.py": {
+      "mode": 420,
+      "sha256": "7a55d00d34a8aaa3140dfc45095d071dd47eb932fd58b3ecaaf932e4824944aa"
+    },
+    "tests/app/grid/reports": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/grid/reports/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/grid/reports/current.py": {
+      "mode": 420,
+      "sha256": "9e1d0687850913043a9a4736088b5e79bbcb191f056db9c5ecd5e79149119ae7"
+    },
+    "tests/app/grid/reports/history.py": {
+      "mode": 420,
+      "sha256": "4b39b74164232235876c3118ed5fca796abdd5b20fc37334f1ded4180cb88d82"
+    },
+    "tests/app/grid/reports/panel.py": {
+      "mode": 420,
+      "sha256": "f30512edd0aad85e3f650144938110f6edd0b5220bcbee1aa8ea7fb3004f7155"
+    },
+    "tests/app/grid/schema.py": {
+      "mode": 420,
+      "sha256": "5f2db7ee2062551277967dfe3e83ca702fc340cf9ada77c45922012c165ecb86"
+    },
+    "tests/app/grid/services": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/grid/services/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/grid/services/operations.py": {
+      "mode": 420,
+      "sha256": "3a6be02a2cb9aa2bd9bca2fe9f31a50e345ae3c0b34211fc4d770d65031919c2"
+    },
+    "tests/app/pyproject.toml": {
+      "mode": 420,
+      "sha256": "8739dba47cf5aef79fae53aeaccf8480337ee775b8d550176830b45af0820ea1"
+    },
+    "tests/app/tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/tests/conftest.py": {
+      "mode": 420,
+      "sha256": "c97b78da482296ff06114f1550444ab532eaf934053bc95b79713c435386f47c"
+    },
+    "tests/app/tests/test_visible.py": {
+      "mode": 420,
+      "sha256": "1554bf1d02219051c5fa3d4fceb3e09aa5f5ef77f658d3b0e811d0ef201b495f"
+    },
+    "tests/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "tests/clickhouse-init.sh": {
+      "mode": 420,
+      "sha256": "d3e16035e9e828b1baca662fd80c10697b8040dbe5b6ef448f93929df43fd29f"
+    },
+    "tests/clickhouse.Dockerfile": {
+      "mode": 420,
+      "sha256": "f98d6ef6b748d372424e5a5eb8e8150cc3fb78a612e740e7885b4d927b27099d"
+    },
+    "tests/config.json": {
+      "mode": 420,
+      "sha256": "03716d75d49c3f45401b1c0f018f714cbbc45929a41c663e4aefd43bf4ac29e3"
+    },
+    "tests/create_manifest.py": {
+      "mode": 420,
+      "sha256": "4a3330a139b7d17786ce075a24fbef9a5977d1f5603bd2cdd9a7408422fc9556"
+    },
+    "tests/decoys": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/decoys/filter-before-current.json": {
+      "mode": 420,
+      "sha256": "455725982dffcd60e7ebd17848fa3d23fd5c6fb7180e9601d0c64821c676a07d"
+    },
+    "tests/decoys/filter-before-current.patch": {
+      "mode": 420,
+      "sha256": "950f6657951449c78f7a0692196152758ff53c8719585da012d00364bbea3cd2"
+    },
+    "tests/decoys/ignore-version-ties.json": {
+      "mode": 420,
+      "sha256": "d8d3e0ef5157f8e15f3244dd68261e97660cb98cb920cdb5834d27bd11ba5b3f"
+    },
+    "tests/decoys/ignore-version-ties.patch": {
+      "mode": 420,
+      "sha256": "f1407f364096a607c344749f0b3bd70f8e160b0d39cd9d8e86e2c060dbfcfdba"
+    },
+    "tests/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "c099c793a67c3d9d53c3c03b40c75537eb89e2e4c3b508a291cc4f331ff82d6b"
+    },
+    "tests/hidden.py": {
+      "mode": 420,
+      "sha256": "b57a9d13b20ff4006494bce24c7cf66b555f2e55d0b7755b8c14a36bb1ac0e73"
+    },
+    "tests/test.sh": {
+      "mode": 420,
+      "sha256": "d1369c25a4ed60c85fd3dc0e1128dff4954efb428297786f0c5ace027befa7ce"
+    },
+    "tests/verify.py": {
+      "mode": 420,
+      "sha256": "5424034fa47e849a0b9797dc3d4192563a4caf8357f543068125cf25bec4cd48"
+    }
+  },
+  "validation_log": "ch-py-argmax-state.attempt1.validation.log",
+  "artifacts": "ch-py-argmax-state.attempt1.artifacts",
+  "agent_inference_runs": 0
+}

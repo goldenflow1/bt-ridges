@@ -1,0 +1,32 @@
+diff --git a/README.md b/README.md
+index be229bb..cec0f47 100644
+--- a/README.md
++++ b/README.md
+@@ -3,3 +3,4 @@
+ Box-office staff browse published events and every ticket type available on each event. A ticket-kind search changes which events qualify, not which ticket types are displayed. Pagination and totals should count events.
+ 
+ `src/api/catalog.ts` delegates to a catalog service and event repository. Entity mappings and connection configuration are separate modules. An adjacent repository function supports the editor's enabled-kind selector. PostgreSQL schema is provisioned by the database image; TypeORM synchronization is disabled.
++
+diff --git a/src/repositories/events.ts b/src/repositories/events.ts
+index de4fb08..395e03b 100644
+--- a/src/repositories/events.ts
++++ b/src/repositories/events.ts
+@@ -8,10 +8,14 @@ export async function listEvents(source: DataSource, tenant: number, kind: strin
+   const query = source.getRepository(EventSchema).createQueryBuilder('event')
+     .leftJoinAndSelect('event.ticketTypes', 'ticket')
+     .where('event.tenantId = :tenant', { tenant }).andWhere('event.published = true');
+-  if (kind !== null) query.andWhere('ticket.kind = :kind AND ticket.enabled = true', { kind });
+-  query.orderBy('event.startsAt', 'ASC').limit(limit).offset(offset);
+-  const total = (await query.clone().limit(undefined).offset(undefined).getRawMany()).length;
+-  return { items: await query.getMany(), total };
++  if (kind !== null) {
++    query.andWhere(builder => 'EXISTS ' + builder.subQuery().select('1')
++      .from(TicketTypeSchema, 'eligible').where('eligible.eventId = event.id')
++      .andWhere('eligible.kind = :kind AND eligible.enabled = true').getQuery(), { kind });
++  }
++  query.orderBy('event.startsAt', 'ASC').addOrderBy('event.id', 'ASC').skip(offset).take(limit);
++  const [items, total] = await query.getManyAndCount();
++  return { items, total };
+ }
+ 
+ export async function enabledTicketKinds(source: DataSource, eventId: number): Promise<string[]> {

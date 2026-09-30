@@ -1,0 +1,2 @@
+# Retain task-calibration evidence, never agent inference/run logs.
+!*.log

@@ -1,0 +1,21 @@
+services:
+  clickhouse:
+    build:
+      context: .
+      dockerfile: clickhouse.Dockerfile
+    environment:
+      CLICKHOUSE_PASSWORD: buildvault-admin-local
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /var/lib/clickhouse/TASK_READY && wget -qO- http://127.0.0.1:8123/ping | grep -q Ok"]
+      interval: 2s
+      timeout: 2s
+      retries: 150
+    deploy:
+      resources:
+        limits:
+          memory: 1536m

@@ -1,0 +1,33 @@
+{
+  "projects_inspected": [
+    "rbv-ch-go-skip-index-4059461-env",
+    "rbv-ch-go-skip-index-4059461-ver",
+    "rbv-ch-py-argmax-state-3922331-env",
+    "rbv-ch-py-argmax-state-3922331-ver",
+    "rbv-go-sqlc-interval-3984759-env",
+    "rbv-go-sqlc-interval-3984759-ver",
+    "rbv-go-sqlc-interval-3999648-env",
+    "rbv-go-sqlc-interval-3999648-ver",
+    "rbv-go-sqlc-interval-4023450-env",
+    "rbv-go-sqlc-interval-4023450-ver",
+    "rbv-pg-expr-index-lower-3960300-env",
+    "rbv-pg-expr-index-lower-3960300-ver",
+    "rbv-pg-expr-index-lower-3973200-env",
+    "rbv-pg-expr-index-lower-3973200-ver",
+    "rbv-pg-expr-index-lower-4098771-env",
+    "rbv-pg-expr-index-lower-4098771-ver",
+    "rbv-py-django-annotate-subquery-3911513-env",
+    "rbv-py-django-annotate-subquery-3911513-ver",
+    "rbv-py-sqla-distinct-on-3899729-env",
+    "rbv-py-sqla-distinct-on-3899729-ver",
+    "rbv-ts-typeorm-fanout-4037101-env",
+    "rbv-ts-typeorm-fanout-4037101-ver"
+  ],
+  "remaining_owned_resources": {
+    "containers": [],
+    "networks": [],
+    "volumes": []
+  },
+  "cached_images_retained": true,
+  "unrelated_resources_untouched": true
+}

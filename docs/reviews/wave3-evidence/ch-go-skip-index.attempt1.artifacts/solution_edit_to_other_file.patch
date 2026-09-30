@@ -1,0 +1,20 @@
+diff --git a/README.md b/README.md
+index 33bab4c..415062f 100644
+--- a/README.md
++++ b/README.md
+@@ -3,3 +3,4 @@
+ A CI service looks up build attempts by opaque job ID. Its chronological storage layout supports project timelines but not cross-project job lookups. Existing parts predate the proposed skip index.
+ 
+ The native clickhouse-go client and query repository are immutable. `internal/builds` reports rows read from the exact query's progress callback. `internal/migrate` applies versioned Up/Down SQL once, tracking active versions in a ReplacingMergeTree migration ledger; reapplying an active version does nothing. `cmd/buildvault` is the operational entrypoint.
++
+diff --git a/migrations/0002_job_index.sql b/migrations/0002_job_index.sql
+new file mode 100644
+index 0000000..bf26b7b
+--- /dev/null
++++ b/migrations/0002_job_index.sql
+@@ -0,0 +1,5 @@
++-- +migrate Up
++ALTER TABLE builds ADD INDEX IF NOT EXISTS ix_build_job_id job_id TYPE bloom_filter(0.0001) GRANULARITY 1;
++ALTER TABLE builds MATERIALIZE INDEX ix_build_job_id SETTINGS mutations_sync=2;
++-- +migrate Down
++ALTER TABLE builds DROP INDEX IF EXISTS ix_build_job_id;

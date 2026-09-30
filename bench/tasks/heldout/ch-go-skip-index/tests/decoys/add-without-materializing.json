@@ -1,0 +1,7 @@
+{
+  "description": "add-without-materializing",
+  "expect_failing": [
+    "TestHiddenExistingPartsReadRowsBoundAndLifecycle"
+  ],
+  "passes_visible": true
+}

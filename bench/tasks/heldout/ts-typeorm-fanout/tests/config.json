@@ -1,0 +1,7 @@
+{
+  "task": "ts-typeorm-fanout",
+  "allowed": [
+    "src/repositories/events.ts"
+  ],
+  "bounded": {}
+}

@@ -1,0 +1,7 @@
+{
+  "description": "ignore-version-ties",
+  "expect_failing": [
+    "test_version_ties_choose_the_complete_latest_payload"
+  ],
+  "passes_visible": true
+}

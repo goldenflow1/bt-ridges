@@ -1,0 +1,43 @@
+/logs/verifier/graded.patch:9: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-django-annotate-subquery" tests="7" failures="2"><testcase name="source_tree_conservation_before"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_unrelated_annotations_do_not_fan_out PASSED  [ 25%]
+tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero PASSED [ 50%]
+tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state PASSED [ 75%]
+tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors PASSED [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_unrelated_annotations_do_not_fan_out
+PASSED tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero
+PASSED tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state
+PASSED tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors
+============================== 4 passed in 1.09s ===============================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_existing_roster_and_calendar_contracts PASSED [ 50%]
+tests/test_visible.py::test_absent_clinic PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_existing_roster_and_calendar_contracts
+PASSED tests/test_visible.py::test_absent_clinic
+============================== 2 passed in 0.36s ===============================

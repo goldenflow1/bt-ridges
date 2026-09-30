@@ -1,0 +1,10 @@
+{
+  "task": "ch-go-skip-index",
+  "allowed": [
+    "migrations/0002_job_index.sql"
+  ],
+  "bounded": {},
+  "new_files": [
+    "migrations/0002_job_index.sql"
+  ]
+}

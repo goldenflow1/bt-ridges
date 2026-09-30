@@ -1,0 +1,11 @@
+--- a/freight/repositories/tracking.py
++++ b/freight/repositories/tracking.py
+@@ -10,7 +10,7 @@
+               .join(parcel, parcel.c.id == scan.c.parcel_id)
+               .where(parcel.c.carrier_id == carrier_id)
+               .distinct(scan.c.parcel_id)
+-              .order_by(scan.c.parcel_id, scan.c.id.desc()))
++              .order_by(scan.c.parcel_id, scan.c.recorded_at.desc()))
+     return [dict(row) for row in connection.execute(latest).mappings()]
+ 
+ 

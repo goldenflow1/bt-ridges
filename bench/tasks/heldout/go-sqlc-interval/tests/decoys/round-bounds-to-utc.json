@@ -1,0 +1,7 @@
+{
+  "description": "round-bounds-to-utc",
+  "expect_failing": [
+    "TestHiddenDSTUsesSuppliedInstants"
+  ],
+  "passes_visible": true
+}

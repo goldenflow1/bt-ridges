@@ -1,0 +1,23 @@
+/logs/verifier/graded.patch:18: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="ch-go-skip-index" tests="6" failures="2"><testcase name="source_tree_conservation_before"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase><testcase name="bounded_migration" /><testcase name="compilation" /><testcase name="regression_visible" /><testcase name="hidden_behaviour" /><testcase name="source_tree_conservation_after"><failure message="source paths, modes, or protected content changed">source paths, modes, or protected content changed</failure></testcase></testsuite>
+
+=== RUN   TestHiddenExistingPartsReadRowsBoundAndLifecycle
+--- PASS: TestHiddenExistingPartsReadRowsBoundAndLifecycle (9.05s)
+=== RUN   TestHiddenQuotedJobAndCompleteFields
+--- PASS: TestHiddenQuotedJobAndCompleteFields (0.26s)
+PASS
+ok  	buildvault/internal/builds	9.330s
+?   	buildvault/cmd/buildvault	[no test files]
+?   	buildvault/internal/connection	[no test files]
+?   	buildvault/internal/migrate	[no test files]
+=== RUN   TestVisibleJobLookupAndProjectTimeline
+--- PASS: TestVisibleJobLookupAndProjectTimeline (0.24s)
+=== RUN   TestVisibleMissingJob
+--- PASS: TestVisibleMissingJob (0.13s)
+PASS
+ok  	buildvault/internal/builds	0.390s

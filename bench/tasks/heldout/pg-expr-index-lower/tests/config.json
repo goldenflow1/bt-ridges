@@ -1,0 +1,12 @@
+{
+  "task": "pg-expr-index-lower",
+  "allowed": [
+    "library/models.py",
+    "library/schema_migrations/0002_email_lookup.py"
+  ],
+  "bounded": {},
+  "raw_sql_forbidden": false,
+  "new_files": [
+    "library/schema_migrations/0002_email_lookup.py"
+  ]
+}

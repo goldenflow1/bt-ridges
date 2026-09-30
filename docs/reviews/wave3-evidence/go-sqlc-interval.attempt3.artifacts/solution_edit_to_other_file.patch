@@ -1,0 +1,33 @@
+diff --git a/README.md b/README.md
+index b6cb373..516ef16 100644
+--- a/README.md
++++ b/README.md
+@@ -3,3 +3,4 @@
+ Payroll exports collect ledger entries for inclusive local calendar dates. The civil-time adapter converts that period into a start instant and the following local midnight. The SQL selection currently loses postings near midnight.
+ 
+ `internal/api` calls the payroll service, which delegates date handling to `internal/calendar` and database reads to pinned sqlc 1.27.0 output in `internal/db`. Edit the query source, run `sqlc generate`, and retain synchronized generated code. Other generated files and the caller are protected.
++
+diff --git a/db/queries/payroll.sql b/db/queries/payroll.sql
+index 4dd9ea5..26b4cba 100644
+--- a/db/queries/payroll.sql
++++ b/db/queries/payroll.sql
+@@ -2,5 +2,5 @@
+ SELECT id, organization_id, posted_at, gross_cents, memo
+ FROM pay_entries
+ WHERE organization_id = sqlc.arg(organization_id)::bigint
+-  AND posted_at BETWEEN sqlc.arg(period_start)::timestamptz AND sqlc.arg(period_end)::timestamptz - INTERVAL '1 second'
++  AND posted_at >= sqlc.arg(period_start)::timestamptz AND posted_at < sqlc.arg(period_end)::timestamptz
+ ORDER BY posted_at, id;
+diff --git a/internal/db/payroll.sql.go b/internal/db/payroll.sql.go
+index 360d44e..3a888cb 100644
+--- a/internal/db/payroll.sql.go
++++ b/internal/db/payroll.sql.go
+@@ -14,7 +14,7 @@ const listPayEntries = `-- name: ListPayEntries :many
+ SELECT id, organization_id, posted_at, gross_cents, memo
+ FROM pay_entries
+ WHERE organization_id = $1::bigint
+-  AND posted_at BETWEEN $2::timestamptz AND $3::timestamptz - INTERVAL '1 second'
++  AND posted_at >= $2::timestamptz AND posted_at < $3::timestamptz
+ ORDER BY posted_at, id
+ `
+ 

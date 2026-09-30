@@ -1,0 +1,21 @@
+== validating go-sqlc-interval (logs: /tmp/validate-go-sqlc-interval-axw6flzk)
+-- building environment
+-- building verifier
+  [PASS] B-VALID-11 miner runtime prerequisites in the task image: expected=python3 + baseline packages got=ok 
+  [PASS] B-VALID-04 named checks pass on unmodified repo: expected=exit 0, clean tree got=exit 0 
+  [FAIL] SETUP harness: expected=ok got=error solve.sh failed:
+/tmp/solve.sh: line 4: python: command not found
+
+
+Task: go-sqlc-interval
+------------+-----------------------------------------------+-----------------------------+--------+--------
+ ID         | Check                                         | Expected                    | Got    | Result 
+------------+-----------------------------------------------+-----------------------------+--------+--------
+ B-VALID-11 | miner runtime prerequisites in the task image | python3 + baseline packages | ok     | PASS   
+ B-VALID-04 | named checks pass on unmodified repo          | exit 0, clean tree          | exit 0 | PASS   
+ SETUP      | harness                                       | ok                          | error  | FAIL   
+------------+-----------------------------------------------+-----------------------------+--------+--------
+environment build: 417s
+verifier build: 9s
+RESULT: FAIL (2/3 checks)
+logs: /tmp/validate-go-sqlc-interval-axw6flzk

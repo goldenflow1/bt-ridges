@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-ts-typeorm-fanout-env-postgres:latest
+  main:
+    image: rbv-ts-typeorm-fanout-env-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/heldout/ts-typeorm-fanout/environment
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

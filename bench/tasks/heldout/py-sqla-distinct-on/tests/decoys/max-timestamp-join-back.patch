@@ -1,0 +1,20 @@
+--- a/freight/repositories/tracking.py
++++ b/freight/repositories/tracking.py
+@@ -5,12 +5,14 @@
+ 
+ def current_scans(connection, carrier_id):
+     """Return one current scan for every parcel belonging to a carrier."""
++    maxima = (select(scan.c.parcel_id, func.max(scan.c.recorded_at).label("latest"))
++              .group_by(scan.c.parcel_id).subquery())
+     latest = (select(scan.c.parcel_id, scan.c.id.label("scan_id"), scan.c.recorded_at,
+                      scan.c.depot, scan.c.condition)
+               .join(parcel, parcel.c.id == scan.c.parcel_id)
+-              .where(parcel.c.carrier_id == carrier_id)
+-              .distinct(scan.c.parcel_id)
+-              .order_by(scan.c.parcel_id, scan.c.id.desc()))
++              .join(maxima, and_(maxima.c.parcel_id == scan.c.parcel_id,
++                                 maxima.c.latest == scan.c.recorded_at))
++              .where(parcel.c.carrier_id == carrier_id).order_by(scan.c.parcel_id))
+     return [dict(row) for row in connection.execute(latest).mappings()]
+ 
+ 

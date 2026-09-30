@@ -1,0 +1,256 @@
+{
+  "task": "ts-typeorm-fanout",
+  "attempt": "1",
+  "exit_code": 0,
+  "wall_sec": 841.1,
+  "source_unchanged": true,
+  "source_manifest": {
+    "environment": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/Dockerfile": {
+      "mode": 420,
+      "sha256": "d9a9084223e5dc9e402314d5ef810518e0e1824ff97394665391654fd50e787d"
+    },
+    "environment/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/README.md": {
+      "mode": 420,
+      "sha256": "1600795290e08d70dcd7afd94ca548645a17003f797dcb87b552a02107783565"
+    },
+    "environment/app/package-lock.json": {
+      "mode": 420,
+      "sha256": "37c6a8ffdec2c43e37b617857c31b884da53901ba2dad83e4e1fe9b99f70f377"
+    },
+    "environment/app/package.json": {
+      "mode": 420,
+      "sha256": "d4448bc360c4853cfbdb5897c42511ddbdf0c789404d57c7ee8f7791e8055b69"
+    },
+    "environment/app/src": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/src/api": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/src/api/catalog.ts": {
+      "mode": 420,
+      "sha256": "5679376797ad87f25f1db507d7624547321489095f1801124e105069914b7610"
+    },
+    "environment/app/src/database.ts": {
+      "mode": 420,
+      "sha256": "26a858e5323822fd6cafcc61751fdb3a3fbc61ebe4f0ccfab93062f56c5b0952"
+    },
+    "environment/app/src/entities.ts": {
+      "mode": 420,
+      "sha256": "436966af7762694a3743d67f2af6eda5b071a3c56bb391848fcee8c20cabe012"
+    },
+    "environment/app/src/repositories": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/src/repositories/events.ts": {
+      "mode": 420,
+      "sha256": "33185ac9b6e79fb438674842c565458caf5efb8c96120e00d51cedb7e3a53f42"
+    },
+    "environment/app/src/services": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/src/services/catalog.ts": {
+      "mode": 420,
+      "sha256": "84b9a6629ed48baae36310095a41ff9e40aabf494165ed09cc7c85b30bd96861"
+    },
+    "environment/app/test": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/test/catalog.test.ts": {
+      "mode": 420,
+      "sha256": "a163afacb03c78a2d652c6739893c4749977527c296bd968afcf255c28ae618c"
+    },
+    "environment/app/test/fixtures.ts": {
+      "mode": 420,
+      "sha256": "8ce6ba10e6dd92597c0c42d1d911eb93604c54253cd66943283e940e61db4ba6"
+    },
+    "environment/app/tsconfig.json": {
+      "mode": 420,
+      "sha256": "894db149529de761337c53d8786be24aaf57a073998df65a6ea25a28ad3c4af7"
+    },
+    "environment/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "environment/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "7f7adf97473c7bffdcbba7a2c94ba80240fbc7bc3cfb1e0165523aebaa50b5db"
+    },
+    "environment/postgres-init.sh": {
+      "mode": 420,
+      "sha256": "5691659c4a9c178f841c3dc77d01589f2bbb2ce5b2a636d162586967026b03bc"
+    },
+    "environment/postgres.Dockerfile": {
+      "mode": 420,
+      "sha256": "ecbeed8eae3e602f68d485d33dd2211fba76e99500069da4f0f1835ef0b88e3c"
+    },
+    "instruction.md": {
+      "mode": 420,
+      "sha256": "d427e73bd7a98a6fdd68721050789546dca47622a6dcac130c01468c991aab82"
+    },
+    "solution": {
+      "mode": 493,
+      "directory": true
+    },
+    "solution/solve.sh": {
+      "mode": 420,
+      "sha256": "50bbb0bf103d10c8d8561bc7464330dd1dfda1af527f395fc6151c4a47289525"
+    },
+    "task.toml": {
+      "mode": 420,
+      "sha256": "d03b991ab97ce6d0a52b92e7fb8f6313dd589838672b84e2f0eb88120afadc4a"
+    },
+    "tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/Dockerfile": {
+      "mode": 420,
+      "sha256": "c7e7d8779883f510aac30afa867217e2c73163119dca0728e3d19de6dd4c4901"
+    },
+    "tests/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/README.md": {
+      "mode": 420,
+      "sha256": "1600795290e08d70dcd7afd94ca548645a17003f797dcb87b552a02107783565"
+    },
+    "tests/app/package-lock.json": {
+      "mode": 420,
+      "sha256": "37c6a8ffdec2c43e37b617857c31b884da53901ba2dad83e4e1fe9b99f70f377"
+    },
+    "tests/app/package.json": {
+      "mode": 420,
+      "sha256": "d4448bc360c4853cfbdb5897c42511ddbdf0c789404d57c7ee8f7791e8055b69"
+    },
+    "tests/app/src": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/src/api": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/src/api/catalog.ts": {
+      "mode": 420,
+      "sha256": "5679376797ad87f25f1db507d7624547321489095f1801124e105069914b7610"
+    },
+    "tests/app/src/database.ts": {
+      "mode": 420,
+      "sha256": "26a858e5323822fd6cafcc61751fdb3a3fbc61ebe4f0ccfab93062f56c5b0952"
+    },
+    "tests/app/src/entities.ts": {
+      "mode": 420,
+      "sha256": "436966af7762694a3743d67f2af6eda5b071a3c56bb391848fcee8c20cabe012"
+    },
+    "tests/app/src/repositories": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/src/repositories/events.ts": {
+      "mode": 420,
+      "sha256": "33185ac9b6e79fb438674842c565458caf5efb8c96120e00d51cedb7e3a53f42"
+    },
+    "tests/app/src/services": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/src/services/catalog.ts": {
+      "mode": 420,
+      "sha256": "84b9a6629ed48baae36310095a41ff9e40aabf494165ed09cc7c85b30bd96861"
+    },
+    "tests/app/test": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/test/catalog.test.ts": {
+      "mode": 420,
+      "sha256": "a163afacb03c78a2d652c6739893c4749977527c296bd968afcf255c28ae618c"
+    },
+    "tests/app/test/fixtures.ts": {
+      "mode": 420,
+      "sha256": "8ce6ba10e6dd92597c0c42d1d911eb93604c54253cd66943283e940e61db4ba6"
+    },
+    "tests/app/tsconfig.json": {
+      "mode": 420,
+      "sha256": "894db149529de761337c53d8786be24aaf57a073998df65a6ea25a28ad3c4af7"
+    },
+    "tests/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "tests/config.json": {
+      "mode": 420,
+      "sha256": "688051303199b7a2a26b2ffa57fe8ef787caad692526fc2a944b11055159e17f"
+    },
+    "tests/create_manifest.py": {
+      "mode": 420,
+      "sha256": "4a3330a139b7d17786ce075a24fbef9a5977d1f5603bd2cdd9a7408422fc9556"
+    },
+    "tests/decoys": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/decoys/filter-loaded-ticket-rows.json": {
+      "mode": 420,
+      "sha256": "ee9f540c570dc9e0c739a4770c455065ab749ded427d691325e1f7b0c8a8046a"
+    },
+    "tests/decoys/filter-loaded-ticket-rows.patch": {
+      "mode": 420,
+      "sha256": "984d3fe569a8ea0656a9378a6886d01f81c8f9d9716b70a9af4f80e5ec7e20ec"
+    },
+    "tests/decoys/take-skip-only.json": {
+      "mode": 420,
+      "sha256": "ac61e63d0c60347db695301d920fd0f72b68a794ff62084b2c23ca66bc743760"
+    },
+    "tests/decoys/take-skip-only.patch": {
+      "mode": 420,
+      "sha256": "b4da09b61d713e25f4cd83190e4585f3a74ce67de5418321706de4ae347d2a0a"
+    },
+    "tests/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "7f7adf97473c7bffdcbba7a2c94ba80240fbc7bc3cfb1e0165523aebaa50b5db"
+    },
+    "tests/hidden.test.ts": {
+      "mode": 420,
+      "sha256": "fa41808bbff3bf63510cc3a7552c8924c7a32e7f8640c547dfe653e971b53bd0"
+    },
+    "tests/postgres-init.sh": {
+      "mode": 420,
+      "sha256": "5691659c4a9c178f841c3dc77d01589f2bbb2ce5b2a636d162586967026b03bc"
+    },
+    "tests/postgres.Dockerfile": {
+      "mode": 420,
+      "sha256": "ecbeed8eae3e602f68d485d33dd2211fba76e99500069da4f0f1835ef0b88e3c"
+    },
+    "tests/test.sh": {
+      "mode": 420,
+      "sha256": "d7a80ae72493d9449f9028b51f5d44a8170db7ca52b292ec0beb6004972fcb09"
+    },
+    "tests/tsspan.cjs": {
+      "mode": 420,
+      "sha256": "ae5f8336aa3712981ca7a79bd8a9ded9bd377006205ebf7d205819cb74e611b2"
+    },
+    "tests/verify.py": {
+      "mode": 420,
+      "sha256": "f92b98e06e846bc2a09073d7210b620818d341e3aaae829a22c3c357cbcc9f09"
+    }
+  },
+  "validation_log": "ts-typeorm-fanout.attempt1.validation.log",
+  "artifacts": "ts-typeorm-fanout.attempt1.artifacts",
+  "agent_inference_runs": 0
+}

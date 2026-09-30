@@ -1,0 +1,47 @@
+== validating go-sqlc-interval (logs: /tmp/validate-go-sqlc-interval-b0jcxlqv)
+-- building environment
+-- building verifier
+  [PASS] B-VALID-11 miner runtime prerequisites in the task image: expected=python3 + baseline packages got=ok 
+  [PASS] B-VALID-04 named checks pass on unmodified repo: expected=exit 0, clean tree got=exit 0 
+  [PASS] B-VALID-01 empty patch: expected=0 got=0 failed=['hidden_behaviour']
+  [PASS] B-VALID-08 empty patch fails by assertion: expected=assertions, no errors got=ok assertion failures=3 errors=[] missing=[]
+  [PASS] B-VALID-02 solution patch: expected=1 got=1 
+  [PASS] B-VALID-03 decoy inclusive-next-midnight.patch: expected=0 (semantic) got=0 failed=['hidden_behaviour']
+  [PASS] B-VALID-08 decoy inclusive-next-midnight.patch fails its declared test: expected=TestHiddenFractionalEndAndExclusiveMidnight got=ok assertion failures=3 errors=[] missing=[] visible_failed=[]
+  [PASS] B-VALID-03 decoy round-bounds-to-utc.patch: expected=0 (semantic) got=0 failed=['hidden_behaviour']
+  [PASS] B-VALID-08 decoy round-bounds-to-utc.patch fails its declared test: expected=TestHiddenDSTUsesSuppliedInstants got=ok assertion failures=2 errors=[] missing=[] visible_failed=[]
+  [PASS] B-VALID-05 solution + new file: expected=0 (applied) got=0 failed=['source_tree_conservation_before', 'source_tree_conservation_after']
+  [PASS] B-VALID-09 solution + new file: only scope checks reject it: expected=scope/conservation only got=ok failed=['source_tree_conservation_before', 'source_tree_conservation_after']
+  [PASS] B-VALID-05 solution + edit to other file: expected=0 (applied) got=0 failed=['source_tree_conservation_before', 'source_tree_conservation_after']
+  [PASS] B-VALID-09 solution + edit to other file: only scope checks reject it: expected=scope/conservation only got=ok failed=['source_tree_conservation_before', 'source_tree_conservation_after']
+  [PASS] B-VALID-05 solution + mode change on allowed file: expected=0 (applied) got=0 failed=['source_tree_conservation_before', 'source_tree_conservation_after']
+  [PASS] B-VALID-09 solution + mode change on allowed file: only scope checks reject it: expected=scope/conservation only got=ok failed=['source_tree_conservation_before', 'source_tree_conservation_after']
+  [PASS] B-VALID-06 named checks + grading ran without network egress: expected=B-02 and B-04 pass offline got=yes 
+
+Task: go-sqlc-interval
+------------+---------------------------------------------------------------------+---------------------------------------------+--------+--------
+ ID         | Check                                                               | Expected                                    | Got    | Result 
+------------+---------------------------------------------------------------------+---------------------------------------------+--------+--------
+ B-VALID-11 | miner runtime prerequisites in the task image                       | python3 + baseline packages                 | ok     | PASS   
+ B-VALID-04 | named checks pass on unmodified repo                                | exit 0, clean tree                          | exit 0 | PASS   
+ B-VALID-01 | empty patch                                                         | 0                                           | 0      | PASS   
+ B-VALID-08 | empty patch fails by assertion                                      | assertions, no errors                       | ok     | PASS   
+ B-VALID-02 | solution patch                                                      | 1                                           | 1      | PASS   
+ B-VALID-03 | decoy inclusive-next-midnight.patch                                 | 0 (semantic)                                | 0      | PASS   
+ B-VALID-08 | decoy inclusive-next-midnight.patch fails its declared test         | TestHiddenFractionalEndAndExclusiveMidnight | ok     | PASS   
+ B-VALID-03 | decoy round-bounds-to-utc.patch                                     | 0 (semantic)                                | 0      | PASS   
+ B-VALID-08 | decoy round-bounds-to-utc.patch fails its declared test             | TestHiddenDSTUsesSuppliedInstants           | ok     | PASS   
+ B-VALID-05 | solution + new file                                                 | 0 (applied)                                 | 0      | PASS   
+ B-VALID-09 | solution + new file: only scope checks reject it                    | scope/conservation only                     | ok     | PASS   
+ B-VALID-05 | solution + edit to other file                                       | 0 (applied)                                 | 0      | PASS   
+ B-VALID-09 | solution + edit to other file: only scope checks reject it          | scope/conservation only                     | ok     | PASS   
+ B-VALID-05 | solution + mode change on allowed file                              | 0 (applied)                                 | 0      | PASS   
+ B-VALID-09 | solution + mode change on allowed file: only scope checks reject it | scope/conservation only                     | ok     | PASS   
+ B-VALID-06 | named checks + grading ran without network egress                   | B-02 and B-04 pass offline                  | yes    | PASS   
+------------+---------------------------------------------------------------------+---------------------------------------------+--------+--------
+environment build: 4s
+verifier build: 6s
+environment phase: 33s
+verifier runs: 210s
+RESULT: PASS (16/16 checks)
+logs: /tmp/validate-go-sqlc-interval-b0jcxlqv

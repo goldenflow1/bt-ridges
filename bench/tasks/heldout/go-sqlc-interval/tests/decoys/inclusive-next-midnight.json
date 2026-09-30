@@ -1,0 +1,7 @@
+{
+  "description": "inclusive-next-midnight",
+  "expect_failing": [
+    "TestHiddenFractionalEndAndExclusiveMidnight"
+  ],
+  "passes_visible": true
+}

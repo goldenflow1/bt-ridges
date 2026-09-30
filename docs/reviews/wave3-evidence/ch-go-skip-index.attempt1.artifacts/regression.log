@@ -1,0 +1,4 @@
+?   	buildvault/cmd/buildvault	[no test files]
+?   	buildvault/internal/connection	[no test files]
+?   	buildvault/internal/migrate	[no test files]
+ok  	buildvault/internal/builds	0.250s

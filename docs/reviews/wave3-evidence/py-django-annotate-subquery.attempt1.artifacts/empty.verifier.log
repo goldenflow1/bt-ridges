@@ -1,0 +1,185 @@
+
+
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="py-django-annotate-subquery" tests="7" failures="1"><testcase name="source_tree_conservation_before" /><testcase name="bounded_functions" /><testcase name="bounded_constructs" /><testcase name="ruff_lint" /><testcase name="regression_visible" /><testcase name="hidden_behaviour"><failure message="NSERT INTO appointments VALUES (1,1,'2026-02-01','open'),(2,1,'2026-02-02','open'),(3,1,'2026-02-03','cancelled')&quot;)&#10;&gt;       assert get_roster(7,NOW)['doctors'] == [{'id':1,'name':'Alma','approved_minutes':75,'open_appointments':2}]&#10;E       AssertionError: assert [{'approved_m...intments': 0}] == [{'approved_m...intments': 2}]&#10;E         &#10;E         At index 0 diff: {'id': 1, 'name': 'Alma', 'approved_minutes': 75, 'open_appointments': 0} != {'id': 1, 'name': 'Alma', 'approved_minutes': 75, 'open_appointments': 2}&#10;E         &#10;E         Full diff:&#10;E           [&#10;E               {&#10;E                   'approved_minutes': 75,...&#10;E         &#10;E         ...Full output truncated (8 lines hidden), use '-vv' to show&#10;&#10;tests/test_private.py:18: AssertionError&#10;_____________ test_boundary_clinic_isolation_ties_and_fresh_state ______________&#10;&#10;conn = &lt;django.db.backends.utils.CursorWrapper object at 0x710d66167a70&gt;&#10;&#10;    def test_boundary_clinic_isolation_ties_and_fresh_state(conn):&#10;        Doctor.objects.bu">NSERT INTO appointments VALUES (1,1,'2026-02-01','open'),(2,1,'2026-02-02','open'),(3,1,'2026-02-03','cancelled')")
+&gt;       assert get_roster(7,NOW)['doctors'] == [{'id':1,'name':'Alma','approved_minutes':75,'open_appointments':2}]
+E       AssertionError: assert [{'approved_m...intments': 0}] == [{'approved_m...intments': 2}]
+E         
+E         At index 0 diff: {'id': 1, 'name': 'Alma', 'approved_minutes': 75, 'open_appointments': 0} != {'id': 1, 'name': 'Alma', 'approved_minutes': 75, 'open_appointments': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'approved_minutes': 75,...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_private.py:18: AssertionError
+_____________ test_boundary_clinic_isolation_ties_and_fresh_state ______________
+
+conn = &lt;django.db.backends.utils.CursorWrapper object at 0x710d66167a70&gt;
+
+    def test_boundary_clinic_isolation_ties_and_fresh_state(conn):
+        Doctor.objects.bulk_create([Doctor(id=i,clinic_id=7 if i&lt;4 else 8,display_name='Same') for i in [3,2,1,4]])
+        Appointment.objects.bulk_create([
+            Appointment(id=1,doctor_id=1,starts_at=NOW,state='open'),
+            Appointment(id=2,doctor_id=1,starts_at=NOW-timedelta(microseconds=1),state='open'),
+            Appointment(id=3,doctor_id=1,starts_at=NOW+timedelta(seconds=1),state='closed'),
+            Appointment(id=4,doctor_id=4,starts_at=NOW,state='open')])
+        equivalent=NOW.astimezone(timezone(timedelta(hours=5,minutes=30)))
+        result=get_roster(7,equivalent)['doctors']
+        assert [r['id'] for r in result] == [1,2,3]
+&gt;       assert [r['open_appointments'] for r in result] == [1,0,0]
+E       AssertionError: assert [0, 0, 0] == [1, 0, 0]
+E         
+E         At index 0 diff: 0 != 1
+E         
+E         Full diff:
+E           [
+E         -     1,
+E         ?     ^...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_private.py:40: AssertionError
+____________ test_query_count_is_constant_at_one_and_fifty_doctors _____________
+
+conn = &lt;django.db.backends.utils.CursorWrapper object at 0x710d66166810&gt;
+
+    def test_query_count_is_constant_at_one_and_fifty_doctors(conn):
+        for count in [1,50]:
+            Appointment.objects.all().delete()
+            Session.objects.all().delete()
+            Doctor.objects.all().delete()
+            Doctor.objects.bulk_create([Doctor(id=i,clinic_id=7,display_name=f'D{i:03}') for i in range(1,count+1)])
+            Appointment.objects.bulk_create([Appointment(doctor_id=i,starts_at=NOW,state='open') for i in range(1,count+1) for _ in range(3)])
+            Session.objects.bulk_create([Session(doctor_id=i,minutes=20,approved=True) for i in range(1,count+1) for _ in range(2)])
+            with CaptureQueriesContext(connection) as queries:
+                queryset=doctor_workload(7,NOW)
+                assert isinstance(queryset,QuerySet)
+                assert not queries.captured_queries
+                actual=list(queryset)
+            assert len(queries) == 1
+            assert len(actual) == count
+&gt;           assert all(d.open_appointments==3 and d.approved_minutes==40 for d in actual)
+E           assert False
+E            +  where False = all(&lt;generator object test_query_count_is_constant_at_one_and_fifty_doctors.&lt;locals&gt;.&lt;genexpr&gt; at 0x710d661a6810&gt;)
+
+tests/test_private.py:60: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero
+FAILED tests/test_private.py::test_unrelated_annotations_do_not_fan_out - Ass...
+FAILED tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state
+FAILED tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors
+========================= 3 failed, 1 passed in 1.28s ==========================
+</failure></testcase><testcase name="source_tree_conservation_after" /></testsuite>
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+tests/test_private.py::test_unrelated_annotations_do_not_fan_out FAILED  [ 25%]
+tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero PASSED [ 50%]
+tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state FAILED [ 75%]
+tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors FAILED [100%]
+
+=================================== FAILURES ===================================
+__________________ test_unrelated_annotations_do_not_fan_out ___________________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x710d6611d1c0>
+
+    def test_unrelated_annotations_do_not_fan_out(conn):
+        conn.execute("INSERT INTO doctors VALUES (1,7,'Alma')")
+        conn.execute("INSERT INTO sessions VALUES (1,1,30,true),(2,1,45,true),(3,1,90,false)")
+        conn.execute("INSERT INTO appointments VALUES (1,1,'2026-02-01','open'),(2,1,'2026-02-02','open'),(3,1,'2026-02-03','cancelled')")
+>       assert get_roster(7,NOW)['doctors'] == [{'id':1,'name':'Alma','approved_minutes':75,'open_appointments':2}]
+E       AssertionError: assert [{'approved_m...intments': 0}] == [{'approved_m...intments': 2}]
+E         
+E         At index 0 diff: {'id': 1, 'name': 'Alma', 'approved_minutes': 75, 'open_appointments': 0} != {'id': 1, 'name': 'Alma', 'approved_minutes': 75, 'open_appointments': 2}
+E         
+E         Full diff:
+E           [
+E               {
+E                   'approved_minutes': 75,...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_private.py:18: AssertionError
+_____________ test_boundary_clinic_isolation_ties_and_fresh_state ______________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x710d66167a70>
+
+    def test_boundary_clinic_isolation_ties_and_fresh_state(conn):
+        Doctor.objects.bulk_create([Doctor(id=i,clinic_id=7 if i<4 else 8,display_name='Same') for i in [3,2,1,4]])
+        Appointment.objects.bulk_create([
+            Appointment(id=1,doctor_id=1,starts_at=NOW,state='open'),
+            Appointment(id=2,doctor_id=1,starts_at=NOW-timedelta(microseconds=1),state='open'),
+            Appointment(id=3,doctor_id=1,starts_at=NOW+timedelta(seconds=1),state='closed'),
+            Appointment(id=4,doctor_id=4,starts_at=NOW,state='open')])
+        equivalent=NOW.astimezone(timezone(timedelta(hours=5,minutes=30)))
+        result=get_roster(7,equivalent)['doctors']
+        assert [r['id'] for r in result] == [1,2,3]
+>       assert [r['open_appointments'] for r in result] == [1,0,0]
+E       AssertionError: assert [0, 0, 0] == [1, 0, 0]
+E         
+E         At index 0 diff: 0 != 1
+E         
+E         Full diff:
+E           [
+E         -     1,
+E         ?     ^...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_private.py:40: AssertionError
+____________ test_query_count_is_constant_at_one_and_fifty_doctors _____________
+
+conn = <django.db.backends.utils.CursorWrapper object at 0x710d66166810>
+
+    def test_query_count_is_constant_at_one_and_fifty_doctors(conn):
+        for count in [1,50]:
+            Appointment.objects.all().delete()
+            Session.objects.all().delete()
+            Doctor.objects.all().delete()
+            Doctor.objects.bulk_create([Doctor(id=i,clinic_id=7,display_name=f'D{i:03}') for i in range(1,count+1)])
+            Appointment.objects.bulk_create([Appointment(doctor_id=i,starts_at=NOW,state='open') for i in range(1,count+1) for _ in range(3)])
+            Session.objects.bulk_create([Session(doctor_id=i,minutes=20,approved=True) for i in range(1,count+1) for _ in range(2)])
+            with CaptureQueriesContext(connection) as queries:
+                queryset=doctor_workload(7,NOW)
+                assert isinstance(queryset,QuerySet)
+                assert not queries.captured_queries
+                actual=list(queryset)
+            assert len(queries) == 1
+            assert len(actual) == count
+>           assert all(d.open_appointments==3 and d.approved_minutes==40 for d in actual)
+E           assert False
+E            +  where False = all(<generator object test_query_count_is_constant_at_one_and_fifty_doctors.<locals>.<genexpr> at 0x710d661a6810>)
+
+tests/test_private.py:60: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_private.py::test_empty_and_nonmatching_counts_are_integer_zero
+FAILED tests/test_private.py::test_unrelated_annotations_do_not_fan_out - Ass...
+FAILED tests/test_private.py::test_boundary_clinic_isolation_ties_and_fresh_state
+FAILED tests/test_private.py::test_query_count_is_constant_at_one_and_fifty_doctors
+========================= 3 failed, 1 passed in 1.28s ==========================
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.6.0 -- /usr/local/bin/python3.12
+rootdir: /app
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+tests/test_visible.py::test_existing_roster_and_calendar_contracts PASSED [ 50%]
+tests/test_visible.py::test_absent_clinic PASSED                         [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_visible.py::test_existing_roster_and_calendar_contracts
+PASSED tests/test_visible.py::test_absent_clinic
+============================== 2 passed in 0.31s ===============================

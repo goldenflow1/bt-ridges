@@ -1,0 +1,20 @@
+--- a/db/queries/payroll.sql
++++ b/db/queries/payroll.sql
+@@ -2,5 +2,5 @@
+ SELECT id, organization_id, posted_at, gross_cents, memo
+ FROM pay_entries
+ WHERE organization_id = sqlc.arg(organization_id)::bigint
+-  AND posted_at BETWEEN sqlc.arg(period_start)::timestamptz AND sqlc.arg(period_end)::timestamptz - INTERVAL '1 second'
++  AND posted_at >= date_trunc('day',sqlc.arg(period_start)::timestamptz AT TIME ZONE 'UTC') AT TIME ZONE 'UTC' AND posted_at < date_trunc('day',sqlc.arg(period_end)::timestamptz AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+ ORDER BY posted_at, id;
+--- a/internal/db/payroll.sql.go
++++ b/internal/db/payroll.sql.go
+@@ -14,7 +14,7 @@
+ SELECT id, organization_id, posted_at, gross_cents, memo
+ FROM pay_entries
+ WHERE organization_id = $1::bigint
+-  AND posted_at BETWEEN $2::timestamptz AND $3::timestamptz - INTERVAL '1 second'
++  AND posted_at >= date_trunc('day',$2::timestamptz AT TIME ZONE 'UTC') AT TIME ZONE 'UTC' AND posted_at < date_trunc('day',$3::timestamptz AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+ ORDER BY posted_at, id
+ `
+ 

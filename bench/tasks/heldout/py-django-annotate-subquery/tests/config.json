@@ -1,0 +1,10 @@
+{
+  "task": "py-django-annotate-subquery",
+  "allowed": [
+    "clinic/repositories/workload.py"
+  ],
+  "bounded": {
+    "clinic/repositories/workload.py": "doctor_workload"
+  },
+  "raw_sql_forbidden": true
+}

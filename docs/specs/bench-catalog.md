@@ -1,6 +1,6 @@
 # SPEC — Practice Task Catalog
 
-Status: accepted · updated 2026-09-30 · Waves 1 and 2 built: 17 dev tasks. Wave 2 calibration: 12/12 tasks, 196/196 checks passed; see evidence below.
+Status: accepted · updated 2026-09-30 · All 24 tasks built: 17 dev and 7 held-out. Wave 2: 196/196 checks; Wave 3: 112/112 checks. No held-out agent evaluation yet; see evidence and provenance below.
 
 The six public samples are all NetBox + Django + PostgreSQL. The competition uses other repositories, both engines, other languages and query layers. This catalog defines practice tasks that cover the niche, so we measure the agent on the niche and not on one codebase.
 
@@ -42,11 +42,11 @@ Kinds: **R** repair · **A** authoring · **O** optimization. Scope: **N** named
 | ts-prisma-groupby | dev | TypeScript · Prisma `$queryRaw` | PG | R | N | integer division truncation in a percentage |
 | ts-knex-window-frame | dev | TypeScript · Knex | PG | A | N | running total with the default window frame and ties (`ROWS` vs `RANGE`) |
 | ts-ch-client-limit-by | dev | TypeScript · @clickhouse/client | CH | A | N | top-N per group with `LIMIT n BY` and deterministic order |
-| py-sqla-distinct-on | heldout | Python · SQLAlchemy | PG | R | N | `DISTINCT ON` with a non-matching `ORDER BY` |
+| py-sqla-distinct-on | heldout | Python · SQLAlchemy | PG | R | N | `DISTINCT ON` chooses stale backfills or the wrong timestamp tie |
 | py-django-annotate-subquery | heldout | Python · Django ORM | PG | A | N | correlated `Subquery` count with `Coalesce` → integer 0 |
 | ch-py-argmax-state | heldout | Python · clickhouse SQL | CH | R | U | latest state per key with `argMax` at the right grain |
 | go-sqlc-interval | heldout | Go · sqlc (generated code kept in sync) | PG | R | N | inclusive end-of-day boundary loses rows; half-open range |
-| ts-typeorm-fanout | heldout | TypeScript · TypeORM QueryBuilder | PG | R | N | `leftJoinAndSelect` + `getCount` fan-out |
+| ts-typeorm-fanout | heldout | TypeScript · TypeORM QueryBuilder | PG | R | N | joined-row limits/totals and child filtering break complete parent pages |
 | pg-expr-index-lower | heldout | Python · Django migration | PG | O | M | expression index on `lower(email)` must serve the case-insensitive lookup |
 | ch-go-skip-index | heldout | Go · clickhouse-go | CH | O | M | data-skipping index + migration; `read_rows` bounded |
 
@@ -83,6 +83,14 @@ Coverage and validation records:
 - [Go/TypeScript](../reviews/wave2-go-ts.md): nullable aggregates, bounded association queries, lifetime running balances with timestamp peers, and deterministic per-group quotas.
 
 The tasks retain matching environment/checker app copies. References, decoys, and tests are independent of the agent source. Cross-review tightened returned-value assertions, public-interface checks, and per-call query measurements. These remain synthetic practice applications; their construction does not establish difficulty or solve rate on the competition's hidden tasks.
+
+### Wave 3 construction (2026-09-30)
+
+All seven held-out task directories are built and Docker-calibrated under the [Wave 3 plan](../plans/wave3-heldout-tasks.md): **112/112 checks passed**. Empty patches score 0; references score 1; all 14 decoys pass visible checks and fail a declared behavioral assertion. All 21 scope variants are rejected solely by scope/conservation checks. Named checks and grading have no network egress, and every image passes the miner-runtime prerequisite check.
+
+The [evidence index](../reviews/wave3-evidence/README.md), [final source/timing audit](../reviews/wave3-evidence/final-results.json), [statement-to-test matrix](../reviews/wave3-heldout.md), [repository gates](../reviews/wave3-evidence/gates.log) and [cleanup record](../reviews/wave3-evidence/cleanup.json) retain the proof, including failed calibration attempts. Paired app trees match in bytes and modes; accepted source manifests match the final task trees. All cold named-check environment phases are below 120 seconds. No task containers, networks or volumes remain.
+
+**Provenance limitation:** these tasks were built in the existing conversation, not by a fresh-session author. No prohibited agent files or run/experiment logs were read during construction, and no agent inference or tuning was performed. The fresh domains and multi-module repositories improve coverage, but competition difficulty and agent generalization remain unmeasured. Only the bench host's separately authorized G7 run may evaluate these tasks; any task used for agent tuning must become dev and be replaced.
 
 ## 7. Host constraints (2026-09-30)
 - **NetBox public samples are deferred on the current dev host** (Xeon E5-2680 v3 KVM guest, 8 GB). Their named Django check takes ≈ 23 min cold here, over the checker's own 600 s per command / 900 s total, and the checker always starts cold. Results from this host for those tasks are infrastructure-void, not agent results. Run them on a faster machine (target: cold check < 5 min).

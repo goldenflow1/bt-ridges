@@ -1,0 +1,7 @@
+{
+  "description": "joined-count",
+  "expect_failing": [
+    "test_unrelated_annotations_do_not_fan_out"
+  ],
+  "passes_visible": true
+}

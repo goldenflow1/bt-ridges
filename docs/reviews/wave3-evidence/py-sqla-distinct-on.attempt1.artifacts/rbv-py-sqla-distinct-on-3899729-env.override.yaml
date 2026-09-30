@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: rbv-py-sqla-distinct-on-env-postgres:latest
+  main:
+    image: rbv-py-sqla-distinct-on-env-main:latest
+    build:
+      context: /root/bittensor/ridges/bench/tasks/heldout/py-sqla-distinct-on/environment
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  default:
+    internal: true

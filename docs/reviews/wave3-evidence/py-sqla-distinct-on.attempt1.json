@@ -1,0 +1,252 @@
+{
+  "task": "py-sqla-distinct-on",
+  "attempt": "1",
+  "exit_code": 0,
+  "wall_sec": 366.9,
+  "source_unchanged": true,
+  "source_manifest": {
+    "environment": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/Dockerfile": {
+      "mode": 420,
+      "sha256": "185845e87271782ad370a94dff6f2bda8be92f24bc6113d6fca27c686a07de84"
+    },
+    "environment/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/README.md": {
+      "mode": 420,
+      "sha256": "ee34c5dffb3e4d922ff5174284842f396e40f99a9875050f8848613f1d790cd5"
+    },
+    "environment/app/freight": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/freight/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/freight/api.py": {
+      "mode": 420,
+      "sha256": "e0185e57d43afb955d4c9d2cbb93dac609064df28305acb3e8ad70502ee6cc55"
+    },
+    "environment/app/freight/db.py": {
+      "mode": 420,
+      "sha256": "17183a36db54acf7260fddbe7aa622555d02e8674bce757f65b9ceb4d2f837f7"
+    },
+    "environment/app/freight/models.py": {
+      "mode": 420,
+      "sha256": "1da5e0cf670922128bee21a009def9066669f364d7f8e55aa57390c2aab93178"
+    },
+    "environment/app/freight/presentation.py": {
+      "mode": 420,
+      "sha256": "b4fed2cb153478257d33dae9dd060d7cbc28fdc7476c69a508d09ced14f88dee"
+    },
+    "environment/app/freight/repositories": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/freight/repositories/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment/app/freight/repositories/history.py": {
+      "mode": 420,
+      "sha256": "bba9bea3cd989bd6eda5091c48e215347bf2100ad31fbd800c492a80c3368d6d"
+    },
+    "environment/app/freight/repositories/tracking.py": {
+      "mode": 420,
+      "sha256": "bd6af7f22a7e6aadfd942735138c612934dc1652bf9aa13460824697ab7a8fd1"
+    },
+    "environment/app/freight/service.py": {
+      "mode": 420,
+      "sha256": "6aed85dff903005e16e5c6bcacd47a807a30cdb9c08164e7329b08c67e18a2a3"
+    },
+    "environment/app/pyproject.toml": {
+      "mode": 420,
+      "sha256": "8739dba47cf5aef79fae53aeaccf8480337ee775b8d550176830b45af0820ea1"
+    },
+    "environment/app/tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "environment/app/tests/conftest.py": {
+      "mode": 420,
+      "sha256": "45276554e0ab43f8f9b49da005c1d0bae1439e947d8bef3bf981e882b981bbe5"
+    },
+    "environment/app/tests/test_visible.py": {
+      "mode": 420,
+      "sha256": "d0ecefa7145bdbd5d2dff2a8dbb0c11b0f6c21caf158665626e9ae09ae3b7304"
+    },
+    "environment/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "environment/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "5691d08cdb7b978f363ca4ad0ef1e659008ce421127324b6b836760f0448b03f"
+    },
+    "environment/postgres-init.sh": {
+      "mode": 420,
+      "sha256": "c55351f887dca47ea0399a72f5e858ae7194d4afa5f5e1f96fbd24d0498bad41"
+    },
+    "environment/postgres.Dockerfile": {
+      "mode": 420,
+      "sha256": "bd9b9010827503b77e4b55112d4723a08869963cb54f05d79b763872f7458103"
+    },
+    "instruction.md": {
+      "mode": 420,
+      "sha256": "19aecad258229b87a59ea417dcbd2da60afd53e7eca5828a9491ea886538fc75"
+    },
+    "solution": {
+      "mode": 493,
+      "directory": true
+    },
+    "solution/solve.sh": {
+      "mode": 420,
+      "sha256": "2eb9ca453dc909e423513631ecd9e6a68b361262029a2b935e24a878313f4c8d"
+    },
+    "task.toml": {
+      "mode": 420,
+      "sha256": "c19a2e27743271412ad9ca3e9c4a555b1a4e77f1621b98874a01d65fd4f14bf3"
+    },
+    "tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/Dockerfile": {
+      "mode": 420,
+      "sha256": "77242e61b281a59bb4d62e7439cdec3172a8b1e213d3a700e43feaa0618da1cd"
+    },
+    "tests/app": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/README.md": {
+      "mode": 420,
+      "sha256": "ee34c5dffb3e4d922ff5174284842f396e40f99a9875050f8848613f1d790cd5"
+    },
+    "tests/app/freight": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/freight/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/freight/api.py": {
+      "mode": 420,
+      "sha256": "e0185e57d43afb955d4c9d2cbb93dac609064df28305acb3e8ad70502ee6cc55"
+    },
+    "tests/app/freight/db.py": {
+      "mode": 420,
+      "sha256": "17183a36db54acf7260fddbe7aa622555d02e8674bce757f65b9ceb4d2f837f7"
+    },
+    "tests/app/freight/models.py": {
+      "mode": 420,
+      "sha256": "1da5e0cf670922128bee21a009def9066669f364d7f8e55aa57390c2aab93178"
+    },
+    "tests/app/freight/presentation.py": {
+      "mode": 420,
+      "sha256": "b4fed2cb153478257d33dae9dd060d7cbc28fdc7476c69a508d09ced14f88dee"
+    },
+    "tests/app/freight/repositories": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/freight/repositories/__init__.py": {
+      "mode": 420,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/app/freight/repositories/history.py": {
+      "mode": 420,
+      "sha256": "bba9bea3cd989bd6eda5091c48e215347bf2100ad31fbd800c492a80c3368d6d"
+    },
+    "tests/app/freight/repositories/tracking.py": {
+      "mode": 420,
+      "sha256": "bd6af7f22a7e6aadfd942735138c612934dc1652bf9aa13460824697ab7a8fd1"
+    },
+    "tests/app/freight/service.py": {
+      "mode": 420,
+      "sha256": "6aed85dff903005e16e5c6bcacd47a807a30cdb9c08164e7329b08c67e18a2a3"
+    },
+    "tests/app/pyproject.toml": {
+      "mode": 420,
+      "sha256": "8739dba47cf5aef79fae53aeaccf8480337ee775b8d550176830b45af0820ea1"
+    },
+    "tests/app/tests": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/app/tests/conftest.py": {
+      "mode": 420,
+      "sha256": "45276554e0ab43f8f9b49da005c1d0bae1439e947d8bef3bf981e882b981bbe5"
+    },
+    "tests/app/tests/test_visible.py": {
+      "mode": 420,
+      "sha256": "d0ecefa7145bdbd5d2dff2a8dbb0c11b0f6c21caf158665626e9ae09ae3b7304"
+    },
+    "tests/baseline-requirements.txt": {
+      "mode": 420,
+      "sha256": "072675cd1dfdf4d44c89ee4082bae507b525c87b89db84a19bf28c4f8e52a8fa"
+    },
+    "tests/config.json": {
+      "mode": 420,
+      "sha256": "733be28f8d3527f1feae21a4d0ead3655608277138201a937746387727586a47"
+    },
+    "tests/create_manifest.py": {
+      "mode": 420,
+      "sha256": "4a3330a139b7d17786ce075a24fbef9a5977d1f5603bd2cdd9a7408422fc9556"
+    },
+    "tests/decoys": {
+      "mode": 493,
+      "directory": true
+    },
+    "tests/decoys/max-timestamp-join-back.json": {
+      "mode": 420,
+      "sha256": "814407b38f605b45129c6af73a0245ba5cfcf94d9122d29aff0a458de3f621be"
+    },
+    "tests/decoys/max-timestamp-join-back.patch": {
+      "mode": 420,
+      "sha256": "ff1a484417ad4cd1364034a0a34fd06f7cf59b909369da93ddd3b97d7d803672"
+    },
+    "tests/decoys/timestamp-without-id.json": {
+      "mode": 420,
+      "sha256": "f6ec65a2d3299dc0ce2d71b03384e7a2076fda29b32681ac7a77a1f50af3724e"
+    },
+    "tests/decoys/timestamp-without-id.patch": {
+      "mode": 420,
+      "sha256": "a6274e4a020e06f9be7fbe786fc71696fc78adfe406f3610bdf6543191cc65a6"
+    },
+    "tests/docker-compose.yaml": {
+      "mode": 420,
+      "sha256": "5691d08cdb7b978f363ca4ad0ef1e659008ce421127324b6b836760f0448b03f"
+    },
+    "tests/hidden.py": {
+      "mode": 420,
+      "sha256": "dab8f40abf5359a3a0fd31c02c3a010bbb40b43692838d7759152edcff598932"
+    },
+    "tests/postgres-init.sh": {
+      "mode": 420,
+      "sha256": "c55351f887dca47ea0399a72f5e858ae7194d4afa5f5e1f96fbd24d0498bad41"
+    },
+    "tests/postgres.Dockerfile": {
+      "mode": 420,
+      "sha256": "bd9b9010827503b77e4b55112d4723a08869963cb54f05d79b763872f7458103"
+    },
+    "tests/test.sh": {
+      "mode": 420,
+      "sha256": "d1369c25a4ed60c85fd3dc0e1128dff4954efb428297786f0c5ace027befa7ce"
+    },
+    "tests/verify.py": {
+      "mode": 420,
+      "sha256": "16567aaa071c659800d270ebb8d2c36dd753a5d643e4bf199aa42e1cb0a59435"
+    }
+  },
+  "validation_log": "py-sqla-distinct-on.attempt1.validation.log",
+  "artifacts": "py-sqla-distinct-on.attempt1.artifacts",
+  "agent_inference_runs": 0
+}

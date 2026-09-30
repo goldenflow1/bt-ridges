@@ -1,0 +1,21 @@
+{
+  "name": "stagepass",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "typeorm": "0.3.20",
+    "pg": "8.13.1",
+    "reflect-metadata": "0.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.7.4",
+    "@types/pg": "8.11.10",
+    "tsx": "4.19.2",
+    "typescript": "5.6.3"
+  }
+}

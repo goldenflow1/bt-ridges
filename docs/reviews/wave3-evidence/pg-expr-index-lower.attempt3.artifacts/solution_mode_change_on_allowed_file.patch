@@ -1,0 +1,25 @@
+diff --git a/library/models.py b/library/models.py
+old mode 100644
+new mode 100755
+index 62ecf34..b37d2d1
+--- a/library/models.py
++++ b/library/models.py
+@@ -15,4 +15,4 @@ class Member(models.Model):
+ 
+     class Meta:
+         db_table = 'library_member'
+-        indexes = []
++        indexes = [models.Index(functions.Lower('email'), name='library_member_lower_email')]
+diff --git a/library/schema_migrations/0002_email_lookup.py b/library/schema_migrations/0002_email_lookup.py
+new file mode 100644
+index 0000000..120f435
+--- /dev/null
++++ b/library/schema_migrations/0002_email_lookup.py
+@@ -0,0 +1,7 @@
++from django.db import migrations, models
++from django.db.models.functions import Lower
++
++
++class Migration(migrations.Migration):
++    dependencies = [('library', '0001_initial')]
++    operations = [migrations.AddIndex(model_name='member', index=models.Index(Lower('email'), name='library_member_lower_email'))]

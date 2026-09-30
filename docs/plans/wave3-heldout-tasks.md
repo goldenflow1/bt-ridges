@@ -1,6 +1,6 @@
 # PLAN — Wave 3 held-out tasks
 
-Status: ready to build · 2026-09-29
+Status: seven tasks built and calibrated; G0–G5 passed; G7 pending · 2026-09-30
 
 Build the seven **held-out** tasks in [the catalog](../specs/bench-catalog.md) §3 under `bench/tasks/heldout/<id>/`. They exist for one purpose: gate G7 (`docs/process/engineering-loop.md`), the 3-trial held-out run that decides whether an agent build may be uploaded. No agent inference and no submission is part of this work.
 
@@ -125,4 +125,6 @@ This target is not changed after the run starts. A later upload may declare a ne
 
 ## 7. Results
 
-Pending.
+Completed task construction and calibration on 2026-09-30: **7/7 tasks, 112/112 checks**, with 14 visible-passing behavioral decoys and 21 scope-only rejections. App copies match byte-for-byte and in modes; the current task trees match their accepted calibration manifests. Cold environment phases were all under 120 seconds, repository G0–G5 passed, and no validation containers, networks or volumes remain. See the [evidence index](../reviews/wave3-evidence/README.md) and [statement-to-test review](../reviews/wave3-heldout.md).
+
+No held-out agent runs, tuning or upload were performed. **This was not fresh-session authorship**; the evidence records that limitation explicitly. G7 remains pending, and its predeclared target above is unchanged.
