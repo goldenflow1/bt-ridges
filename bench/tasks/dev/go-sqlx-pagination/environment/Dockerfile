@@ -8,8 +8,13 @@ ENV GOFLAGS=-mod=vendor \
     AUDITFEED_TEST_DATABASE_URL=postgres://auditfeed:auditfeed-app-81b04c6e@postgres:5432/auditfeed_test?sslmode=disable
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends bash ca-certificates git postgresql-client \
+    && apt-get install -y --no-install-recommends bash ca-certificates git python3 python3-pip postgresql-client \
     && rm -rf /var/lib/apt/lists/*
+
+# The Ridges miner runtime needs python3 and its baseline packages inside the task environment.
+COPY baseline-requirements.txt /tmp/baseline-requirements.txt
+RUN python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/baseline-requirements.txt \
+    && rm /tmp/baseline-requirements.txt
 
 COPY app/ /app/
 WORKDIR /app

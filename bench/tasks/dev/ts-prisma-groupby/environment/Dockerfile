@@ -9,8 +9,13 @@ ENV CHECKPOINT_DISABLE=1 \
     COURSEBOARD_TEST_DATABASE_URL=postgresql://courseboard:courseboard-app-2a7d5e90@postgres:5432/courseboard_test
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends bash ca-certificates git openssl postgresql-client \
+    && apt-get install -y --no-install-recommends bash ca-certificates git python3 python3-pip openssl postgresql-client \
     && rm -rf /var/lib/apt/lists/*
+
+# The Ridges miner runtime needs python3 and its baseline packages inside the task environment.
+COPY baseline-requirements.txt /tmp/baseline-requirements.txt
+RUN python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/baseline-requirements.txt \
+    && rm /tmp/baseline-requirements.txt
 
 COPY app/ /app/
 WORKDIR /app

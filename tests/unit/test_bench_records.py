@@ -101,3 +101,10 @@ def test_B_RUN_02_voluntary_no_patch_is_not_a_transport_failure(tmp_path):
     assert (state, lab) == ("valid", "budget")
     obs, state, lab = label(tmp_path / "b", exception="MinerRuntimeError", tele=telemetry({"source": "candidate"}))
     assert lab == "mechanical"  # a patch existed: this is a real mechanical failure
+
+
+def test_B_RUN_02_broken_task_image_is_a_task_defect_not_agent_or_transient(tmp_path):
+    root, cli = trial(tmp_path, exception="RuntimeError")
+    obs = observe(root, cli, None)
+    obs["exception_message"] = "Unsupported task environment: python3 is required to run the Ridges miner runtime"
+    assert (validity(obs), auto_label(obs)) == ("task-environment", "task-environment-defect")

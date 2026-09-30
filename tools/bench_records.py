@@ -102,8 +102,14 @@ def observe(trial_dir: str, cli_output: str, telemetry: Optional[Dict]) -> Dict:
     return obs
 
 
+TASK_ENVIRONMENT_DEFECT = re.compile(r"Unsupported task environment|Failed to install local miner baseline packages")
+
+
 def validity(obs: Dict) -> str:
-    """valid | void-infrastructure | unresolved, by responsibility (not timing)."""
+    """valid | void-infrastructure | task-environment | unresolved, by responsibility (not timing).
+    A broken task image is neither the agent's fault nor transient: fix and re-validate the task, don't retry."""
+    if TASK_ENVIRONMENT_DEFECT.search(obs.get("exception_message") or ""):
+        return "task-environment"
     kind = obs.get("exception_type")
     if kind in VOID_INFRASTRUCTURE:
         return "void-infrastructure"
@@ -123,6 +129,8 @@ def auto_label(obs: Dict) -> str:
     state = validity(obs)
     if state == "void-infrastructure":
         return "infrastructure-void"
+    if state == "task-environment":
+        return "task-environment-defect"
     if state == "unresolved":
         return "unknown"
     if kind in AGENT_MECHANICAL:

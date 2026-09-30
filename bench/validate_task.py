@@ -60,6 +60,18 @@ def behaviour_evidence(text, expect):
     return ok, f"assertion failures={len(fails)} errors={errors} missing={missing}"
 
 
+RIDGES_BASELINE = Path.home() / "bittensor" / "ridges-cli" / "miners" / "baseline-requirements.txt"
+
+
+def runtime_dists(task):
+    """Packages the Ridges miner runtime expects in the task image (its baseline requirements)."""
+    for path in (Path(task) / "environment" / "baseline-requirements.txt", RIDGES_BASELINE):
+        if path.exists():
+            return [line.split("==")[0].strip() for line in path.read_text().splitlines()
+                    if line.strip() and not line.startswith("#")]
+    return []
+
+
 def extra_file_content(path, sibling_text):
     """A harmless, valid file for the scope variant in the target's language (B-VALID-09)."""
     suffix = Path(path).suffix
@@ -244,6 +256,15 @@ class Validator:
             "cd /app && test ! -e .git && git init -q && git add -A && "
             f"git {' '.join(GIT_ID)} commit -qm baseline"
         )
+        # B-VALID-11: the Ridges miner runtime can start here (python3 + its baseline packages, no install needed).
+        dists = runtime_dists(self.task)
+        probe = (f"import importlib.metadata as m, sys\nmissing = []\nfor d in {dists!r}:\n    try:\n        m.version(d)\n"
+                 "    except m.PackageNotFoundError:\n        missing.append(d)\nprint(' '.join(missing))\n"
+                 "sys.exit(1 if missing else 0)\n")
+        result = self.env.exec(f"python3 -c {shlex.quote(probe)}", check=False, user="1000")
+        ok = result.returncode == 0
+        self.record("B-VALID-11", "miner runtime prerequisites in the task image", "python3 + baseline packages",
+                    "ok" if ok else "missing", ok, "" if ok else result.stdout[-400:])
         # B-VALID-04: named checks on the unmodified repo.
         script = "set -euo pipefail\ncd /app\n" + block + "\n"
         result = self.env.exec(script, check=False, timeout=1800)
