@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "test_query_count_does_not_grow_with_rows"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

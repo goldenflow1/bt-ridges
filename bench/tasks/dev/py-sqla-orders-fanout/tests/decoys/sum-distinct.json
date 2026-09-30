@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "test_equal_line_amounts_are_each_counted"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

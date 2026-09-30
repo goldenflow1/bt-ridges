@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "hidden: fractional rates keep one decimal"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

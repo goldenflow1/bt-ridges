@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "hidden: halves round away from zero"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

@@ -25,6 +25,7 @@ faster re-runs unless --rmi is given.
 """
 
 import argparse
+import json
 import os
 import re
 import shlex
@@ -39,7 +40,37 @@ from pathlib import Path
 GIT_ID = ["-c", "user.email=validator@ridges.invalid", "-c", "user.name=validator"]
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from runner_results import detect_runner  # noqa: E402
+from runner_results import parse as parse_results  # noqa: E402
+
 SCOPE_CHECK = re.compile(r"conservation|bounded|construct|transported|compilation|lint|gofmt|vet|typecheck|model_state")
+# Checks that only a scope/conservation problem should trip (B-VALID-09): compile/lint/typecheck must still pass.
+SCOPE_ONLY = re.compile(r"conservation|bounded|transported|model_state")
+VISIBLE_CHECK = re.compile(r"regression|focused|upstream")
+
+
+def behaviour_evidence(text, expect):
+    """(ok, detail): every declared test executed and failed an assertion, and nothing errored (B-VALID-08)."""
+    results = parse_results(text, detect_runner(text))
+    errors = sorted(name for name, status in results.items() if status == "error")
+    missing = [e for e in expect if not any(e in name and status == "fail" for name, status in results.items())]
+    fails = sorted(name for name, status in results.items() if status == "fail")
+    ok = bool(fails) and not errors and not missing
+    return ok, f"assertion failures={len(fails)} errors={errors} missing={missing}"
+
+
+def extra_file_content(path, sibling_text):
+    """A harmless, valid file for the scope variant in the target's language (B-VALID-09)."""
+    suffix = Path(path).suffix
+    if suffix == ".py":
+        return "# extra helper\n"
+    if suffix == ".go":
+        match = re.search(r"^package (\w+)", sibling_text or "", re.M)
+        return f"package {match.group(1) if match else 'main'}\n"
+    if suffix in (".ts", ".tsx", ".js", ".mjs", ".cjs"):
+        return "export {};\n"
+    return "\n"
 
 
 class Failure(Exception):
@@ -252,7 +283,8 @@ class Validator:
         qa, qo, qe = map(shlex.quote, (allowed, other, extra))
         variants = {
             "solution + new file": (
-                f"printf '%s\\n' '// helper' > {qe}", f"rm -f {qe}"),
+                f"printf '%s' {shlex.quote(extra_file_content(extra, self.env.exec(f'cat {qa}', check=False).stdout))}"
+                f" > {qe}", f"rm -f {qe}"),
             "solution + edit to other file": (
                 f"printf '\\n' >> {qo}", f"git checkout -q -- {qo}"),
             "solution + mode change on allowed file": (
@@ -288,16 +320,19 @@ class Validator:
             self.ver.down()
         log = self.workdir / (Path(patch_path).stem + ".verifier.log")
         log.write_text(result.stdout + "\n\n" + (junit or "<no junit>") + "\n\n" + commands)
-        return reward, junit_failures(junit), result.stdout
+        return reward, junit_failures(junit), result.stdout + "\n\n" + commands
 
     def verifier_phase(self, solution_patch):
         empty = self.workdir / "empty.patch"
         empty.write_text("")
 
-        reward, failed, _ = self.verify(empty)
+        reward, failed, out = self.verify(empty)
         self.record("B-VALID-01", "empty patch", "0", reward,
                     reward == "0" and failed is not None,
                     f"failed={failed}")
+        ok, detail = behaviour_evidence(out, [])
+        self.record("B-VALID-08", "empty patch fails by assertion", "assertions, no errors",
+                    "ok" if ok else "no", ok, detail)
 
         reward, failed, out = self.verify(solution_patch)
         self.record("B-VALID-02", "solution patch", "1", reward, reward == "1",
@@ -321,6 +356,18 @@ class Validator:
             self.record("B-VALID-03", f"decoy {decoy.name}", "0 (semantic)", got,
                         reward == "0" and semantic,
                         f"failed={failed}" if applied else f"tail={out[-600:]!r}")
+            meta_path = decoy.with_suffix(".json")
+            if not meta_path.exists():
+                self.record("B-VALID-08", f"decoy {decoy.name} declared", "tests/decoys/*.json", "missing", False)
+                continue
+            meta = json.loads(meta_path.read_text())
+            ok, detail = behaviour_evidence(out, meta.get("expect_failing") or [])
+            if meta.get("passes_visible", True):
+                visible_failed = [name for name in failed or [] if VISIBLE_CHECK.search(name)]
+                ok = ok and not visible_failed
+                detail += f" visible_failed={visible_failed}"
+            self.record("B-VALID-08", f"decoy {decoy.name} fails its declared test",
+                        ", ".join(meta.get("expect_failing") or []), "ok" if ok else "no", applied and ok, detail)
 
         for label, path in self.variant_patches.items():
             reward, failed, out = self.verify(path)
@@ -329,6 +376,9 @@ class Validator:
                         f"{reward}{'' if applied else ' (not applied)'}",
                         reward == "0" and applied,
                         f"failed={failed}" if applied else f"tail={out[-600:]!r}")
+            isolated = applied and bool(failed) and all(SCOPE_ONLY.search(name) for name in failed)
+            self.record("B-VALID-09", f"{label}: only scope checks reject it", "scope/conservation only",
+                        "ok" if isolated else "no", isolated, f"failed={failed}")
 
     # ---------------------------------------------------------------------- run
     def run(self):

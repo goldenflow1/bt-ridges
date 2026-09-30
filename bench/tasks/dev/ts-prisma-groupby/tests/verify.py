@@ -240,7 +240,7 @@ def hidden_tests():
     required = [
         "hidden: fractional rates keep one decimal",
         "hidden: halves round away from zero",
-        "hidden: ordering uses the precise rate",
+        "hidden: ordering uses the rounded rate, then id",
         "hidden: withdrawn learners do not dilute fractional rates",
         "hidden: large cohorts and tiny fractions",
     ]

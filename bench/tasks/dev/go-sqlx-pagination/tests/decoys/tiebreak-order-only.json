@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "TestHiddenTiesAcrossPageBoundaries"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

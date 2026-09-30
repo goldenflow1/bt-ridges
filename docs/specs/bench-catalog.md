@@ -18,16 +18,7 @@ The six public samples are all NetBox + Django + PostgreSQL. The competition use
 `verify.py` follows the samples: binary reward; tree conservation (manifest of every path + mode); byte-exact method bounds when the statement bounds the change; named regression checks; hidden tests on **data the statement does not show** (different sizes, ties, NULLs, empty groups, time zones).
 
 ## 2. Task validity gate (every task, before it enters a set)
-| ID | Check |
-|---|---|
-| B-VALID-01 | Unmodified repo → reward 0 (the hidden tests catch the defect). |
-| B-VALID-02 | `solution/solve.sh` → reward 1. |
-| B-VALID-03 | At least one **plausible wrong fix** (the "matches the sample rows" fix: wrong grain, missing tie-breaker, approximate function, …) stored as `tests/decoys/*.patch` → reward 0 each. |
-| B-VALID-04 | The named regression checks in `instruction.md` pass on the unmodified repo. |
-| B-VALID-05 | A patch that touches an extra file or changes a mode → reward 0. |
-| B-VALID-06 | Builds offline after the image build (no network needed at run time). |
-
-`bench/validate_task.py <task-dir>` runs B-VALID-01..05 with docker compose.
+The validity checks B-VALID-01..09 are defined, staged and traced in §8. `bench/validate_task.py <task-dir>` runs them with docker compose.
 
 ## 3. Coverage matrix
 Kinds: **R** repair · **A** authoring · **O** optimization. Scope: **N** named file+symbol · **U** unnamed (trace from symptom) · **M** migration-only.
@@ -77,3 +68,29 @@ Besides full tasks, `tests/scenario/` holds statement fixtures and repo fixtures
 - `go-sqlx-pagination`: the `split-predicate` decoy also fails a visible test; `tiebreak-order-only` is the "looks right on visible data" decoy.
 - `py-django-n-plus-one` allows three files (no single-method bound); the checker instead limits imports, forbids raw SQL and caching, and runs `makemigrations --check`.
 - Validation: about 8–10 min per task with warm images; each checker run takes 45–85 s.
+- `ts-prisma-groupby` (2026-09-30): the ordering test is renamed "rounded rate, then id", the large-cohorts test creates the 1/1500 course first and asserts the tie order, and `order-by-precise-rate` is a new decoy (from the catalog review's counterexample). `tests/verify.py` lists hidden test names, so a renamed test must be updated there too.
+
+## 7. Host constraints (2026-09-30)
+- **NetBox public samples are deferred on the current dev host** (Xeon E5-2680 v3 KVM guest, 8 GB). Their named Django check takes ≈ 23 min cold here, over the checker's own 600 s per command / 900 s total, and the checker always starts cold. Results from this host for those tasks are infrastructure-void, not agent results. Run them on a faster machine (target: cold check < 5 min).
+- Dev tasks remain runnable here (checker runs of 45–85 s during validation).
+
+## 8. Traced bench requirements
+Gate G5 reads this table. Status: `planned` (reported as pending, never as passing), `implemented` (unit/scenario/e2e rows need a named test), `verified` (bench/manual rows need evidence). A stage closes only when none of its own rows is `planned` (`tools/gate.py --close-stage <stage>`).
+
+| ID | Requirement | Stage | Status | Verify | Evidence |
+|---|---|---|---|---|---|
+| B-VALID-01 | Unmodified repo → reward 0 (the hidden tests catch the defect). | done | verified | bench | validate_task.py, 5/5 dev tasks PASS (2026-09-29; re-run under B-VALID-08/09 rules 2026-09-30: 5/5 PASS) |
+| B-VALID-02 | `solution/solve.sh` → reward 1. | done | verified | bench | validate_task.py, 5/5 dev tasks PASS (2026-09-29; re-run under B-VALID-08/09 rules 2026-09-30: 5/5 PASS) |
+| B-VALID-03 | At least one plausible wrong fix per task (`tests/decoys/*.patch`) → reward 0 each. | done | verified | bench | validate_task.py, 13 decoys → 0, each via its declared assertion (2026-09-30) |
+| B-VALID-04 | The named regression checks pass on the unmodified repo. | done | verified | bench | validate_task.py, 5/5 dev tasks PASS (2026-09-29; re-run under B-VALID-08/09 rules 2026-09-30: 5/5 PASS) |
+| B-VALID-05 | A patch that touches an extra file or changes a mode → reward 0. | done | verified | bench | validate_task.py, 15 variants → 0, scope-only rejection (2026-09-30) |
+| B-VALID-06 | Runs without network egress after the image build. | done | verified | bench | validate_task.py internal network, 5/5 PASS (2026-09-30) |
+| B-VALID-07 | Each stated ordering/rounding/tie rule in the dev set has a documented distinguishing hidden test and wrong-variant evidence (four-task audit). | B2 | planned | manual | |
+| B-VALID-08 | A decoy counts only if its declared test executed and failed the expected behavioural assertion; collection/setup/compile errors are rejected. | B1 | implemented | unit | `bench/runner_results.py` (pytest, Django, Go, TAP adapters); 13 decoys declare `tests/decoys/*.json` |
+| B-VALID-09 | Scope variants are valid code in the task's language and are rejected by a scope/conservation check while the reference behaviour still passes. | B1 | implemented | unit | `extra_file_content()` + `SCOPE_ONLY` in `bench/validate_task.py` |
+| B-VALID-10 | `ts-prisma-groupby` has a rounded-rate tie case (1/1500 vs 1/1000) and an `order-by-precise-rate` decoy that fails it. | B1 | verified | bench | validate_task.py 17/17 PASS 2026-09-30: solution → 1, decoy → 0 via the declared tie assertion |
+| B-RUN-01 | Results identify full task inputs, agent build, runtime identity and execution configuration; compatibility is enforced (full W3). | B2 | planned | unit | |
+| B-RUN-02 | Trials record observations before diagnoses: execution outcome, termination, final patch hash, applicability, final guard/check status, reward, accounting coverage, validity (valid / void-infrastructure / unresolved) with a replacement cap; automatic labels per the W5 precedence. | B1 | implemented | unit | `tools/bench_records.py`; replacement loop in `tools/run_bench.py` (cap 2 per slot) not yet unit-tested |
+| B-RUN-03 | Multi-run aggregation (equal task weight, per set), paired confirmation protocol and immutable baseline promotion with compatibility checks. | B2 | planned | unit | |
+| B-RUN-04 | At execution time every trial records a unique trial ID, bundle hash, canonical task-source digest, expected task list, effective non-secret configuration and raw logs. | B1 | implemented | unit | digest `task-tree-v1` in `tools/bench_records.py` |
+

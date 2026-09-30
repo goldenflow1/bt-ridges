@@ -79,3 +79,35 @@ def test_H_LINT_01_traceability_counts_e2e_and_rejects_malformed_rows(tmp_path):
     assert not traceability(missing)  # an e2e-only requirement without a test must fail, not be skipped
     unknown = _spec_tree(tmp_path / "c", ["| H-X-03 | thing | vibes |\n"], "def test_H_X_03(): pass\n")
     assert not traceability(unknown)
+
+
+B_HEADER = "| ID | Requirement | Stage | Status | Verify | Evidence |\n|---|---|---|---|---|---|\n"
+
+
+def _bench_tree(tmp_path, rows, tests=""):
+    from tests.conftest import write as w
+
+    w(str(tmp_path), "docs/specs/b.md", B_HEADER + "".join(rows))
+    w(str(tmp_path), "tests/test_x.py", tests)
+    return str(tmp_path)
+
+
+def test_H_LINT_01_bench_requirements_are_traced_with_status(tmp_path):
+    from tools.gate import traceability
+
+    planned = _bench_tree(tmp_path / "a", ["| B-RUN-09 | x | B1 | planned | unit | |\n"])
+    assert traceability(planned)  # pending is reported, not failed
+    assert not traceability(planned, close_stage="B1")  # ...but a stage cannot close with it pending
+    implemented_untested = _bench_tree(tmp_path / "b", ["| B-RUN-09 | x | B1 | implemented | unit | |\n"])
+    assert not traceability(implemented_untested)  # a B requirement cannot slip through because of its prefix
+    implemented_tested = _bench_tree(tmp_path / "c", ["| B-RUN-09 | x | B1 | implemented | unit | |\n"],
+                                     "def test_B_RUN_09(): pass\n")
+    assert traceability(implemented_tested, close_stage="B1")
+    no_evidence = _bench_tree(tmp_path / "d", ["| B-VALID-99 | x | done | verified | bench | |\n"])
+    assert not traceability(no_evidence)
+    with_evidence = _bench_tree(tmp_path / "e", ["| B-VALID-99 | x | done | verified | bench | run 2026-09-30 |\n"])
+    assert traceability(with_evidence)
+    bad_status = _bench_tree(tmp_path / "f", ["| B-RUN-09 | x | B1 | done-ish | unit | |\n"])
+    assert not traceability(bad_status)
+    wrong_shape = _bench_tree(tmp_path / "g", ["| B-RUN-09 | x only |\n"])
+    assert not traceability(wrong_shape)

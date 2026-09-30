@@ -27,7 +27,17 @@ from typing import Callable, Dict, List, Optional
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
+sys.path.insert(0, ROOT)
 from quarry.telemetry import parse_log  # noqa: E402  (shared parser: the agent's telemetry contract)
+from tools.bench_records import (  # noqa: E402
+    MAX_SETUP_REPLACEMENTS,
+    auto_label,
+    cli_version,
+    expected_tasks,
+    observe,
+    task_digest,
+    validity,
+)
 
 LEGACY_TELEMETRY = re.compile(r"\[quarry\] calls=(\d+) prompt_tokens=(\d+) cached_tokens=(\d+) cost=\$([\d.]+)")
 KEY_ENDPOINT = "https://openrouter.ai/api/v1/key"
@@ -36,14 +46,6 @@ TELEMETRY_FIELDS = [
     "unknown_reserved", "cost_accounted", "accounting_complete", "cache_read_reported", "cache_read_tokens",
     "cache_write_reported", "cache_write_tokens", "successful_calls", "read_share", "read_share_calls", "agent_sec",
 ]
-
-
-def classify(output: str, reward: float, patch_found: bool) -> str:
-    if reward >= 1:
-        return "solved"
-    if "FAILED:" in output or not patch_found:
-        return "mechanical"
-    return "wrong"
 
 
 def flatten_telemetry(record: Optional[Dict], legacy_text: str = "") -> Dict:
@@ -78,7 +80,8 @@ def flatten_telemetry(record: Optional[Dict], legacy_text: str = "") -> Dict:
     return row
 
 
-def telemetry_from(trial_dir: str) -> Dict:
+def telemetry_record(trial_dir: str):
+    """(parsed record or None, raw log text) from the trial's agent logs."""
     texts = []
     for path in sorted(glob.glob(os.path.join(trial_dir, "**", "*.log"), recursive=True)):
         try:
@@ -86,7 +89,12 @@ def telemetry_from(trial_dir: str) -> Dict:
         except OSError:
             continue
     joined = "\n".join(texts)
-    return flatten_telemetry(parse_log(joined), joined)
+    return parse_log(joined), joined
+
+
+def telemetry_from(trial_dir: str) -> Dict:
+    record, joined = telemetry_record(trial_dir)
+    return flatten_telemetry(record, joined)
 
 
 # ------------------------------------------------------------------ session ledger (host side, W1)
@@ -176,15 +184,6 @@ def sha256_file(path: str) -> str:
         return hashlib.sha256(handle.read()).hexdigest()
 
 
-def task_digest(task: str) -> str:
-    digest = hashlib.sha256()
-    for name in ("task.toml", "instruction.md"):
-        path = os.path.join(task, name)
-        if os.path.exists(path):
-            digest.update(open(path, "rb").read())
-    return digest.hexdigest()[:16]
-
-
 def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: str) -> Dict:
     started = time.time()
     cmd = ridges + ["miner", "run-local", "--non-interactive", "--task-path", task, "--agent-path", agent]
@@ -195,16 +194,19 @@ def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: st
         output = f"FAILED: bench timeout\n{exc.stdout or ''}"
     with open(raw_path, "w", encoding="utf-8") as handle:
         handle.write(output)
-    reward_match = re.search(r"^reward:\s*([\d.]+)", output, re.M)
-    reward = float(reward_match.group(1)) if reward_match else 0.0
     trial = re.search(r"^trial_dir:\s*(.+)$", output, re.M)
     trial_dir = trial.group(1).strip() if trial else ""
-    patch_found = bool(trial_dir and glob.glob(os.path.join(trial_dir, "**", "patch.diff"), recursive=True))
-    row = {"task": os.path.basename(task), "reward": reward, "outcome": classify(output, reward, patch_found),
-           "wall_sec": round(time.time() - started), "trial_dir": trial_dir}
+    record, joined = telemetry_record(trial_dir) if trial_dir else (None, "")
+    obs = observe(trial_dir, output, record)
+    row = {"task": os.path.basename(task), "reward": obs["reward"], "wall_sec": round(time.time() - started),
+           "trial_dir": trial_dir}
     failed = re.search(r"^FAILED:\s*(.+)$", output, re.M)
     row["error"] = failed.group(1).strip() if failed else ""
-    row.update(telemetry_from(trial_dir) if trial_dir else flatten_telemetry(None))
+    row.update({f"obs_{k}": v for k, v in obs.items() if k != "trial_dir"})
+    row["validity"] = validity(obs)
+    row["outcome"] = row["auto_label"] = auto_label(obs)
+    row["manual_label"], row["manual_reason"] = "", ""
+    row.update(flatten_telemetry(record, joined))
     return row
 
 
@@ -267,7 +269,13 @@ def main() -> int:
         "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip(),
         "git_dirty": bool(subprocess.run(["git", "status", "--porcelain", "src"], cwd=ROOT, capture_output=True, text=True).stdout),
         "model_override": {k: v for k, v in os.environ.items() if k.startswith("QUARRY_")},
+        "expected_tasks": expected_tasks(ROOT, args.set),
+        "selected_tasks": [os.path.basename(t) for t in tasks],
         "tasks": {os.path.basename(t): task_digest(t) for t in tasks},
+        "config": {"ceiling": args.ceiling, "allowance": args.allowance, "timeout": args.timeout, "ridges": args.ridges,
+                   "max_setup_replacements": MAX_SETUP_REPLACEMENTS},
+        "ridges_cli_commit": cli_version(os.path.expanduser("~/bittensor/ridges-cli")),
+        "python": sys.version.split()[0],
     }
     with open(os.path.join(out_dir, "manifest.json"), "w") as handle:
         json.dump(manifest, handle, indent=1)
@@ -281,17 +289,29 @@ def main() -> int:
             if not ledger.fits(args.allowance):
                 stopped = f"spending ceiling ${args.ceiling:.2f} reached ({ledger.spent()}); remaining runs not scheduled"
                 break
-            trial_id = f"{os.path.basename(out_dir)}/{os.path.basename(task)}/r{repeat}"
-            before = fetch()
-            raw = os.path.join(out_dir, "raw", f"{os.path.basename(task)}-r{repeat}.log")
-            row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw)
-            after = settled_usage(fetch) if before is not None else None
-            row["reconciled_cost"] = round(after - before, 6) if (before is not None and after is not None) else None
-            row["repeat"], row["trial_id"] = repeat, trial_id
-            ledger.record(trial_id, args.allowance, row["reconciled_cost"], row.get("cost_accounted"))
-            rows.append(row)
-            print(f"[{repeat}] {row['task']}: {row['outcome']} reward={row['reward']} cost={format_cost(row)} "
-                  f"wall={row['wall_sec']}s {row['error']}", flush=True)
+            slot = f"{os.path.basename(out_dir)}/{os.path.basename(task)}/r{repeat}"
+            for attempt in range(1, MAX_SETUP_REPLACEMENTS + 2):
+                if attempt > 1 and not ledger.fits(args.allowance):
+                    stopped = f"spending ceiling ${args.ceiling:.2f} reached during a setup replacement"
+                    break
+                trial_id = f"{slot}/a{attempt}"
+                before = fetch()
+                raw = os.path.join(out_dir, "raw", f"{os.path.basename(task)}-r{repeat}-a{attempt}.log")
+                row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw)
+                after = settled_usage(fetch) if before is not None else None
+                row["reconciled_cost"] = round(after - before, 6) if (before is not None and after is not None) else None
+                row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": trial_id,
+                            "bundle_sha256": manifest["agent_sha256"][:16], "task_digest": manifest["tasks"][os.path.basename(task)]})
+                ledger.record(trial_id, args.allowance, row["reconciled_cost"], row.get("cost_accounted"))
+                rows.append(row)
+                print(f"[{repeat}.{attempt}] {row['task']}: {row['outcome']} ({row['validity']}) reward={row['reward']} "
+                      f"cost={format_cost(row)} wall={row['wall_sec']}s {row['error']}", flush=True)
+                if row["validity"] != "void-infrastructure":
+                    break
+            else:
+                print(f"slot {slot}: infrastructure-blocked after {MAX_SETUP_REPLACEMENTS} setup replacements")
+            if stopped:
+                break
         if stopped:
             break
     if stopped:
@@ -299,24 +319,30 @@ def main() -> int:
     if not rows:
         print("no runs executed", file=sys.stderr)
         return 1
-    fields = ["trial_id", "repeat", "task", "outcome", "reward", "reconciled_cost"] + TELEMETRY_FIELDS + [
+    obs_fields = sorted({k for r in rows for k in r if k.startswith("obs_")})
+    fields = ["trial_id", "slot", "attempt", "repeat", "task", "task_digest", "bundle_sha256", "validity", "auto_label",
+              "manual_label", "manual_reason", "reward", "reconciled_cost"] + TELEMETRY_FIELDS + obs_fields + [
         "wall_sec", "error", "trial_dir"]
     with open(os.path.join(out_dir, "results.csv"), "w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
-    solved = [r["reward"] >= 1 for r in rows]
+    counted = [r for r in rows if r["validity"] != "void-infrastructure"]  # void attempts leave the denominator
+    solved = [(r["reward"] or 0) >= 1 for r in counted]
     times = sorted((r.get("agent_sec") or r["wall_sec"]) for r in rows)
     outcomes: Dict[str, int] = {}
     for r in rows:
         outcomes[r["outcome"]] = outcomes.get(r["outcome"], 0) + 1
     per_task: Dict[str, List[bool]] = {}
     for r in rows:
-        per_task.setdefault(r["task"], []).append(r["reward"] >= 1)
+        if r["validity"] != "void-infrastructure":
+            per_task.setdefault(r["task"], []).append((r["reward"] or 0) >= 1)
     always = sorted(t for t, runs in per_task.items() if all(runs))
-    mean = sum(solved) / len(rows)
-    print(f"\nsolve rate (mean per run) {sum(solved)}/{len(rows)} = {mean:.2f}")
+    mean = sum(solved) / len(counted) if counted else 0.0
+    voids = len(rows) - len(counted)
+    print(f"\nsolve rate (mean per counted run) {sum(solved)}/{len(counted)} = {mean:.2f}"
+          f" ({voids} void infrastructure attempt(s) excluded)")
     print(f"solved in every repeat: {len(always)}/{len(per_task)} {always}")
     print(cost_report(rows))
     print(f"session ledger: {ledger.spent()} of ${args.ceiling:.2f}")

@@ -45,7 +45,7 @@ test("hidden: halves round away from zero", async () => {
   assert.equal(got.get(d), 2.5);
 });
 
-test("hidden: ordering uses the precise rate", async () => {
+test("hidden: ordering uses the rounded rate, then id", async () => {
   const sixtySix = await course(prisma, "SOC310", 50, 33);
   const twoThirds = await course(prisma, "SOC311", 3, 2);
   const nearlyAll = await course(prisma, "SOC312", 200, 199);
@@ -77,10 +77,12 @@ test("hidden: withdrawn learners do not dilute fractional rates", async () => {
 });
 
 test("hidden: large cohorts and tiny fractions", async () => {
+  // Created first so it has the lower id: 1/1500 and 1/1000 both round to 0.1, so "rounded rate, then id"
+  // puts it first, while sorting by the unrounded rate would put the 1/1000 course first.
+  const tiny = await course(prisma, "CS1003", 1500, 1);
   const oneInThousand = await course(prisma, "CS1000", 1000, 1);
   const almost = await course(prisma, "CS1001", 1000, 999);
   const nothing = await course(prisma, "CS1002", 1000, 0);
-  const tiny = await course(prisma, "CS1003", 1500, 1);
 
   const rows = await courseCompletionRates(prisma);
   const got = new Map(rows.map((r) => [r.courseId, r]));
@@ -89,6 +91,11 @@ test("hidden: large cohorts and tiny fractions", async () => {
   assert.equal(got.get(almost)?.completionRate, 99.9);
   assert.equal(got.get(nothing)?.completionRate, 0);
   assert.equal(got.get(tiny)?.completionRate, 0.1);
+  assert.deepEqual(
+    rows.filter((r) => r.courseId === tiny || r.courseId === oneInThousand).map((r) => r.courseId),
+    [tiny, oneInThousand],
+    "equal rounded rates are ordered by course id",
+  );
   for (const row of rows) {
     assert.equal(typeof row.completionRate, "number");
     assert.ok(Number.isFinite(row.completionRate));

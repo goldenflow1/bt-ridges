@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "test_revision_not_timestamp_decides_the_current_row"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

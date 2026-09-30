@@ -1,0 +1,8 @@
+{
+ "expect_failing": [
+  "TestHiddenBackfilledEventsHaveIDsOutOfTimeOrder"
+ ],
+ "category": "assertion",
+ "passes_visible": false,
+ "note": "also fails a visible regression test (documented exception)"
+}
