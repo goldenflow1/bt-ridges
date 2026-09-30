@@ -218,10 +218,10 @@ def trial_images(trial_dir: str, run: Callable[[List[str]], str] = _run,
 
 class ImageWatcher:
     """Polls the local images while a trial runs and keeps every image that appeared under the task's trial-name
-    prefix (Harbor truncates the task name to 32 characters), so the IDs survive Harbor's cleanup (B-RUN-01)."""
+    prefix (Harbor names trials `task_name[:32].rstrip("_-")`), so the IDs survive Harbor's cleanup (B-RUN-01)."""
 
     def __init__(self, task_name: str, run: Callable[[List[str]], str] = _run, interval: float = 5.0):
-        self.prefix = task_name[:32].lower() + "__"
+        self.prefix = task_name[:32].rstrip("_-").lower() + "__"
         self.run, self.interval = run, interval
         self.before = set(image_listing(run))  # images of earlier trials are never attributed to this one
         self.seen: Dict[str, Optional[str]] = {}

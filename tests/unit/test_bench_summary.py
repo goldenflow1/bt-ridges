@@ -83,6 +83,12 @@ def test_B_RUN_01_images_are_captured_while_the_trial_runs_before_harbor_removes
     assert images == {"env-main:latest": "sha256:111"}
 
 
+def test_B_RUN_01_watcher_prefix_matches_harbor_trial_names_cut_on_a_dash():
+    # Harbor: task_name[:32].rstrip("_-"); a 32nd character "-" is dropped (pg-netbox-vlangroup-utilization-001)
+    watcher = ImageWatcher("pg-netbox-vlangroup-utilization-001", lambda cmd: "")
+    assert watcher.prefix == "pg-netbox-vlangroup-utilization__"
+
+
 # ---------------------------------------------------------------- B-RUN-02 (replacement cap)
 
 
