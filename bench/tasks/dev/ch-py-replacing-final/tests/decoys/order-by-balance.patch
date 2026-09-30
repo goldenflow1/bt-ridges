@@ -1,0 +1,29 @@
+diff --git a/meterline/balances.py b/meterline/balances.py
+index 530799b..4d7765c 100644
+--- a/meterline/balances.py
++++ b/meterline/balances.py
+@@ -87,11 +87,20 @@ def tenant_balance_summary(client: ClickHouse, tenant_id: str) -> list[CurrencyT
+             currency,
+             count() AS accounts,
+             sum(balance_minor) AS balance_minor
+-        FROM account_balances
+-        WHERE tenant_id = {tenant_id:String}
+-          AND status = 'active'
++        FROM
++        (
++            SELECT
++                account_id,
++                argMax(currency, revision) AS currency,
++                argMax(balance_minor, revision) AS balance_minor,
++                argMax(status, revision) AS status
++            FROM account_balances
++            WHERE tenant_id = {tenant_id:String}
++            GROUP BY account_id
++        )
++        WHERE status = 'active'
+         GROUP BY currency
+-        ORDER BY currency
++        ORDER BY balance_minor DESC
+         """,
+         {"tenant_id": tenant_id},
+     )

@@ -464,7 +464,7 @@ quarry/
 
 ### 12.3 Measurement protocol
 - Run every task **3×** because of LLM variance. Report the mean solve rate, the per-task pass fraction, $/task and p50/p99 time.
-- A change is "real" only if held-out improves by ≥ 2 tasks per 25, or cost drops ≥ 15% at equal score.
+- Keep/revert follows `docs/process/engineering-loop.md` §5a (superseded the earlier "≥ 2 tasks per 25" rule, which was too coarse for a small practice set).
 - Keep a failure taxonomy per run and fix the largest bucket first.
 
 ### 12.4 Submission gate
@@ -587,7 +587,7 @@ quarry/
 - Network only through `SANDBOX_PROXY_URL`.
 - Before any upload: `tools/prescreen_lint.sh dist/agent.py` and `tools/originality_check.sh dist/agent.py` both pass.
 - Architecture change → ADR. Behaviour change → experiment entry with before/after numbers.
-- A result counts only if it holds across 3 repeats and moves held-out by ≥ 2 tasks per 25, or cuts cost ≥ 15% at an equal score.
+- A result counts only under the keep/revert rule in `docs/process/engineering-loop.md` §5a.
 - Held-out tasks are never used for tuning.
 
 ---
@@ -623,7 +623,7 @@ Write the idea down before building it, as one row in `EXPERIMENTS.md`. For exam
 One idea per branch (`exp/E017-scope-splice`). An architecture change gets an ADR. An idea learned from a reference is cited in the experiment note.
 
 ### 18.4 Measure (inner loop)
-Run dev 3 times (`tools/run_bench.py --set dev --repeats 3`). Record solve rate (mean and per-task pass fraction), $/task, p50/p99 time and failure buckets. Keep the change only if it clears the bar (§17.2). Otherwise revert it and log the negative result. A negative result is data, not waste.
+Run dev 3 times (`tools/run_bench.py --set dev --repeats 3`). Record solve rate (mean and per-task pass fraction), $/task, p50/p99 time and failure buckets. Keep the change only if it clears the rule in `docs/process/engineering-loop.md` §5a (`tools/bench_summary.py compare`). Otherwise revert it and log the negative result. A negative result is data, not waste.
 
 ### 18.5 Gate
 1. Held-out, 3 repeats: at least the target solve rate.

@@ -34,8 +34,11 @@ from tools.bench_records import (  # noqa: E402
     auto_label,
     cli_version,
     expected_tasks,
+    host_identity,
+    inputs_unchanged,
     observe,
     task_digest,
+    trial_images,
     validity,
 )
 
@@ -210,6 +213,22 @@ def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: st
     return row
 
 
+def run_slot(attempt_fn: Callable[[int], Dict], fits: Callable[[], bool],
+             max_replacements: int = MAX_SETUP_REPLACEMENTS):
+    """One planned trial slot: the first attempt, plus up to `max_replacements` replacements for attempts voided
+    by infrastructure. Returns (attempt rows, infrastructure_blocked, stop_reason). Valid failures are never
+    replaced; every physical attempt is kept."""
+    rows: List[Dict] = []
+    for attempt in range(1, max_replacements + 2):
+        if attempt > 1 and not fits():
+            return rows, False, "spending ceiling reached during a setup replacement"
+        row = attempt_fn(attempt)
+        rows.append(row)
+        if row["validity"] != "void-infrastructure":
+            return rows, False, ""
+    return rows, True, ""
+
+
 def format_cost(row: Dict) -> str:
     """Never prints an unknown cost as $0."""
     if row.get("reconciled_cost") is not None:
@@ -251,6 +270,9 @@ def main() -> int:
     parser.add_argument("--allowance", type=float, default=0.29, help="per-run allowance reserved before launching")
     parser.add_argument("--ledger", default=os.path.join(ROOT, "bench", "runs", "ledger.json"))
     parser.add_argument("--no-key-usage", action="store_true", help="do not read the key's usage for reconciliation")
+    parser.add_argument("--purpose", default="reconnaissance",
+                        choices=["reconnaissance", "evaluation", "confirmation", "diagnostic"],
+                        help="declared before the run; only evaluation (+ confirmation) runs can be promoted")
     args = parser.parse_args()
 
     tasks = sorted(glob.glob(os.path.join(ROOT, "bench", "tasks", args.set, "*", "task.toml")))
@@ -274,6 +296,8 @@ def main() -> int:
         "tasks": {os.path.basename(t): task_digest(t) for t in tasks},
         "config": {"ceiling": args.ceiling, "allowance": args.allowance, "timeout": args.timeout, "ridges": args.ridges,
                    "max_setup_replacements": MAX_SETUP_REPLACEMENTS},
+        "purpose": args.purpose,
+        "host": host_identity(os.path.expanduser("~/bittensor/ridges-cli")),
         "ridges_cli_commit": cli_version(os.path.expanduser("~/bittensor/ridges-cli")),
         "python": sys.version.split()[0],
     }
@@ -290,26 +314,34 @@ def main() -> int:
                 stopped = f"spending ceiling ${args.ceiling:.2f} reached ({ledger.spent()}); remaining runs not scheduled"
                 break
             slot = f"{os.path.basename(out_dir)}/{os.path.basename(task)}/r{repeat}"
-            for attempt in range(1, MAX_SETUP_REPLACEMENTS + 2):
-                if attempt > 1 and not ledger.fits(args.allowance):
-                    stopped = f"spending ceiling ${args.ceiling:.2f} reached during a setup replacement"
-                    break
-                trial_id = f"{slot}/a{attempt}"
+            name = os.path.basename(task)
+
+            def attempt_fn(attempt, name=name, task=task, repeat=repeat, slot=slot):
+                inputs_before = {name: task_digest(task), "bundle": sha256_file(args.agent)}
                 before = fetch()
-                raw = os.path.join(out_dir, "raw", f"{os.path.basename(task)}-r{repeat}-a{attempt}.log")
+                raw = os.path.join(out_dir, "raw", f"{name}-r{repeat}-a{attempt}.log")
                 row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw)
                 after = settled_usage(fetch) if before is not None else None
                 row["reconciled_cost"] = round(after - before, 6) if (before is not None and after is not None) else None
-                row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": trial_id,
-                            "bundle_sha256": manifest["agent_sha256"][:16], "task_digest": manifest["tasks"][os.path.basename(task)]})
-                ledger.record(trial_id, args.allowance, row["reconciled_cost"], row.get("cost_accounted"))
-                rows.append(row)
+                changed = inputs_unchanged(inputs_before, {name: task_digest(task), "bundle": sha256_file(args.agent)})
+                row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": f"{slot}/a{attempt}",
+                            "purpose": args.purpose, "bundle_sha256": manifest["agent_sha256"][:16],
+                            "task_digest": manifest["tasks"][name], "inputs_changed": ",".join(changed),
+                            "images": json.dumps(trial_images(row.get("trial_dir", "")), sort_keys=True)})
+                if changed:
+                    row["validity"], row["outcome"] = "unresolved", "unknown"  # not comparable: inputs moved
+                ledger.record(row["trial_id"], args.allowance, row["reconciled_cost"], row.get("cost_accounted"))
                 print(f"[{repeat}.{attempt}] {row['task']}: {row['outcome']} ({row['validity']}) reward={row['reward']} "
-                      f"cost={format_cost(row)} wall={row['wall_sec']}s {row['error']}", flush=True)
-                if row["validity"] != "void-infrastructure":
-                    break
-            else:
+                      f"cost={format_cost(row)} wall={row['wall_sec']}s {row['error']}"
+                      + (f" INPUTS CHANGED: {changed}" if changed else ""), flush=True)
+                return row
+
+            slot_rows, blocked, stop_reason = run_slot(attempt_fn, lambda: ledger.fits(args.allowance))
+            rows.extend(slot_rows)
+            if blocked:
                 print(f"slot {slot}: infrastructure-blocked after {MAX_SETUP_REPLACEMENTS} setup replacements")
+            if stop_reason:
+                stopped = stop_reason
             if stopped:
                 break
         if stopped:
@@ -320,7 +352,8 @@ def main() -> int:
         print("no runs executed", file=sys.stderr)
         return 1
     obs_fields = sorted({k for r in rows for k in r if k.startswith("obs_")})
-    fields = ["trial_id", "slot", "attempt", "repeat", "task", "task_digest", "bundle_sha256", "validity", "auto_label",
+    fields = ["trial_id", "purpose", "slot", "attempt", "repeat", "task", "task_digest", "bundle_sha256", "inputs_changed",
+              "images", "validity", "auto_label",
               "manual_label", "manual_reason", "reward", "reconciled_cost"] + TELEMETRY_FIELDS + obs_fields + [
         "wall_sec", "error", "trial_dir"]
     with open(os.path.join(out_dir, "results.csv"), "w", newline="") as handle:

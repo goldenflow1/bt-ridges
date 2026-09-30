@@ -265,6 +265,9 @@ def bounded_function():
                     "Wes",
                     "Xan",
                     "Yara",
+                    "Zed",
+                    "Zoe",
+                    "Abe",
                     "east",
                     "west",
                 )
@@ -346,8 +349,10 @@ def hidden_tests():
         "test_mixed_customers_rank_by_true_revenue",
         "test_customers_without_qualifying_orders_report_integer_zero",
         "test_report_is_one_statement",
+        "test_order_without_lines_still_counts",
+        "test_revenue_ties_break_by_id_not_name",
     ]
-    return parse_pytest_run(result, 6, required)
+    return parse_pytest_run(result, 8, required)
 
 
 def role_identity():

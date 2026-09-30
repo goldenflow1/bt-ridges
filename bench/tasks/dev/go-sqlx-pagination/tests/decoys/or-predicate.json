@@ -1,0 +1,8 @@
+{
+ "expect_failing": [
+  "TestHiddenBackfilledEventsHaveIDsOutOfTimeOrder",
+  "TestHiddenTenantsShareTimestamps"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

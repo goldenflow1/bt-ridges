@@ -49,10 +49,28 @@ Every test names the requirement it proves: `test_H_GUARD_03_mode_change_is_rest
 | G4 | `tools/prescreen_lint.py dist/agent.py` clean | upload |
 | G4b | `tools/originality_check.py dist/agent.py` passes against freshly fetched public agents (`tools/fetch_references.py`) | upload |
 | G5 | traceability: every requirement ID in `docs/specs/` has ≥ 1 test or is marked `verify: bench`/`manual` | commit |
-| G6 | bench: dev set 3× — solve rate and $/task not worse than the last kept result; 0 mechanical failures | merge of a behaviour change |
+| G6 | bench: the keep/revert rule in §5a against the promoted baseline (`tools/bench_summary.py compare`) | merge of a behaviour change |
 | G7 | held-out set 3× meets the submission target (architecture §12.4) | upload |
 
 G0–G5 are automatic and free. G6–G7 cost inference money and are run deliberately.
+
+## 5a. Keep or revert a change (the single source for this rule)
+Tooling: `tools/run_bench.py --purpose evaluation|confirmation`, `tools/bench_summary.py summarize|promote|compare`.
+
+| Change type | Evidence | Keep if |
+|---|---|---|
+| **Reliability / mechanical** (hand-off, deadlines, guard, parsing, telemetry) | a focused regression test proving the defect and the fix; G0–G5; the next compatible bench check | the regression test and gates pass and no task regresses under the protocol below. No solve-count gain is required. |
+| **Behaviour** (prompts, phases, model routing, tools) | per-task before/after on the same frozen set, 3 planned evaluation trials each, plus the paired confirmation block when triggered | at least one more task solved 3/3, **or** comparable cost ≤ 85% of the baseline with every previously covered task kept; **both** require no confirmed regression and no new agent mechanical failure |
+| **Any** | an experiment row with the comparison inputs and what is still uncertain | provisional while the dev set has fewer than 15 tasks; re-evaluate on the expanded frozen set. This is an engineering checkpoint, not statistical proof. |
+
+**Confirmation protocol** (declared before the initial evaluation; `compare` implements it):
+1. Baseline and candidate each get 3 valid trials per task on matching task and runtime versions (compatibility is checked, not assumed).
+2. A baseline 3/3 task falling to 0/3 or 1/3 is a material regression: revert. A new agent mechanical failure also blocks keeping.
+3. Any other per-task drop triggers **one** paired block of 3 more trials on **both** versions, for the affected tasks only, run in alternating order under matching conditions.
+4. The drop persists (revert) if the candidate solves fewer of those 3 than the baseline; otherwise it is "not reproduced". Both blocks are reported cumulatively; nothing is relabelled or replaced.
+5. At most one confirmation block per task; missing trials or budget leave the decision pending. More evidence means a new recorded experiment.
+
+The upload gate uses the **held-out** set (3 trials per task) against a numerical target set before looking at results. Dev results guide development but do not show generalisation; held-out cases used for tuning become dev cases.
 
 ## 6. Feedback
 - Every bench run writes `bench/runs/<timestamp>/results.csv` and a failure taxonomy (mechanical / locate / semantic / perf / scope).

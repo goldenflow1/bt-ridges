@@ -257,6 +257,7 @@ def bounded_function():
                     "summit",
                     "ember",
                     "CHF",
+                    "fjord",
                 )
             )
         ):
@@ -336,8 +337,9 @@ def hidden_tests():
         "test_repeated_balances_are_not_collapsed",
         "test_same_answer_before_and_after_merge",
         "test_tenant_with_only_inactive_current_rows_is_empty",
+        "test_currencies_sorted_by_code_not_by_size",
     ]
-    return parse_pytest_run(result, 7, required)
+    return parse_pytest_run(result, 8, required)
 
 
 def clickhouse(sql, database="meterline_test"):

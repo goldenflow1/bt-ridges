@@ -1,0 +1,77 @@
+diff --git a/recipes/serializers.py b/recipes/serializers.py
+index 01c6f14..6ad1b29 100644
+--- a/recipes/serializers.py
++++ b/recipes/serializers.py
+@@ -1,10 +1,18 @@
+ """Plain-dict serializers for the JSON API."""
+ 
++from recipes.models import rating_payload
++
+ 
+ def serialize_author(author):
+     return {"handle": author.handle, "name": author.name}
+ 
+ 
++def rating_from_reviews(reviews):
++    ratings = [review.rating for review in reviews]
++    average = sum(ratings) / len(ratings) if ratings else None
++    return rating_payload(average, len(ratings))
++
++
+ def serialize_recipe_summary(recipe):
+     """Compact representation used by the recipe list."""
+     return {
+@@ -12,9 +20,9 @@ def serialize_recipe_summary(recipe):
+         "slug": recipe.slug,
+         "title": recipe.title,
+         "author": serialize_author(recipe.author),
+-        "tags": [tag.slug for tag in recipe.tags.order_by("slug")],
+-        "ingredient_count": recipe.ingredients.count(),
+-        "rating": recipe.rating_summary(),
++        "tags": [tag.slug for tag in recipe.tags.all()],
++        "ingredient_count": len(recipe.ingredients.all()),
++        "rating": rating_from_reviews(recipe.reviews.all()),
+         "created_at": recipe.created_at.isoformat(),
+     }
+ 
+diff --git a/recipes/views.py b/recipes/views.py
+index 32d2802..6f2235c 100644
+--- a/recipes/views.py
++++ b/recipes/views.py
+@@ -1,15 +1,27 @@
+ from django.core.paginator import Paginator
++from django.db.models import Prefetch
+ from django.http import JsonResponse
+ from django.shortcuts import get_object_or_404
+ 
+-from recipes.models import Recipe
++from recipes.models import Recipe, Tag
+ from recipes.serializers import serialize_recipe_detail, serialize_recipe_summary
+ 
+ PAGE_SIZE = 20
+ 
+ 
++def published_recipes():
++    """Published recipes with their relations loaded up front."""
++    return (
++        Recipe.objects.filter(published=True)
++        .select_related("author")
++        .prefetch_related(
++            Prefetch("tags", queryset=Tag.objects.order_by("slug")), "ingredients", "reviews"
++        )
++    )
++
++
+ def recipe_list(request):
+-    recipes = Recipe.objects.filter(published=True).order_by("-created_at", "id")
++    recipes = published_recipes().order_by("-created_at", "id")
+     tag = request.GET.get("tag")
+     if tag:
+         recipes = recipes.filter(tags__slug=tag)
+@@ -25,5 +37,5 @@ def recipe_list(request):
+ 
+ 
+ def recipe_detail(request, slug):
+-    recipe = get_object_or_404(Recipe, slug=slug, published=True)
++    recipe = get_object_or_404(published_recipes(), slug=slug)
+     return JsonResponse(serialize_recipe_detail(recipe))

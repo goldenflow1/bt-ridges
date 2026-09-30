@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "test_revenue_ties_break_by_id_not_name"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

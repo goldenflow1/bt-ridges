@@ -142,3 +142,49 @@ class HiddenListingTests(TestCase):
         self.assertEqual([r["id"] for r in body["results"]], [visible.id])
         self.assertEqual([r["id"] for r in by_tag["results"]], [visible.id])
         self.assertEqual(body["count"], 1)
+
+    def test_same_timestamp_recipes_page_in_id_order(self):
+        tied = [
+            f.recipe(
+                f"Tie {i}", tags=[self.mint], ingredients=["salt"], ratings=[4], minutes_ago=7
+            )
+            for i in range(45)
+        ]
+        newest = f.recipe("Fresh", minutes_ago=1)
+
+        ids = []
+        for page in (1, 2, 3):
+            _, body = self.fetch(page=page)
+            ids += [r["id"] for r in body["results"]]
+
+        self.assertEqual(ids, [newest.id] + [r.id for r in tied])
+
+    def test_listing_counts_and_average_come_from_the_database(self):
+        for i in range(3):
+            self.rich_recipe(f"Pantry {i}", i, ratings=[5, 4, 2])
+
+        with CaptureQueriesContext(connection) as captured:
+            response = self.client.get("/api/recipes/")
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["results"][0]
+        self.assertEqual(row["ingredient_count"], 3)
+        self.assertEqual(row["rating"], {"average": 3.67, "count": 3})
+
+        statements = [q["sql"].upper() for q in captured.captured_queries]
+
+        def aggregated(table, *functions):
+            return any(
+                table in sql and any(f"{fn}(" in sql for fn in functions) for sql in statements
+            )
+
+        self.assertTrue(
+            aggregated("RECIPES_INGREDIENT", "COUNT"),
+            "ingredient_count is not computed by the database",
+        )
+        self.assertTrue(
+            aggregated("RECIPES_REVIEW", "COUNT"), "rating.count is not computed by the database"
+        )
+        self.assertTrue(
+            aggregated("RECIPES_REVIEW", "AVG", "SUM"),
+            "rating.average is not computed by the database",
+        )

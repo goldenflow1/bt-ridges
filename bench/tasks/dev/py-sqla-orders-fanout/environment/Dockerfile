@@ -9,8 +9,11 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends bash ca-certificates git postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir \
-    "SQLAlchemy==2.0.36" "psycopg[binary]==3.2.3" "pytest==8.3.3" "ruff==0.7.4"
+# The Ridges miner runtime needs python3 and its baseline packages inside the task environment.
+COPY baseline-requirements.txt /tmp/baseline-requirements.txt
+RUN pip install --no-cache-dir -r /tmp/baseline-requirements.txt \
+    "SQLAlchemy==2.0.36" "psycopg[binary]==3.2.3" "pytest==8.3.3" "ruff==0.7.4" \
+    && rm /tmp/baseline-requirements.txt
 
 COPY app/ /app/
 WORKDIR /app

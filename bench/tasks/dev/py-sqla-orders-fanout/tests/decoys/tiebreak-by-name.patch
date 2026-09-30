@@ -1,0 +1,44 @@
+diff --git a/tidewater/reports.py b/tidewater/reports.py
+index 46021d7..f5ff461 100644
+--- a/tidewater/reports.py
++++ b/tidewater/reports.py
+@@ -52,21 +52,34 @@ def customer_revenue(
+     if placed_to is not None:
+         order_join.append(Order.placed_at < placed_to)
+ 
+-    revenue = func.coalesce(func.sum(OrderItem.quantity * OrderItem.unit_price_cents), 0)
++    order_totals = (
++        select(
++            OrderItem.order_id,
++            func.sum(OrderItem.quantity * OrderItem.unit_price_cents).label("order_cents"),
++        )
++        .group_by(OrderItem.order_id)
++        .subquery()
++    )
++    order_shipments = (
++        select(Shipment.order_id, func.max(Shipment.shipped_at).label("shipped_at"))
++        .group_by(Shipment.order_id)
++        .subquery()
++    )
++    revenue = func.coalesce(func.sum(order_totals.c.order_cents), 0)
+     stmt = (
+         select(
+             Customer.id,
+             Customer.name,
+             revenue.label("revenue_cents"),
+             func.count(distinct(Order.id)).label("order_count"),
+-            func.max(Shipment.shipped_at).label("last_shipped_at"),
++            func.max(order_shipments.c.shipped_at).label("last_shipped_at"),
+         )
+         .select_from(Customer)
+         .outerjoin(Order, and_(*order_join))
+-        .outerjoin(OrderItem, OrderItem.order_id == Order.id)
+-        .outerjoin(Shipment, Shipment.order_id == Order.id)
++        .outerjoin(order_totals, order_totals.c.order_id == Order.id)
++        .outerjoin(order_shipments, order_shipments.c.order_id == Order.id)
+         .group_by(Customer.id, Customer.name)
+-        .order_by(desc("revenue_cents"), Customer.id)
++        .order_by(desc("revenue_cents"), Customer.name)
+     )
+     if region is not None:
+         stmt = stmt.where(Customer.region == region)

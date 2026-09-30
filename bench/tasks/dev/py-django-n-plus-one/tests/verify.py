@@ -179,6 +179,9 @@ def construct_limits():
         "Batch",
         "Even Split",
         "Thirds",
+        "Tie",
+        "Fresh",
+        "Pantry",
     )
     for allowed in ALLOWED:
         tree = ast.parse((APP / allowed).read_text(), str(allowed))
@@ -269,8 +272,10 @@ def hidden_tests():
         "test_rating_rounding_matches_model_and_detail",
         "test_filtered_later_pages_stay_bounded",
         "test_unpublished_recipes_do_not_leak",
+        "test_same_timestamp_recipes_page_in_id_order",
+        "test_listing_counts_and_average_come_from_the_database",
     ]
-    return parse_test_run(result, 5, required)
+    return parse_test_run(result, 7, required)
 
 
 def role_identity():

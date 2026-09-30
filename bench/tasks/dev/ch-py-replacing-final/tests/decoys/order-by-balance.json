@@ -1,0 +1,7 @@
+{
+ "expect_failing": [
+  "test_currencies_sorted_by_code_not_by_size"
+ ],
+ "category": "assertion",
+ "passes_visible": true
+}

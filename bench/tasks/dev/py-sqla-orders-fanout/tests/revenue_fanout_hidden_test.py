@@ -130,3 +130,29 @@ def test_report_is_one_statement(shop, session, engine):
     assert rows[0].revenue_cents == sum(day * 699 + 999 for day in range(1, 9))
     assert rows[0].order_count == 8
     assert rows[0].last_shipped_at == at(8, 15)
+
+
+def test_order_without_lines_still_counts(shop, session):
+    zed = shop.customer("Zed Achebe")
+    shop.order(zed, [], shipped=[at(11), at(12)])
+    shop.order(zed, [("TOWEL-MF", 2, 1200)], shipped=[at(10)])
+    shop.order(zed, [], status=OrderStatus.CANCELLED, shipped=[at(13)])
+
+    [row] = customer_revenue(session)
+
+    assert row == CustomerRevenue(
+        customer_id=zed.id,
+        name="Zed Achebe",
+        revenue_cents=2400,
+        order_count=2,
+        last_shipped_at=at(12),
+    )
+
+
+def test_revenue_ties_break_by_id_not_name(shop, session):
+    zoe = shop.customer("Zoe Brandt")
+    abe = shop.customer("Abe Carver")
+    shop.order(zoe, [("CUP-TI", 1, 2500)], shipped=[at(2), at(3)])
+    shop.order(abe, [("CUP-TI", 1, 2500)], shipped=[at(2)])
+
+    assert [row.customer_id for row in customer_revenue(session)] == [zoe.id, abe.id]

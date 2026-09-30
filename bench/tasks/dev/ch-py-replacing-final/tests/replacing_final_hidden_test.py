@@ -131,3 +131,20 @@ def test_tenant_with_only_inactive_current_rows_is_empty(ch, ledger):
     assert tenant_balance_summary(ch, "orbit") == [
         CurrencyTotal(currency="EUR", accounts=1, balance_minor=3_000)
     ]
+
+
+def test_currencies_sorted_by_code_not_by_size(ch, ledger):
+    stop_merges(ch)
+    ledger.write("fjord", 1, 1, 9_999, currency="AUD")
+    ledger.write("fjord", 1, 2, 2_000, currency="AUD")
+    ledger.write("fjord", 2, 1, 3_000, currency="AUD")
+    ledger.write("fjord", 3, 1, 50, currency="EUR")
+    ledger.write("fjord", 4, 1, 70, currency="EUR")
+    ledger.write("fjord", 5, 1, 80, currency="EUR")
+    ledger.write("fjord", 6, 1, 90_000, currency="USD")
+
+    assert tenant_balance_summary(ch, "fjord") == [
+        CurrencyTotal(currency="AUD", accounts=2, balance_minor=5_000),
+        CurrencyTotal(currency="EUR", accounts=3, balance_minor=200),
+        CurrencyTotal(currency="USD", accounts=1, balance_minor=90_000),
+    ]

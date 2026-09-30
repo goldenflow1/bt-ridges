@@ -18,3 +18,6 @@ Spec (requirement ID) → plan item → implement → test named after the ID �
 - `uv run pytest` — unit + scenario + offline e2e.
 - Test names contain the requirement ID: `test_H_GUARD_03_...`.
 - Practice tasks: `python3 bench/validate_task.py bench/tasks/<set>/<id>`; live runs need `ridges miner run-local` and an OpenRouter key.
+
+## Keep or revert
+The rule is in `docs/process/engineering-loop.md` §5a (reliability fixes vs behaviour changes, the paired confirmation protocol, provisional until ≥ 15 dev tasks). Use `tools/bench_summary.py compare`; never keep a change on a single run.

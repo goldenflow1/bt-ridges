@@ -12,7 +12,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends bash ca-certificates curl git postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir "Django==5.1.2" "psycopg[binary]==3.2.3" "ruff==0.7.4"
+# The Ridges miner runtime needs python3 and its baseline packages inside the task environment.
+COPY baseline-requirements.txt /tmp/baseline-requirements.txt
+RUN pip install --no-cache-dir -r /tmp/baseline-requirements.txt "Django==5.1.2" "psycopg[binary]==3.2.3" "ruff==0.7.4" \
+    && rm /tmp/baseline-requirements.txt
 
 COPY app/ /app/
 WORKDIR /app

@@ -1,7 +1,7 @@
 # Experiments
 
 One row per idea, including negative results. Status: `idea` → `running` → `kept` / `reverted` / `parked`.
-A change counts only if it holds across 3 repeats and moves held-out by ≥ 2 tasks per 25, or cuts cost ≥ 15% at an equal score.
+A change is kept or reverted by the rule in `docs/process/engineering-loop.md` §5a.
 
 | ID | Date | Hypothesis | Dev before → after (solve / $) | Held-out | Status | Note |
 |---|---|---|---|---|---|---|

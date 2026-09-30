@@ -12,7 +12,8 @@ import json
 import os
 import re
 import stat
-from typing import Dict, List, Optional
+import subprocess
+from typing import Callable, Dict, List, Optional
 
 DIGEST_VERSION = "task-tree-v1"
 # Excluded from the task digest (documented, B-RUN-04): VCS metadata and disposable caches only.
@@ -161,3 +162,51 @@ def cli_version(ridges_root: str) -> Optional[str]:
 def expected_tasks(root: str, task_set: str) -> List[str]:
     return sorted(os.path.basename(os.path.dirname(p))
                   for p in glob.glob(os.path.join(root, "bench", "tasks", task_set, "*", "task.toml")))
+
+
+# ---------------------------------------------------------------------------------- runtime identity (B-RUN-01)
+
+
+def _run(cmd: List[str]) -> str:
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=30).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def host_identity(ridges_root: str, run: Callable[[List[str]], str] = _run) -> Dict:
+    """What the run executed on. Unknown values are recorded as None, never guessed."""
+    cpu = ""
+    try:
+        with open("/proc/cpuinfo", encoding="utf-8") as handle:
+            cpu = next((line.split(":", 1)[1].strip() for line in handle if line.startswith("model name")), "")
+    except OSError:
+        pass
+    harbor = run([os.path.join(ridges_root, ".venv", "bin", "python"), "-c",
+                  "import importlib.metadata as m; print(m.version('harbor'))"])
+    return {
+        "cpu": cpu or None,
+        "cpus": os.cpu_count(),
+        "docker": run(["docker", "version", "--format", "{{.Server.Version}}"]) or None,
+        "harbor": harbor or None,
+        "ridges_cli_commit": cli_version(ridges_root),
+    }
+
+
+def trial_images(trial_dir: str, run: Callable[[List[str]], str] = _run) -> Dict[str, Optional[str]]:
+    """Image IDs of the containers Harbor built for this trial (named after the trial)."""
+    if not trial_dir:
+        return {}
+    prefix = os.path.basename(os.path.normpath(trial_dir)).lower() + "__"
+    listing = run(["docker", "images", "--no-trunc", "--format", "{{.Repository}}:{{.Tag}} {{.ID}}"])
+    images = {}
+    for line in listing.splitlines():
+        name, _, image_id = line.partition(" ")
+        if name.startswith(prefix):
+            images[name[len(prefix):]] = image_id or None
+    return images
+
+
+def inputs_unchanged(before: Dict[str, str], after: Dict[str, str]) -> List[str]:
+    """Names of inputs (task digests, bundle hash) that changed while a trial ran."""
+    return sorted(key for key in set(before) | set(after) if before.get(key) != after.get(key))
