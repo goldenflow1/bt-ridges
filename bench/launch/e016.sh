@@ -1,5 +1,5 @@
 #!/bin/bash
-# E016 launcher (docs/plans/e016-protocol.md). Usage: bench/launch/e016.sh pilot x15|x25 | main
+# E016 launcher (docs/plans/e016-protocol.md). Usage: bench/launch/e016.sh pilot x15|x25 | main | confirm TASKS
 # Verifies the frozen inputs, then runs the paired A/B comparison with every protocol limit enforced by run_bench.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -34,5 +34,12 @@ case "${1:-}" in
     scenario_for "$MAIN_CONDITION"; common
     exec uv run python tools/run_bench.py "${COMMON[@]}" --purpose evaluation --repeats 3 --spend-limit 4.00 \
       --experiment-id e016-main ;;
-  *) echo "usage: $0 pilot x15|x25 | main" >&2; exit 2 ;;
+  confirm)
+    # Protocol §5 paired confirmation block: 3 more A/B pairs on the affected tasks only, same frozen condition.
+    [ -n "$MAIN_CONDITION" ] || { echo "REFUSED: the main-cohort condition is not frozen" >&2; exit 2; }
+    [ -n "${2:-}" ] || { echo "usage: $0 confirm TASK[,TASK...]" >&2; exit 2; }
+    scenario_for "$MAIN_CONDITION"; common
+    exec uv run python tools/run_bench.py "${COMMON[@]}" --purpose confirmation --repeats 3 --spend-limit 4.00 \
+      --experiment-id e016-main --tasks "$2" ;;
+  *) echo "usage: $0 pilot x15|x25 | main | confirm TASKS" >&2; exit 2 ;;
 esac
