@@ -1,6 +1,6 @@
 # PROTOCOL — E016: B2/B3 under synthetic budget pressure
 
-Status: **declared 2026-10-01, before any E016 trial**; amended 2026-10-01 after the [follow-up review](../reviews/2026-10-01-e016-followup.md) (enforced limits, reservation hold, outcome contract, evidence rules); ×15 pilot passed; **calibration amendment §3a** (×25 pilot); main cohort not started and its condition not yet frozen.
+Status: **declared 2026-10-01, before any E016 trial**; amended 2026-10-01 after the [follow-up review](../reviews/2026-10-01-e016-followup.md) (enforced limits, reservation hold, outcome contract, evidence rules); ×15 pilot passed; calibration amendment §3a: ×25 pilot passed and **×25 frozen for the main cohort**; main cohort not started.
 Reviews: [readiness](../reviews/2026-10-01-e016-readiness.md), [follow-up](../reviews/2026-10-01-e016-followup.md).
 
 ## 1. Question and what this can show
@@ -57,6 +57,8 @@ The ×15 pilot **passed** §3 (E016-pilot: 8/8 complete accounting, $0.07149 set
 **Activation is reported separately** for each mechanism: B2 — finalization notices (`fin_notices`) and finalization rounds (`fin_rounds`); B3 — refused and accepted empty finishes (`fin_refusals`, `fin_empty_accepts`). The ×15 pilot exercised only a B2 notice.
 
 **Observation from the ×15 pilot (not evidence of a regression; one trial):** B's py-django-n-plus-one stopped on budget at turn 20 after its notice, with a mid-edit tree (visible tests failing, an unused import) returned as a last-resort candidate; no finalization round ran because H-SHELL-15 requires *no* candidate. A, which has no pre-request affordability quote, overshot to 101% and finished. The main-cohort analysis will report budget-stop-with-failing-candidate outcomes per arm.
+
+**Calibration result (2026-10-01):** the ×25 pilot (`20261001-080347-dev-A/-B`) passed §3 (1)–(2): 8/8 matched-proxy and complete, 0 unscaled, 0 uncertain; categories and completion evidence on 8/8; arm A without events; order alternated. Arm A reached the finishing reserve on **2 of 4** tasks (py-django-n-plus-one 98%, py-sqla-orders-fanout 100%); not saturated (1 of 4 tasks per arm ended without a passing patch — py-django-n-plus-one in **both** arms, each a budget stop with a failing last-resort candidate). Activation: B2 notices 2, B2 rounds 0, B3 refusals 0, B3 accepts 0. Pilot envelope settled $0.125712 of $0.50, nothing held. Under the rule above, **×25 is frozen as the main-cohort condition** (`MAIN_CONDITION="x25"` in `bench/launch/e016.sh`, same commit). Outcomes (A 3/4, B 3/4) played no part in the choice.
 
 ## 4. Main cohort
 

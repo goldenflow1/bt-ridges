@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 A=bench/variants/v004-a-only-eb9e6ee.py
 B=bench/variants/v004-b2b3-5406e4dd.py
 # Main-cohort condition: empty until frozen by a dated protocol amendment after calibration (§3a).
-MAIN_CONDITION=""
+MAIN_CONDITION="x25"  # frozen 2026-10-01 by protocol §3a (x25 calibration pilot passed)
 check() { [ "$(sha256sum "$1" | cut -d' ' -f1)" = "$2" ] || { echo "REFUSED: $1 does not match the protocol hash" >&2; exit 2; }; }
 scenario_for() {
   case "$1" in
