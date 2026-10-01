@@ -199,9 +199,14 @@ class SessionLedger:
         self.save()
 
     def save(self) -> None:
+        """Atomic replacement: a crash while saving leaves the previous ledger, never a truncated one."""
         os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
-        with open(self.path, "w") as handle:
+        temp = self.path + ".tmp"
+        with open(temp, "w") as handle:
             json.dump(self.data, handle, indent=1)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp, self.path)
 
     def spent(self) -> Dict:
         now, start = self.fetch(), self.data.get("start_usage")
@@ -209,6 +214,9 @@ class SessionLedger:
             return {"usd": round(now - start, 6), "source": "key-usage"}
         total = 0.0
         for run in self.data["runs"].values():
+            if run.get("pending"):
+                total += run.get("allowance") or 0.0
+                continue
             for field in ("reconciled", "consumed", "allowance"):
                 if isinstance(run.get(field), (int, float)):
                     total += run[field]
@@ -230,13 +238,98 @@ class SessionLedger:
         self.save()
 
     def record(self, trial_id: str, allowance: float, reconciled: Optional[float], consumed: Optional[float]) -> None:
-        self.data["runs"][trial_id] = {"allowance": allowance, "reconciled": reconciled, "consumed": consumed}
+        """Settle a trial. Only a reconciled real cost releases its reservation; otherwise the allowance stays held
+        (E016 follow-up P1): an unchanged usage reading does not prove no delayed charge is coming."""
+        self.data["runs"][trial_id] = {"allowance": allowance, "reconciled": reconciled, "consumed": consumed,
+                                       "pending": reconciled is None}
+        self.save()
+
+    def settle(self, trial_id: str, real_cost: float) -> None:
+        """Release a held reservation after its real cost was established by other evidence (manual reconciliation)."""
+        run = self.data["runs"][trial_id]
+        run.update(reconciled=real_cost, pending=False, settled_manually=True)
         self.save()
 
 
 def sha256_file(path: str) -> str:
     with open(path, "rb") as handle:
         return hashlib.sha256(handle.read()).hexdigest()
+
+
+class StopConditions:
+    """Declared stop conditions, enforced by the scheduler (E016 follow-up P1). Each returns a reason once met."""
+
+    def __init__(self, billing_mismatch: bool, input_change: bool, max_blocked: Optional[int],
+                 max_incomplete: Optional[int]):
+        self.billing_mismatch, self.input_change = billing_mismatch, input_change
+        self.max_blocked, self.max_incomplete = max_blocked, max_incomplete
+        self.blocked = 0
+        self.incomplete_run = 0
+
+    def after_trial(self, row: Dict) -> str:
+        reconciliation = str(row.get("cost_reconciliation") or "")
+        if self.billing_mismatch and "differs" in reconciliation:
+            return f"billing mismatch on {row.get('trial_id')}: {reconciliation}"
+        if self.input_change and row.get("inputs_changed"):
+            return f"inputs changed during {row.get('trial_id')}: {row['inputs_changed']}"
+        complete = reconciliation in ("matched", "matched-proxy")
+        self.incomplete_run = 0 if complete else self.incomplete_run + 1
+        if self.max_incomplete and self.incomplete_run >= self.max_incomplete:
+            return f"{self.incomplete_run} consecutive trials without complete cost accounting"
+        return ""
+
+    def after_blocked_slot(self) -> str:
+        self.blocked += 1
+        if self.max_blocked and self.blocked >= self.max_blocked:
+            return f"{self.blocked} infrastructure-blocked slots"
+        return ""
+
+
+class ExperimentEnvelope:
+    """Experiment-level spending control, checked before every dispatch: real settled cost plus held (unreconciled)
+    allowances plus the next allowance must fit the limit, and the key must keep `keep_headroom` of unspent limit.
+    Unknown key headroom refuses dispatch (fail closed)."""
+
+    def __init__(self, limit: Optional[float], keep_headroom: Optional[float], key_remaining: Callable[[], Optional[float]]):
+        self.limit, self.keep_headroom, self.key_remaining = limit, keep_headroom, key_remaining
+        self.settled = 0.0
+        self.held: Dict[str, float] = {}
+
+    def reserve(self, trial_id: str, allowance: float) -> None:
+        self.held[trial_id] = allowance
+
+    def settle(self, trial_id: str, real_cost: Optional[float]) -> None:
+        if real_cost is None:
+            return  # unresolved: the allowance stays held
+        self.held.pop(trial_id, None)
+        self.settled += float(real_cost)
+
+    def refusal(self, allowance: float) -> str:
+        held = sum(self.held.values())
+        if self.limit is not None and self.settled + held + allowance > self.limit:
+            return (f"experiment spend limit ${self.limit:.2f}: settled ${self.settled:.4f} + held ${held:.2f} "
+                    f"+ next ${allowance:.2f} would exceed it")
+        if self.keep_headroom is not None:
+            remaining = self.key_remaining()
+            if remaining is None:
+                return "key headroom unknown; not dispatching (fail closed)"
+            if remaining - held - allowance < self.keep_headroom:
+                return (f"key headroom: ${remaining:.2f} left - held ${held:.2f} - next ${allowance:.2f} "
+                        f"< retained ${self.keep_headroom:.2f}")
+        return ""
+
+
+def fetch_key_remaining(key: str) -> Optional[float]:
+    """The key's unspent limit (`limit_remaining`) from the free key endpoint; None when unavailable."""
+    if not key:
+        return None
+    request = urllib.request.Request(KEY_ENDPOINT, headers={"Authorization": "Bearer " + key})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            value = json.load(response).get("data", {}).get("limit_remaining")
+        return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+    except (OSError, ValueError, urllib.error.URLError):
+        return None
 
 
 def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: str,
@@ -351,6 +444,16 @@ def run_bench() -> int:
                         help="route every trial through tools/fault_proxy.py with this scenario JSON (B-FAULT-03)")
     parser.add_argument("--fault-host", default="172.17.0.1",
                         help="address at which task containers reach the fault proxy on this host")
+    parser.add_argument("--spend-limit", type=float, default=None,
+                        help="experiment real-spend envelope in USD, enforced before every dispatch (settled + held + allowance)")
+    parser.add_argument("--keep-headroom", type=float, default=None,
+                        help="never dispatch unless the key keeps this much unspent limit after held + new allowances")
+    parser.add_argument("--stop-on-billing-mismatch", action="store_true",
+                        help="stop when key usage differs from the attributable cost (another client on the key)")
+    parser.add_argument("--stop-on-input-change", action="store_true", help="stop when a trial's inputs changed")
+    parser.add_argument("--max-blocked-slots", type=int, default=None, help="stop at this many infrastructure-blocked slots")
+    parser.add_argument("--max-consecutive-incomplete", type=int, default=None,
+                        help="stop after this many consecutive trials without complete cost accounting")
     parser.add_argument("--purpose", default="reconnaissance",
                         choices=["reconnaissance", "evaluation", "confirmation", "diagnostic"],
                         help="declared before the run; only evaluation (+ confirmation) runs can be promoted")
@@ -413,6 +516,18 @@ def run_bench() -> int:
     ledger = SessionLedger(args.ledger, args.ceiling, fetch)
     stopped = ""
     pair_no = 0
+    halt = {"reason": ""}
+    stops = StopConditions(args.stop_on_billing_mismatch, args.stop_on_input_change, args.max_blocked_slots,
+                           args.max_consecutive_incomplete)
+    envelope = ExperimentEnvelope(args.spend_limit, args.keep_headroom, lambda: fetch_key_remaining(key))
+
+    def dispatch_refusal() -> str:
+        """Why the next dispatch (first attempt or replacement) must not happen; empty when it may."""
+        if halt["reason"]:
+            return "STOP: " + halt["reason"]
+        if not ledger.fits(args.allowance):
+            return f"spending ceiling ${args.ceiling:.2f} reached ({ledger.spent()}); remaining runs not scheduled"
+        return envelope.refusal(args.allowance)
 
     def make_attempt(label, name, task, repeat, slot, pair_id, position):
         arm = state[label]
@@ -420,6 +535,7 @@ def run_bench() -> int:
         def attempt_fn(attempt):
             trial_id = f"{slot}/a{attempt}"
             ledger.reserve(trial_id, args.allowance)
+            envelope.reserve(trial_id, args.allowance)
             inputs_before = {name: task_digest(task), "bundle": sha256_file(arm["agent"])}
             before = fetch()
             raw = os.path.join(arm["out_dir"], "raw", f"{name}-r{repeat}-a{attempt}.log")
@@ -443,8 +559,13 @@ def run_bench() -> int:
                 row.update(arm=label, pair_id=pair_id, arm_position=position)
             if changed:
                 row["validity"], row["outcome"] = "unresolved", "unknown"  # not comparable: inputs moved
-            ledger.record(trial_id, args.allowance, delta if delta is not None and delta >= 0 else None,
-                          row.get("cost_accounted"))
+            real = row.get("reconciled_cost")
+            ledger.record(trial_id, args.allowance, real,
+                          row.get("proxy_real_cost") if scenario is not None else row.get("cost_accounted"))
+            envelope.settle(trial_id, real)
+            halt_reason = stops.after_trial(row)
+            if halt_reason and not halt["reason"]:
+                halt["reason"] = halt_reason
             print(f"[{repeat}.{attempt}]{f' {label}' if paired else ''} {row['task']}: {row['outcome']} ({row['validity']}) "
                   f"reward={row['reward']} cost={format_cost(row)} wall={row['wall_sec']}s {row['error']}"
                   + (f" INPUTS CHANGED: {changed}" if changed else ""), flush=True)
@@ -460,19 +581,25 @@ def run_bench() -> int:
             pair_id = f"{stamp}/{name}/r{repeat}"
             pair_no += 1
             for position, label in enumerate(order):
-                if not ledger.fits(args.allowance):
-                    stopped = f"spending ceiling ${args.ceiling:.2f} reached ({ledger.spent()}); remaining runs not scheduled"
+                refusal = dispatch_refusal()
+                if refusal:
+                    stopped = refusal
                     break
                 arm = state[label]
                 slot = f"{os.path.basename(arm['out_dir'])}/{name}/r{repeat}"
                 attempt_fn = make_attempt(label, name, task, repeat, slot, pair_id, position)
-                slot_rows, blocked, stop_reason = run_slot(attempt_fn, lambda: ledger.fits(args.allowance))
+                slot_rows, blocked, stop_reason = run_slot(attempt_fn, lambda: not dispatch_refusal())
                 arm["rows"].extend(slot_rows)
                 save_results(arm["out_dir"], arm["rows"])
                 if blocked:
                     print(f"slot {slot}: infrastructure-blocked after {MAX_SETUP_REPLACEMENTS} setup replacements")
-                if stop_reason:
-                    stopped = stop_reason
+                    halt_reason = stops.after_blocked_slot()
+                    if halt_reason and not halt["reason"]:
+                        halt["reason"] = halt_reason
+                if halt["reason"]:
+                    stopped = "STOP: " + halt["reason"]
+                elif stop_reason:
+                    stopped = dispatch_refusal() or stop_reason
                 if stopped:
                     break
             if stopped:

@@ -161,8 +161,10 @@ def test_H_WALLET_06_host_ledger_uses_key_usage_delta_and_never_double_counts(tm
     offline = SessionLedger(str(tmp_path / "l2.json"), 1.0, lambda: None)
     offline.record("run/a/r1", 0.29, None, 0.2)
     offline.record("run/a/r1", 0.29, None, 0.2)
-    offline.record("run/b/r1", 0.29, None, None)  # nothing known: counts its full allowance
-    assert offline.spent() == {"usd": pytest.approx(0.49), "source": "per-run records"}
+    offline.record("run/b/r1", 0.29, None, None)
+    # Unreconciled trials keep their full allowance held (E016 follow-up P1, B-RUN-06): a consumed figure that was
+    # never reconciled against real billing does not release the reservation.
+    assert offline.spent() == {"usd": pytest.approx(0.58), "source": "per-run records"}
     assert offline.fits(0.29) and not offline.fits(0.6)
 
 

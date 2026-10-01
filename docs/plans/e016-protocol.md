@@ -1,7 +1,7 @@
 # PROTOCOL — E016: B2/B3 under synthetic budget pressure
 
-Status: **declared 2026-10-01, before any E016 trial**; technical pilot pending approval; main cohort not started.
-Readiness review: [2026-10-01-e016-readiness.md](../reviews/2026-10-01-e016-readiness.md) (blockers fixed in the harness commit that adds this file).
+Status: **declared 2026-10-01, before any E016 trial**; amended 2026-10-01 after the [follow-up review](../reviews/2026-10-01-e016-followup.md) (enforced limits, reservation hold, outcome contract, evidence rules); technical pilot pending approval; main cohort not started.
+Reviews: [readiness](../reviews/2026-10-01-e016-readiness.md), [follow-up](../reviews/2026-10-01-e016-followup.md).
 
 ## 1. Question and what this can show
 
@@ -14,13 +14,13 @@ Do the B2/B3 finalization mechanisms (H-LOOP-06/07, H-SHELL-15) change outcomes 
 | Item | Identity |
 |---|---|
 | Arm A — without B2/B3 | `d8d965c67e98ed6294cc2ac4448803bee83bb4f9a0ae0003b46e8a7a7d1decfe`, built by `tools/build.py` from commit `eb9e6ee` (A0/A1a after review). Local copy `bench/variants/v004-a-only-eb9e6ee.py` (not committed; rebuild is byte-identical). |
-| Arm B — with B2/B3 | `5406e4dd79608e0109e8d1c283879f63b78099a11cd422193623a4a7f5a49637`, `dist/agent.py` built from `src/` as of `a2bbc42` (A0/A1a + B2/B3 after both reviews + finalization-event logging). |
+| Arm B — with B2/B3 | `5406e4dd79608e0109e8d1c283879f63b78099a11cd422193623a4a7f5a49637`, built from `src/` as of `a2bbc42` (A0/A1a + B2/B3 after both reviews + finalization-event logging). Local copy `bench/variants/v004-b2b3-5406e4dd.py` (not committed; rebuild is byte-identical). |
 | Scenario | `bench/faults/cost-x15.json`, SHA-256 `2b8f28ecb53301ea209bfe6defa9b78bac07f81dddee5928154fae0db4a13ae3` |
 | Tasks | `bench/tasks/dev/*` at the digests the runner records (17 tasks); unchanged by decision, including py-django-n-plus-one's unstated `__dict__` rule |
 | Runner | `tools/run_bench.py --agent A --agent-b B --fault-scenario bench/faults/cost-x15.json`: each task × repeat is a pair, order A,B on even and B,A on odd pairs, trials serial; one cohort per arm |
 | Runtime | this host, Ridges CLI `d74410d8`, cap `RIDGES_MAX_COST_USD` default 0.29 (driver phase ≈ $0.222 as the agent sees it) |
 
-Each arm's bundle is copied into its run folder at start; a change to either source file afterwards does not affect the cohort, and the input-mutation check marks any trial whose inputs moved as unresolved.
+**Launch only through `bench/launch/e016.sh pilot|main`**, which refuses to start unless both bundles and the scenario match the hashes above and passes every limit in §6 as an enforced runner flag. Each arm's bundle is copied into its run folder at start; a change to either source file afterwards does not affect the cohort, and the input-mutation check marks any trial whose inputs moved as unresolved.
 
 ## 3. Technical pilot (before the main cohort; excluded from it)
 
@@ -40,7 +40,7 @@ The pilot passes only if all hold:
 
 If (3) fails, the factor is changed, saved as a **new scenario file with a new identity**, this protocol is amended with the date, and the pilot is repeated. Pilot results never enter the main cohort.
 
-**Pilot limit:** stop if real spend exceeds **$0.50**.
+**Pilot limit:** `--spend-limit 0.50`, enforced before every dispatch: settled real cost + held unreconciled allowances + the next $0.29 allowance must fit, so the pilot cannot exceed $0.50 even if a trial spends its whole per-run cap.
 
 ## 4. Main cohort
 
@@ -57,6 +57,12 @@ Recorded per trial: outcome category, reward, real (trusted) and simulated cost,
 - **and** no confirmed regression and no new agent mechanical failure. A gain elsewhere never offsets a regression.
 - **Drops:** 3/3 → 1/3 or 0/3 is a material regression (reject). Any other per-task drop (e.g. 3/3 → 2/3, 2/3 → 1/3) triggers **one** paired confirmation block: 3 more A/B pairs on the affected tasks only, same scenario, counterbalanced; the drop persists if B solves fewer of those than A. Reported cumulatively; nothing replaced.
 
+**Evidence rules (amended):**
+- *Solve-based acceptance* needs a known outcome for every planned slot; an unresolved slot (missing evidence, changed inputs, unknown reward) leaves its task **pending** under the comparison rules — it never passes acceptance by being left out.
+- *Cost-based acceptance* needs **complete** trusted (proxy-reconciled) real cost for every counted trial of both arms; otherwise the cost branch is unavailable, not passed.
+- *Diagnostic fields* — finalization counts (`fin_*`, unknown when `fin_observed` is false), simulated cost, model mix — may be missing for up to 10% of trials per arm without invalidating a decision; their coverage is reported.
+- Outcome categories follow the completion contract (B-RUN-06): the agent's own no-change exit is `empty-output`; other exceptions are `harness-exception`; no completion record is `missing-evidence`.
+
 **Outcomes:**
 
 | Result | Meaning |
@@ -64,14 +70,17 @@ Recorded per trial: outcome category, reward, real (trusted) and simulated cost,
 | **keep** | gain and no regression → B2/B3 enter v004 (then the normal-condition comparison and G7) |
 | **reject** | confirmed or material regression |
 | **no gain** | complete, valid, sufficiently stressed cohort without a §5a gain → B2/B3 stay out of v004 |
-| **inconclusive** | insufficient stress (fewer than 6 of 17 tasks have an A trial reaching the finishing reserve), or > 10% of slots with incomplete accounting/evidence, or the run stopped early → no decision; not evidence that B2/B3 are ineffective |
+| **inconclusive** | insufficient stress (fewer than 6 of 17 tasks have an A trial reaching the finishing reserve), pending tasks under the evidence rules, a diagnostic coverage gap above 10%, or the run stopped early → no decision; not evidence that B2/B3 are ineffective |
 
 ## 6. Spending and stop conditions
 
 - Key headroom at declaration: $20.72 of the key's $30 limit (proposal figure; refresh before starting). Keep ≥ $5 for the later normal-condition comparison (~$1), held-out G7 (~$0.2) and confirmations.
 - The ledger now reserves each allowance before dispatch and releases it on reconciliation, so serial trials hold one $0.29 allowance at a time; worst-case 102 × $0.29 is never reserved at once.
-- **Main-cohort real-spend stop: $4.** Stop and report as inconclusive if exceeded.
-- **Stop immediately** on: two infrastructure-blocked slots; three consecutive trials with incomplete proxy accounting; any `key usage differs from proxy real cost` (another client on the key); an input-mutation flag.
+- **Enforced by `bench/launch/e016.sh`** (B-RUN-06), all checked before every dispatch including setup replacements:
+  - `--spend-limit 0.50` (pilot) / `--spend-limit 4.00` (main): settled real cost + held unreconciled allowances + next allowance;
+  - `--keep-headroom 5`: the key's `limit_remaining` minus held and next allowances must stay ≥ $5; unknown headroom refuses dispatch;
+  - `--stop-on-billing-mismatch` (another client on the key), `--stop-on-input-change`, `--max-blocked-slots 2`, `--max-consecutive-incomplete 3`.
+- A trial without reconciled real cost keeps its $0.29 allowance held (also across restarts) until its cost is established; a stopped run is reported as inconclusive.
 - The OpenRouter key must have no other active users during E016 (the unexplained DeepSeek 0423 usage must be stopped or the experiment run on a dedicated key).
 
 ## 7. Record

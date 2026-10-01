@@ -259,23 +259,40 @@ FINALIZATION_EVENTS = {
     "fin_empty_accepts": "[quarry] empty finish accepted",
     "fin_rounds": "[quarry] finalization round: no candidate",
 }
+NO_CHANGE_MARKER = "RuntimeError: no change was produced"  # src/quarry/agent.py, after run_agent completed
+TELEMETRY_MARKER = "[quarry-telemetry] {"  # written by run_agent just before it returns: the completion record
 
 
-def finalization_events(runtime_log: str) -> Dict[str, int]:
-    """Counts of the agent's finalization events (H-LOOP-06/07, H-SHELL-15) from its run log (E016 measurement)."""
+def completed(runtime_log: str) -> bool:
+    """Completion evidence: the agent's telemetry record, written at the end of run_agent (not just any log line)."""
+    return TELEMETRY_MARKER in (runtime_log or "")
+
+
+def finalization_events(runtime_log: str) -> Dict[str, Optional[int]]:
+    """Counts of the agent's finalization events (H-LOOP-06/07, H-SHELL-15). Without completion evidence the counts
+    are unknown (None), never zero: an unobserved run is not a run in which nothing fired (E016 follow-up P2)."""
+    observed = completed(runtime_log)
     lines = (runtime_log or "").splitlines()
-    return {field: sum(1 for line in lines if line.startswith(marker)) for field, marker in FINALIZATION_EVENTS.items()}
+    counts: Dict[str, Optional[int]] = {
+        field: (sum(1 for line in lines if line.startswith(marker)) if observed else None)
+        for field, marker in FINALIZATION_EVENTS.items()}
+    counts["fin_observed"] = observed
+    return counts
 
 
 def outcome_category(trial_dir: str, obs: Dict, runtime_log: str) -> str:
-    """What the trial produced, kept apart because they mean different things (E016 readiness P2):
-    patch | empty-output (the agent ran and returned nothing) | harness-exception | not-started | missing-evidence."""
+    """What the trial produced (E016 follow-up P2 contract):
+    patch — the agent returned a patch;
+    empty-output — completion evidence, no patch, and no exception or exactly the agent's own no-change exception;
+    harness-exception — any other exception;
+    missing-evidence — no completion record (missing or truncated log, run cut off);
+    not-started — no trial directory."""
     if not trial_dir:
         return "not-started"
-    if obs.get("exception_type"):
-        return "harness-exception"
     if obs.get("patch_sha256"):
         return "patch"
-    if "[quarry]" in (runtime_log or ""):
-        return "empty-output"
-    return "missing-evidence"
+    log = runtime_log or ""
+    known_no_change = completed(log) and NO_CHANGE_MARKER in log
+    if obs.get("exception_type"):
+        return "empty-output" if known_no_change else "harness-exception"
+    return "empty-output" if completed(log) else "missing-evidence"
