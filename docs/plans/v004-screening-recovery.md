@@ -222,6 +222,7 @@ Housekeeping includes recording v003's failed screening, preserving reference pr
 | Step 0 billing export | Done (daily granularity) | [openrouter-daily-by-model.csv](../reviews/public-agent-study-20261001/openrouter-daily-by-model.csv); §2 step-0 row |
 | Incident archive / requirement revisions | Pending | v003 production record; revised spec IDs |
 | A0 inference transport and A1a | Implemented and corrected after [review](../reviews/2026-10-01-a0-a1a.md) (E012); corrected-build no-regression baseline check pending | 40 focused cases; deadline, classification, retry and telemetry corrections. See review for current gate results. Broader tool/cleanup deadline coverage remains with B2/B3; the earlier live diagnostic measured the previous build. |
+| B2 and B3 | Implemented 2026-10-01 (E013); no-regression check running with A0/A1a on bundle `ca8e92f3` (dev 17×3, NetBox 6×3) | `tests/unit/test_finalization.py`, G0–G5 (98/98), live diagnostic |
 | A2 and C1 | Pending | Focused regressions, accounting proof, G0–G5 |
 | A3 and B1–B3 experiments | Pending | Compatible paired comparisons and keep/revert decisions |
 | C2–C4 | Pending | Attribution/isolation evidence; declared rehearsal results |
