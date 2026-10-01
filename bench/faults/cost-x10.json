@@ -1,0 +1,3 @@
+{"name": "cost-x10", "seed": 0,
+ "purpose": "Budget pressure like the v003 screening (~$0.15/task in production vs ~$0.01 locally): every reported cost x10, so the agent's wallet runs down as it did on the fallback. Real billing unchanged and logged.",
+ "rules": [{"id": "cost-x10", "action": "cost_multiplier", "factor": 10}]}

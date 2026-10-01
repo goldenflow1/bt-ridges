@@ -31,7 +31,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 sys.path.insert(0, ROOT)
 from quarry.telemetry import parse_log  # noqa: E402  (shared parser: the agent's telemetry contract)
-from tools.bench_cost import reconcile  # noqa: E402
+from tools.bench_cost import proxy_summary, reconcile, reconcile_proxy  # noqa: E402
 from tools.bench_records import (  # noqa: E402
     MAX_SETUP_REPLACEMENTS,
     ImageWatcher,
@@ -45,6 +45,7 @@ from tools.bench_records import (  # noqa: E402
     trial_images,
     validity,
 )
+from tools.fault_proxy import FaultProxy, load_scenario  # noqa: E402
 
 LEGACY_TELEMETRY = re.compile(r"\[quarry\] calls=(\d+) prompt_tokens=(\d+) cached_tokens=(\d+) cost=\$([\d.]+)")
 KEY_ENDPOINT = "https://openrouter.ai/api/v1/key"
@@ -75,9 +76,10 @@ def save_results(out_dir, rows):
     if not rows:
         return
     obs_fields = sorted({k for row in rows for k in row if k.startswith('obs_')})
+    fault_fields = sorted({k for row in rows for k in row if k.startswith('proxy_') or k == 'fault_scenario'})
     fields = ['trial_id', 'purpose', 'slot', 'attempt', 'repeat', 'task', 'task_digest', 'bundle_sha256', 'inputs_changed',
               'images', 'validity', 'auto_label', 'manual_label', 'manual_reason', 'reward', 'reconciled_cost',
-              'key_usage_delta', 'cost_reconciliation'] + TELEMETRY_FIELDS + obs_fields + ['wall_sec', 'error', 'trial_dir']
+              'key_usage_delta', 'cost_reconciliation'] + TELEMETRY_FIELDS + obs_fields + fault_fields + ['wall_sec', 'error', 'trial_dir']
     temp = os.path.join(out_dir, 'results.csv.tmp')
     with open(temp, 'w', newline='') as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction='ignore')
@@ -222,12 +224,14 @@ def sha256_file(path: str) -> str:
         return hashlib.sha256(handle.read()).hexdigest()
 
 
-def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: str) -> Dict:
+def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: str,
+            extra_args: Optional[List[str]] = None, extra_env: Optional[Dict[str, str]] = None) -> Dict:
     started = time.time()
-    cmd = ridges + ["miner", "run-local", "--non-interactive", "--task-path", task, "--agent-path", agent]
+    cmd = ridges + ["miner", "run-local", "--non-interactive", "--task-path", task, "--agent-path", agent] + (extra_args or [])
+    env = dict(os.environ, **(extra_env or {}))
     with ImageWatcher(os.path.basename(os.path.normpath(task))) as watcher:
         try:
-            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout)
+            proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout, env=env)
             output = proc.stdout + proc.stderr
         except subprocess.TimeoutExpired as exc:
             output = f"FAILED: bench timeout\n{exc.stdout or ''}"
@@ -320,6 +324,10 @@ def run_bench() -> int:
     parser.add_argument("--allowance", type=float, default=0.29, help="per-run allowance reserved before launching")
     parser.add_argument("--ledger", default=os.path.join(ROOT, "bench", "runs", "ledger.json"))
     parser.add_argument("--no-key-usage", action="store_true", help="do not read the key's usage for reconciliation")
+    parser.add_argument("--fault-scenario", default="",
+                        help="route every trial through tools/fault_proxy.py with this scenario JSON (B-FAULT-03)")
+    parser.add_argument("--fault-host", default="172.17.0.1",
+                        help="address at which task containers reach the fault proxy on this host")
     parser.add_argument("--purpose", default="reconnaissance",
                         choices=["reconnaissance", "evaluation", "confirmation", "diagnostic"],
                         help="declared before the run; only evaluation (+ confirmation) runs can be promoted")
@@ -341,6 +349,12 @@ def run_bench() -> int:
     with open(source_agent, 'rb') as source, open(frozen_agent, 'xb') as frozen:
         frozen.write(source.read())
     args.agent = frozen_agent
+    scenario = load_scenario(args.fault_scenario) if args.fault_scenario else None
+    fault_identity = None
+    if scenario is not None:
+        with open(args.fault_scenario, "rb") as handle:
+            fault_identity = {"name": scenario["name"], "path": args.fault_scenario,
+                              "sha256": hashlib.sha256(handle.read()).hexdigest(), "host": args.fault_host}
     manifest = {
         "started": time.strftime("%Y-%m-%dT%H:%M:%S"), "set": args.set, "repeats": args.repeats,
         "agent": args.agent, "agent_sha256": sha256_file(args.agent),
@@ -354,6 +368,7 @@ def run_bench() -> int:
         "config": {"ceiling": args.ceiling, "allowance": args.allowance, "timeout": args.timeout, "ridges": args.ridges,
                    "max_setup_replacements": MAX_SETUP_REPLACEMENTS},
         "purpose": args.purpose,
+        "fault_scenario": fault_identity,
         "host": host_identity(os.path.expanduser("~/bittensor/ridges-cli")),
         "ridges_cli_commit": cli_version(os.path.expanduser("~/bittensor/ridges-cli")),
         "python": sys.version.split()[0],
@@ -377,10 +392,18 @@ def run_bench() -> int:
                 inputs_before = {name: task_digest(task), "bundle": sha256_file(args.agent)}
                 before = fetch()
                 raw = os.path.join(out_dir, "raw", f"{name}-r{repeat}-a{attempt}.log")
-                row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw)
+                if scenario is None:
+                    row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw)
+                else:
+                    proxy_log = raw[:-4] + "-proxy.jsonl"
+                    with FaultProxy(scenario, port=0, host="0.0.0.0", log_path=proxy_log) as proxy:
+                        row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw,
+                                      ["--provider", "custom"],
+                                      {"RIDGES_CUSTOM_SANDBOX_PROXY_URL": f"http://{args.fault_host}:{proxy.port}"})
+                    row.update(proxy_summary(proxy_log), fault_scenario=scenario["name"])
                 after = settled_usage(fetch) if before is not None else None
                 delta = round(after - before, 6) if (before is not None and after is not None) else None
-                row.update(reconcile(row, delta))
+                row.update(reconcile(row, delta) if scenario is None else reconcile_proxy(delta, row))
                 changed = inputs_unchanged(inputs_before, {name: task_digest(task), "bundle": sha256_file(args.agent)})
                 row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": f"{slot}/a{attempt}",
                             "purpose": args.purpose, "bundle_sha256": manifest["agent_sha256"][:16],

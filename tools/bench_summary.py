@@ -54,6 +54,7 @@ def cohort_key(manifest: Dict) -> Tuple:
         json.dumps(manifest.get("model_override") or {}, sort_keys=True),
         json.dumps(manifest.get("tasks") or {}, sort_keys=True),
         host.get("ridges_cli_commit") or manifest.get("ridges_cli_commit"), host.get("harbor"),
+        json.dumps(manifest.get("fault_scenario") or {}, sort_keys=True),  # fault runs never join a normal cohort
     )
 
 

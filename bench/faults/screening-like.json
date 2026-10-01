@@ -1,0 +1,8 @@
+{"name": "screening-like", "seed": 7,
+ "purpose": "Mixed transient faults under budget pressure: 429 + Retry-After, 5xx, temporary 402, dropped responses, cost x10.",
+ "rules": [
+  {"id": "rate-limit", "action": "status", "status": 429, "probability": 0.08, "headers": {"Retry-After": "2"}},
+  {"id": "server-error", "action": "status", "status": 503, "probability": 0.05},
+  {"id": "temporary-402", "action": "status", "status": 402, "probability": 0.03, "message": "in_flight_budget_exhausted"},
+  {"id": "dropped", "action": "drop", "probability": 0.02},
+  {"id": "cost-x10", "action": "cost_multiplier", "factor": 10}]}

@@ -1,0 +1,2 @@
+{"name": "clean", "seed": 0, "rules": [],
+ "purpose": "Proxy path only: checks that routing through the fault proxy changes nothing (B-FAULT-03 pilot)."}
