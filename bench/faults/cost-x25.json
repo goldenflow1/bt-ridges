@@ -1,0 +1,3 @@
+{"name": "cost-x25", "seed": 0,
+ "purpose": "E016 calibration (amendment 2026-10-01): every returned usage.cost x25 after the x15 pilot reached the finishing reserve on 1 of 4 tasks. Tests unexpected billing pressure (pre-call estimates unchanged), not a faithful expensive-model or provider-cap simulation. Real billing unchanged and logged.",
+ "rules": [{"id": "cost-x25", "action": "cost_multiplier", "factor": 25}]}

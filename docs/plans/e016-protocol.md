@@ -1,6 +1,6 @@
 # PROTOCOL — E016: B2/B3 under synthetic budget pressure
 
-Status: **declared 2026-10-01, before any E016 trial**; amended 2026-10-01 after the [follow-up review](../reviews/2026-10-01-e016-followup.md) (enforced limits, reservation hold, outcome contract, evidence rules); technical pilot pending approval; main cohort not started.
+Status: **declared 2026-10-01, before any E016 trial**; amended 2026-10-01 after the [follow-up review](../reviews/2026-10-01-e016-followup.md) (enforced limits, reservation hold, outcome contract, evidence rules); ×15 pilot passed; **calibration amendment §3a** (×25 pilot); main cohort not started and its condition not yet frozen.
 Reviews: [readiness](../reviews/2026-10-01-e016-readiness.md), [follow-up](../reviews/2026-10-01-e016-followup.md).
 
 ## 1. Question and what this can show
@@ -41,6 +41,22 @@ The pilot passes only if all hold:
 If (3) fails, the factor is changed, saved as a **new scenario file with a new identity**, this protocol is amended with the date, and the pilot is repeated. Pilot results never enter the main cohort.
 
 **Pilot limit:** `--spend-limit 0.50`, enforced before every dispatch: settled real cost + held unreconciled allowances + the next $0.29 allowance must fit, so the pilot cannot exceed $0.50 even if a trial spends its whole per-run cap.
+
+## 3a. Calibration amendment (2026-10-01, after the ×15 pilot)
+
+The ×15 pilot **passed** §3 (E016-pilot: 8/8 complete accounting, $0.07149 settled, nothing held) and is preserved as is. Its stress reached the finishing reserve on 1 of 4 deliberately selected tasks. An offline projection from two earlier dev cohorts (holding execution paths unchanged; different builds, so a calibration hint only) puts 1/17 tasks above the reserve threshold at ×15 versus 7–8/17 at ×25.
+
+**Deliberate calibration change:** a second pilot under `bench/faults/cost-x25.json` (SHA-256 `f0166642b9c673203a69d8d2be0b0029e65a9255fe890f309f9bbc43e1f7714c`), with **the same two bundles, the same four tasks** and the **same pilot envelope** (`e016-pilot`, $0.50 total; $0.42851 left after the ×15 pilot). Launch: `bench/launch/e016.sh pilot x25`.
+
+**Choosing the main condition** uses stress coverage and saturation only — **never whether B beats A**:
+- ×25 is frozen for the main cohort if it passes §3 (1)–(2) and reaches the reserve on at least 2 of the 4 tasks in arm A without saturating (saturation: in both arms, 3 or more of the 4 tasks end without a passing-check patch because the budget ran out).
+- If ×25 saturates, or still reaches the reserve on fewer than 2 tasks, the condition is decided in a further dated amendment before any main-cohort trial.
+- The chosen condition is frozen by setting `MAIN_CONDITION` in `bench/launch/e016.sh` in the same commit as the amendment; until then `main` refuses to start.
+- The §5 stress threshold (at least 6 of 17 tasks with an arm-A trial reaching the reserve) is unchanged.
+
+**Activation is reported separately** for each mechanism: B2 — finalization notices (`fin_notices`) and finalization rounds (`fin_rounds`); B3 — refused and accepted empty finishes (`fin_refusals`, `fin_empty_accepts`). The ×15 pilot exercised only a B2 notice.
+
+**Observation from the ×15 pilot (not evidence of a regression; one trial):** B's py-django-n-plus-one stopped on budget at turn 20 after its notice, with a mid-edit tree (visible tests failing, an unused import) returned as a last-resort candidate; no finalization round ran because H-SHELL-15 requires *no* candidate. A, which has no pre-request affordability quote, overshot to 101% and finished. The main-cohort analysis will report budget-stop-with-failing-candidate outcomes per arm.
 
 ## 4. Main cohort
 
