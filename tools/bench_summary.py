@@ -19,6 +19,9 @@ import os
 import sys
 from typing import Dict, List, Optional, Tuple
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tools.bench_cost import trusted_cost  # noqa: E402
+
 PROMOTABLE_PURPOSES = {"evaluation", "confirmation"}
 MIN_REPEATS = 3
 
@@ -69,13 +72,21 @@ def solved(row: Dict) -> bool:
 def trials(runs: List[Dict]) -> List[Dict]:
     """All physical attempts, deduplicated by trial ID; conflicting duplicates are an error."""
     seen: Dict[str, Dict] = {}
+    valid_slots = set()
     for run in runs:
         for row in run["rows"]:
             tid = row.get("trial_id") or ""
+            if not tid:
+                raise SummaryError("attempt is missing its trial ID")
             if tid in seen:
-                if seen[tid] != row:
+                if {k: v for k, v in seen[tid].items() if k != "_purpose"} != row:
                     raise SummaryError(f"conflicting records for trial {tid}")
                 continue
+            if row.get("validity") == "valid":
+                slot = row.get("slot")
+                if not slot or slot in valid_slots:
+                    raise SummaryError(f"missing or duplicate valid slot: {slot}")
+                valid_slots.add(slot)
             seen[tid] = dict(row, _purpose=row.get("purpose") or run["manifest"].get("purpose") or "reconnaissance")
     return list(seen.values())
 
@@ -106,7 +117,8 @@ def summarize(runs: List[Dict], purposes: Optional[set] = None) -> Dict:
             "mechanical": sum(1 for r in counted if r.get("auto_label") == "mechanical"),
             "solve_fraction": (sum(1 for r in counted if solved(r)) / len(counted)) if counted else None,
             "solved_every_repeat": bool(counted) and all(solved(r) for r in counted),
-            "mean_cost": _mean([float(r["reconciled_cost"]) for r in counted if r.get("reconciled_cost")]),
+            "mean_cost": _mean([trusted_cost(r) for r in counted if trusted_cost(r) is not None]),
+            "cost_complete": bool(counted) and all(trusted_cost(r) is not None for r in counted),
         }
     missing = [t for t, info in per_task.items() if info["valid_trials"] == 0]
     fractions = [info["solve_fraction"] for info in per_task.values() if info["solve_fraction"] is not None]
@@ -117,6 +129,7 @@ def summarize(runs: List[Dict], purposes: Optional[set] = None) -> Dict:
         "mean_solve": (sum(fractions) / len(fractions)) if fractions and not missing else None,
         "solved_every_repeat": sorted(t for t, info in per_task.items() if info["solved_every_repeat"]),
         "cost_per_task_mean": _mean(costs), "cost_coverage": f"{len(costs)}/{len(expected)}",
+        "cost_complete": bool(per_task) and all(info["cost_complete"] for info in per_task.values()),
         "min_valid_trials": min((info["valid_trials"] for info in per_task.values()), default=0),
         "per_task": per_task,
     }
@@ -196,12 +209,38 @@ def _fraction(info: Dict) -> Tuple[int, int]:
     return info["solved"], info["valid_trials"]
 
 
+def confirmation_problems(runs: List[Dict], identity: Dict, tasks: Dict) -> List[str]:
+    problems = []
+    for run in runs:
+        m = run["manifest"]
+        if (m.get("purpose") != "confirmation" or m.get("set") != identity["set"]
+                or m.get("agent_sha256") != identity["agent_sha256"]
+                or (m.get("model_override") or {}) != (identity.get("model_override") or {})
+                or list(runtime_key(m)) != list(identity["runtime"])):
+            problems.append(f"{run['dir']}: confirmation purpose, agent, routing, set or runtime differs")
+        selected = m.get("tasks") or {}
+        if not selected or any(t not in tasks or digest != tasks[t] for t, digest in selected.items()):
+            problems.append(f"{run['dir']}: confirmation task versions differ")
+        for row in run["rows"]:
+            if (row.get("purpose") != "confirmation" or row.get("task") not in selected
+                    or row.get("inputs_changed") or not row.get("images") or row.get("images") == "{}"
+                    or (row.get("bundle_sha256") and row["bundle_sha256"] != m["agent_sha256"][:16])
+                    or (row.get("task_digest") and row["task_digest"] != selected.get(row.get("task")))):
+                problems.append(f"{run['dir']}: confirmation trial provenance is invalid")
+    return problems
+
+
 def compare(baseline: Dict, candidate_runs: List[Dict], confirm_base: Optional[List[Dict]] = None,
-            confirm_cand: Optional[List[Dict]] = None, cost_branch: bool = False) -> Dict:
+            confirm_cand: Optional[List[Dict]] = None, cost_branch: bool = False, reliability: bool = False) -> Dict:
     """W6 decision: keep | revert | pending. Material regression: a baseline 3/3 task at 0/3 or 1/3. Any other
     drop needs one paired confirmation block (both versions, affected tasks); a drop persists when the candidate
     solves fewer confirmation trials than the baseline. Confirmation never replaces initial results."""
+    if not candidate_runs:
+        return {"decision": "pending", "reason": "no candidate runs"}
     problems = compatibility_problems(baseline, candidate_runs)
+    candidate_identity = dict(candidate_runs[0]["manifest"], runtime=list(runtime_key(candidate_runs[0]["manifest"])))
+    problems += confirmation_problems(confirm_base or [], baseline["cohort"], baseline["cohort"]["tasks"])
+    problems += confirmation_problems(confirm_cand or [], candidate_identity, baseline["cohort"]["tasks"])
     if problems:
         return {"decision": "incompatible", "problems": problems}
     base = baseline["summary"]["per_task"]
@@ -211,7 +250,7 @@ def compare(baseline: Dict, candidate_runs: List[Dict], confirm_base: Optional[L
     material, needs_confirmation, confirmed, not_reproduced, gains = [], [], [], [], []
     for task, b in base.items():
         c = cand.get(task)
-        if c is None or c["valid_trials"] < MIN_REPEATS:
+        if c is None or c["valid_trials"] < MIN_REPEATS or c["unresolved"]:
             return {"decision": "pending", "reason": f"{task}: candidate has fewer than {MIN_REPEATS} valid trials"}
         if c["mechanical"]:
             material.append(f"{task}: new agent mechanical failure")
@@ -219,7 +258,11 @@ def compare(baseline: Dict, candidate_runs: List[Dict], confirm_base: Optional[L
         if bs == bn and cs <= 1:
             material.append(f"{task}: {bs}/{bn} → {cs}/{cn}")
         elif cs * bn < bs * cn:  # lower observed fraction
-            if task in confirm_b and task in confirm_c:
+            if (task in confirm_b and task in confirm_c
+                    and all(info[task]["valid_trials"] == MIN_REPEATS and not info[task]["unresolved"]
+                            for info in (confirm_b, confirm_c))):
+                if confirm_c[task]["mechanical"]:
+                    material.append(f"{task}: confirmation has an agent mechanical failure")
                 (xb, _), (xc, _) = _fraction(confirm_b[task]), _fraction(confirm_c[task])
                 (confirmed if xc < xb else not_reproduced).append(
                     f"{task}: initial {bs}/{bn} → {cs}/{cn}; confirmation baseline {xb}/3 vs candidate {xc}/3")
@@ -237,10 +280,19 @@ def compare(baseline: Dict, candidate_runs: List[Dict], confirm_base: Optional[L
     elif needs_confirmation:
         result["decision"] = "pending"
         result["reason"] = f"run one paired confirmation block (3 trials, both versions) for {needs_confirmation}"
+    elif reliability:
+        result["decision"] = "keep"
+        result["reason"] = "reliability change: no confirmed regression or agent mechanical failure"
     elif gains:
         result["decision"] = "keep"
-    elif cost_branch and base_cost and cand_cost is not None and cand_cost <= 0.85 * base_cost and any(
-            info["solved"] for info in cand.values()):
+    elif cost_branch and (not baseline["summary"].get("cost_complete", False)
+                          or not summarize(candidate_runs, PROMOTABLE_PURPOSES)["cost_complete"]):
+        result["decision"] = "pending"
+        result["reason"] = "cost comparison requires attributable cost for every trial on both versions"
+    elif (cost_branch and baseline["summary"].get("cost_complete", False)
+          and summarize(candidate_runs, PROMOTABLE_PURPOSES)["cost_complete"]
+          and base_cost and cand_cost is not None and cand_cost <= 0.85 * base_cost and any(
+            info["solved"] for info in cand.values())):
         result["decision"] = "keep"
         result["reason"] = f"cost {cand_cost} ≤ 85% of {base_cost} with no confirmed regression"
     else:
@@ -266,6 +318,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_cmp.add_argument("--confirm-baseline", nargs="*", default=[])
     p_cmp.add_argument("--confirm-candidate", nargs="*", default=[])
     p_cmp.add_argument("--cost-branch", action="store_true", help="evaluate the cost-saving branch of W6")
+    p_cmp.add_argument("--reliability", action="store_true", help="mechanical fix: no solve-count gain required (still requires regression tests and G0-G5)")
     args = parser.parse_args(argv)
     try:
         if args.cmd == "summarize":
@@ -278,7 +331,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 baseline = json.load(handle)
             result = compare(baseline, [load_run(d) for d in args.runs],
                              [load_run(d) for d in args.confirm_baseline] or None,
-                             [load_run(d) for d in args.confirm_candidate] or None, args.cost_branch)
+                             [load_run(d) for d in args.confirm_candidate] or None, args.cost_branch, args.reliability)
             print(json.dumps(result, indent=1))
             return 0 if result["decision"] in ("keep", "revert", "pending") else 1
     except SummaryError as exc:

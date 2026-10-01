@@ -23,11 +23,13 @@ import math
 import os
 import subprocess
 import sys
+import tempfile
 from typing import Dict, List, Optional, Tuple
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+from tools.bench_cost import trusted_cost  # noqa: E402
 from tools.bench_summary import load_run, solved, summarize  # noqa: E402
 from tools.originality_check import check as originality  # noqa: E402
 from tools.prescreen_lint import lint  # noqa: E402
@@ -55,11 +57,14 @@ def evaluate(agent_path: str, run_dir: str, refs_root: str) -> Tuple[List[Tuple[
     same = manifest.get("agent_sha256") == digest and bundles == {digest[:16]}
     results.append(("bundle is the one measured", same,
                     f"file {digest[:16]}, run {str(manifest.get('agent_sha256'))[:16]}, trials {sorted(map(str, bundles))}"))
+    results.append(("production model routing", not manifest.get("model_override"),
+                    "default routing" if not manifest.get("model_override") else "local model overrides were used"))
 
     purposes = {row.get("purpose") for row in run["rows"]}
     summary = summarize([run], {"evaluation"})
     unresolved = sum(info["unresolved"] for info in summary["per_task"].values())
-    complete = (manifest.get("set") == "heldout" and purposes == {"evaluation"} and summary["complete"]
+    complete = (manifest.get("set") == "heldout" and manifest.get("purpose") == "evaluation"
+                and purposes == {"evaluation"} and summary["complete"]
                 and summary["min_valid_trials"] >= MIN_TRIALS and unresolved == 0)
     results.append(("complete held-out evaluation", complete,
                     f"set {manifest.get('set')}, purposes {sorted(map(str, purposes))}, "
@@ -73,7 +78,7 @@ def evaluate(agent_path: str, run_dir: str, refs_root: str) -> Tuple[List[Tuple[
     mechanical = sum(info["mechanical"] for info in summary["per_task"].values())
     results.append(("mechanical failures", mechanical <= MAX_MECHANICAL, f"{mechanical}"))
 
-    costs = [float(row["reconciled_cost"]) for row in counted if row.get("reconciled_cost")]
+    costs = [trusted_cost(row) for row in counted if trusted_cost(row) is not None]
     mean_cost: Optional[float] = sum(costs) / len(costs) if costs else None
     cost_ok = mean_cost is not None and len(costs) == len(counted) and mean_cost <= MAX_COST_PER_TRIAL
     results.append(("cost per trial", cost_ok,
@@ -104,9 +109,15 @@ def main(argv=None) -> int:
     parser.add_argument("--refs", default=os.path.join(ROOT, "references", "miners"))
     parser.add_argument("--with-gates", action="store_true", help="run tools/gate.py (G0-G5) first")
     args = parser.parse_args(argv)
-    if args.with_gates and subprocess.run([sys.executable, os.path.join(ROOT, "tools", "gate.py")], cwd=ROOT).returncode:
-        print("FAIL  G0-G5")
-        return 1
+    if args.with_gates:
+        with tempfile.TemporaryDirectory(prefix="quarry-gates-") as temp:
+            tested = os.path.join(temp, "agent.py")
+            if subprocess.run([sys.executable, os.path.join(ROOT, "tools", "gate.py"), "--bundle", tested], cwd=ROOT).returncode:
+                print("FAIL  G0-G5")
+                return 1
+            if sha256_file(tested) != sha256_file(os.path.join(args.submission, "agent.py")):
+                print("FAIL  G0-G5 tested a different bundle from the submission")
+                return 1
     results, numbers = evaluate(os.path.join(args.submission, "agent.py"), args.heldout_run, args.refs)
     for name, passed, detail in results:
         print(f"{'PASS' if passed else 'FAIL'}  {name}: {detail}")

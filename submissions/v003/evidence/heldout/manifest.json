@@ -1,0 +1,55 @@
+{
+ "started": "2026-09-30T21:42:35",
+ "set": "heldout",
+ "repeats": 3,
+ "agent": "/root/bittensor/ridges/bench/runs/20260930-214235-heldout/agent.py",
+ "agent_sha256": "060edea3568360c90aea234bf5227257c79a3e9926b8cd7275ec24af1dfeae1c",
+ "agent_source_path": "/root/bittensor/ridges/submissions/v003/agent.py",
+ "git_commit": "668138ab1df120d9bd11abb4b2c879a027d0f3b6",
+ "git_dirty": true,
+ "model_override": {},
+ "expected_tasks": [
+  "ch-go-skip-index",
+  "ch-py-argmax-state",
+  "go-sqlc-interval",
+  "pg-expr-index-lower",
+  "py-django-annotate-subquery",
+  "py-sqla-distinct-on",
+  "ts-typeorm-fanout"
+ ],
+ "selected_tasks": [
+  "ch-go-skip-index",
+  "ch-py-argmax-state",
+  "go-sqlc-interval",
+  "pg-expr-index-lower",
+  "py-django-annotate-subquery",
+  "py-sqla-distinct-on",
+  "ts-typeorm-fanout"
+ ],
+ "tasks": {
+  "ch-go-skip-index": "task-tree-v1:a2b9f5ce85449df4239e2b8d68eb0357297b683d13723b26f8e5bbc7d59ce856",
+  "ch-py-argmax-state": "task-tree-v1:10f911d7ecac1c8f85a48ccc8175045d0b7b0c24903118bda3413b2f78a76558",
+  "go-sqlc-interval": "task-tree-v1:d337fef56b69408418a02324ac7e75d80acb3fcb51c414b10cd79a1b1b3c5af7",
+  "pg-expr-index-lower": "task-tree-v1:5f42f20ff10a182c254741a913c224c7b2bb96db5ae821ed87698c19e0085c3b",
+  "py-django-annotate-subquery": "task-tree-v1:42a1799ac45eb0d3966e0dd47fedb54c3ed70685f9ae01c03036188c38fd7c79",
+  "py-sqla-distinct-on": "task-tree-v1:a6eaef97a264f644d2321fbf32e5191dd31e1cef96697e1ded9dbe6898a9b3bb",
+  "ts-typeorm-fanout": "task-tree-v1:566fc655f9087598d00f528f9be30a67542667cca095ffc28db1d68042999b57"
+ },
+ "config": {
+  "ceiling": 30.0,
+  "allowance": 0.29,
+  "timeout": 3600,
+  "ridges": "/root/bittensor/ridges-cli/.venv/bin/ridges",
+  "max_setup_replacements": 2
+ },
+ "purpose": "evaluation",
+ "host": {
+  "cpu": "AMD Ryzen 9 7950X3D 16-Core Processor",
+  "cpus": 32,
+  "docker": "29.1.3",
+  "harbor": "0.20.0",
+  "ridges_cli_commit": "d74410d8484f"
+ },
+ "ridges_cli_commit": "d74410d8484f",
+ "python": "3.12.3"
+}

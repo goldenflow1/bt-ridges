@@ -3,8 +3,13 @@
 import csv
 import hashlib
 import json
+import subprocess
+from pathlib import Path
+
+import pytest
 
 from tools.submission_gate import evaluate
+from tools.submission_preflight import preflight
 
 AGENT = "def agent_main(inputs):\n    return {'patch': ''}\n"
 REFERENCE = "import os\n\n\ndef run_everything_differently(task):\n    return os.listdir(task)\n"
@@ -63,3 +68,74 @@ def test_B_RUN_05_gate_rejects_low_solve_rate_mechanical_failures_and_cost(tmp_p
 def test_B_RUN_05_gate_requires_a_complete_three_trial_evaluation(tmp_path):
     assert "complete held-out evaluation" in failed(evaluate(*setup(tmp_path / "short", trials=2))[0])
     assert "complete held-out evaluation" in failed(evaluate(*setup(tmp_path / "diag", purpose="diagnostic"))[0])
+
+
+@pytest.mark.parametrize('cost', ['nan', 'inf', '-1', ''])
+def test_B_RUN_05_nonfinite_negative_or_missing_cost_blocks_upload(tmp_path, cost):
+    assert 'cost per trial' in failed(evaluate(*setup(tmp_path, cost=cost))[0])
+
+
+def test_B_RUN_05_mismatched_provider_and_key_usage_blocks_upload(tmp_path):
+    agent, run, refs = setup(tmp_path)
+    path = Path(run) / 'results.csv'
+    rows = list(csv.DictReader(path.open()))
+    for row in rows:
+        row.update(cost_provider='0.001', accounting_complete='True', estimated_calls='0', unknown_attempts='0')
+    with path.open('w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    assert 'cost per trial' in failed(evaluate(agent, run, refs)[0])
+
+
+def test_B_RUN_05_upload_preflight_checks_release_bytes_and_evidence(tmp_path):
+    agent, run, refs = setup(tmp_path)
+    folder = Path(agent).parent
+    evidence = folder / 'evidence' / 'heldout'
+    evidence.mkdir(parents=True)
+    hashes = {}
+    for name in ('manifest.json', 'results.csv'):
+        data = (Path(run) / name).read_bytes()
+        (evidence / name).write_bytes(data)
+        hashes[name] = hashlib.sha256(data).hexdigest()
+    manifest = {'status': 'ready', 'competition_set_id': 28, 'sha256': hashlib.sha256(Path(agent).read_bytes()).hexdigest(),
+                'evidence_sha256': hashes}
+    (folder / 'manifest.json').write_text(json.dumps(manifest))
+    assert preflight(folder, refs) == agent
+    Path(agent).write_text(AGENT + '# changed\n')
+    with pytest.raises(ValueError, match='checksum'):
+        preflight(folder, refs)
+    Path(agent).write_text(AGENT)
+    (evidence / 'results.csv').write_text('changed')
+    with pytest.raises(ValueError, match='evidence checksum'):
+        preflight(folder, refs)
+
+
+def test_B_RUN_05_shell_preflight_rejects_legacy_file_override_without_uploader(tmp_path):
+    import os
+
+    root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(['bash', str(root / 'tools/ridges_submit.sh'), 'preflight'],
+                            env=dict(os.environ, RIDGES_AGENT_FILE=str(tmp_path / 'agent.py')),
+                            capture_output=True, text=True)
+    assert result.returncode != 0 and 'RIDGES_SUBMISSION_DIR' in result.stderr
+
+
+@pytest.mark.parametrize('action', ['upload', 'resume', 'fund', 'register'])
+def test_B_RUN_05_paid_steps_require_explicit_wallet_after_possible_migration(action):
+    import os
+
+    root = Path(__file__).resolve().parents[2]
+    env = {k: v for k, v in os.environ.items() if k != 'RIDGES_WALLET_NAME'}
+    result = subprocess.run(['bash', str(root / 'tools/ridges_submit.sh'), action],
+                            env=env, capture_output=True, text=True)
+    assert result.returncode != 0 and 'RIDGES_WALLET_NAME' in result.stderr
+
+
+def test_B_RUN_05_local_model_override_does_not_qualify_default_upload(tmp_path):
+    agent, run, refs = setup(tmp_path)
+    path = Path(run) / 'manifest.json'
+    manifest = json.loads(path.read_text())
+    manifest['model_override'] = {'QUARRY_DRIVER_MODEL': 'other'}
+    path.write_text(json.dumps(manifest))
+    assert 'production model routing' in failed(evaluate(agent, run, refs)[0])

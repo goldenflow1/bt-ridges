@@ -158,9 +158,16 @@ class Workflow:
         """Run the statement's checks once before any edit: learn their duration, warm caches, and see whether
         they pass on unmodified code (H-SHELL-11)."""
         commands = expand_templates(self.spec, [])
+        phase_budget = min(max(self.settings.baseline_min_sec, self.settings.baseline_share * self.clock.total),
+                           max(0.0, self.clock.remaining() - 60))
+        phase_end = self.clock.now() + phase_budget
         for command in commands:
-            budget = min(self.settings.baseline_share * self.clock.total, self.clock.remaining() - 60)
-            obs = self.run_command(command, max(self.settings.baseline_min_sec, budget), "baseline")
+            budget = min(phase_end - self.clock.now(), self.clock.remaining() - 60)
+            if budget < 5.0:
+                self.check_log.append({"round": "baseline", "command": command.splitlines()[0][:100],
+                                       "skipped": "baseline phase time budget exhausted"})
+                continue
+            obs = self.run_command(command, budget, "baseline")
             self.baseline[command] = {"seconds": obs["seconds"], "ok": obs["exit"] == 0 and not obs["timed_out"],
                                       "timed_out": obs["timed_out"]}
         if commands and self.repo.changed().all_paths():

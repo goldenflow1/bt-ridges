@@ -1,7 +1,11 @@
 """Baseline check run, check timeouts and check observations (H-SHELL-11..13), found by the 2026-09-29 smoke test."""
 
 import json
+from types import SimpleNamespace
 
+import pytest
+
+from quarry.clock import Clock
 from quarry.shell import Settings, Workflow, run_agent
 from quarry.telemetry import parse_log
 from tests.scenario.test_review_2026_09_29 import M, Scripted, env
@@ -52,9 +56,9 @@ def test_H_SHELL_12_timeout_derived_from_baseline(make_repo, tmp_path):
 
 def test_H_SHELL_12_baseline_timeout_makes_later_runs_unknown_not_failed(make_repo, tmp_path):
     repo = make_repo({"m.py": M})
-    wf = workflow(repo, tmp_path, "sleep 5", baseline_min_sec=1.0, baseline_share=0.0)
+    wf = workflow(repo, tmp_path, "sleep 8", baseline_min_sec=6.0, baseline_share=0.0)
     wf.run()
-    assert wf.baseline["sleep 5"]["timed_out"]
+    assert wf.baseline["sleep 8"]["timed_out"]
     assert any(c.get("skipped") for c in wf.check_log)
     assert "do not run it yourself" in wf.messages()[1]["content"]
     best = wf.store.best()
@@ -85,3 +89,25 @@ def test_H_SHELL_13_check_observations_reach_log_and_telemetry(make_repo, tmp_pa
     assert record["rounds"][0]["checks"] is False and record["rounds"][0]["guard_eligible"] is True
     assert record["final"]["eligible"] is False and record["final"]["returned_option"] == 0
     json.dumps(record)  # the whole record stays serialisable
+
+
+@pytest.mark.parametrize("total,elapsed,expected", [(180, 0, 60), (1500, 0, 525), (180, 70, 0), (50, 0, 0)])
+def test_H_SHELL_11_checks_share_budget_without_consuming_edit_or_handoff_time(total, elapsed, expected):
+    now = [0.0]
+    wf = Workflow.__new__(Workflow)
+    wf.clock = Clock(total, now=lambda: now[0])
+    now[0] = elapsed
+    wf.settings = Settings()
+    wf.spec = SimpleNamespace(checks=['first', 'second', 'third', 'fourth'], check_templates=[])
+    wf.baseline, wf.check_log = {}, []
+    wf.repo = SimpleNamespace(changed=lambda: SimpleNamespace(all_paths=lambda: []))
+
+    def run(command, timeout, label):
+        now[0] += timeout
+        return {'seconds': timeout, 'exit': 124, 'timed_out': True}
+
+    wf.run_command = run
+    wf.baseline_checks()
+    assert now[0] - elapsed == expected
+    assert len(wf.baseline) == (1 if expected else 0)
+    assert len(wf.check_log) == 4 - len(wf.baseline)

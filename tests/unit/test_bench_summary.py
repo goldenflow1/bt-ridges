@@ -10,7 +10,7 @@ import pytest
 
 from tools.bench_records import ImageWatcher, host_identity, inputs_unchanged, trial_images
 from tools.bench_summary import SummaryError, compare, load_run, promote, promotion_problems, summarize
-from tools.run_bench import run_slot
+from tools.run_bench import run_slot, save_results
 
 TASKS = {"a": "task-tree-v1:aaa", "b": "task-tree-v1:bbb"}
 HOST = {"ridges_cli_commit": "d74410d8484f", "harbor": "0.20.0", "cpu": "x", "cpus": 8, "docker": "29"}
@@ -177,3 +177,66 @@ def test_B_RUN_03_compare_rejects_changed_task_versions_or_runtime(tmp_path):
     runtime = load_run(make_run(tmp_path, "rt", {"a": [1, 1, 1], "b": [1, 1, 1]}, agent="agent2",
                                 host=dict(HOST, harbor="0.21.0")))
     assert compare(base, [runtime])["decision"] == "incompatible"
+
+
+@pytest.mark.parametrize("count", [0, 1, 2, 4])
+def test_B_RUN_03_confirmation_requires_exactly_three_valid_trials(tmp_path, count):
+    base = baseline_for(tmp_path, {"a": [1, 1, 1], "b": [0, 0, 0]})
+    cand = load_run(make_run(tmp_path, "cand", {"a": [1, 1, 0], "b": [1, 1, 1]}, agent="agent2"))
+    cb = load_run(make_run(tmp_path, "cb", {"a": [1, 1, 1]}, purpose="confirmation", tasks={"a": TASKS['a']}))
+    cc = load_run(make_run(tmp_path, "cc", {"a": [1] * max(1, count)}, purpose="confirmation",
+                           agent="agent2", tasks={"a": TASKS['a']}))
+    if count == 0:
+        cc['rows'][0]['validity'] = 'unresolved'
+    assert compare(base, [cand], [cb], [cc])['decision'] == 'pending'
+
+
+@pytest.mark.parametrize("field,value", [('agent_sha256', 'wrong'), ('model_override', {'model': 'wrong'}),
+                                         ('host', dict(HOST, harbor='wrong')), ('tasks', {'a': 'wrong'}),
+                                         ('purpose', 'diagnostic')])
+def test_B_RUN_03_confirmation_must_match_the_original_version_and_conditions(tmp_path, field, value):
+    base = baseline_for(tmp_path, {"a": [1, 1, 1], "b": [0, 0, 0]})
+    cand = load_run(make_run(tmp_path, "cand", {"a": [1, 1, 0], "b": [1, 1, 1]}, agent="agent2"))
+    cb = load_run(make_run(tmp_path, "cb", {"a": [1, 1, 1]}, purpose="confirmation", tasks={"a": TASKS['a']}))
+    cc = load_run(make_run(tmp_path, "cc", {"a": [1, 1, 1]}, purpose="confirmation",
+                           agent="agent2", tasks={"a": TASKS['a']}))
+    cc['manifest'][field] = value
+    assert compare(base, [cand], [cb], [cc])['decision'] == 'incompatible'
+
+
+def test_B_RUN_03_duplicate_valid_slots_cannot_inflate_confirmation(tmp_path):
+    run = load_run(make_run(tmp_path, "run", {"a": [1, 1, 1]}))
+    run['rows'][1]['slot'] = run['rows'][0]['slot']
+    with pytest.raises(SummaryError, match='duplicate valid slot'):
+        summarize([run])
+
+
+def test_B_RUN_03_cost_branch_requires_cost_for_every_trial(tmp_path):
+    base = baseline_for(tmp_path, {"a": [1, 1, 1], "b": [1, 1, 1]})
+    cand = load_run(make_run(tmp_path, "cand", {"a": [1, 1, 1], "b": [1, 1, 1]}))
+    for row in cand['rows']:
+        row['reconciled_cost'] = '0.001'
+    assert compare(base, [cand], cost_branch=True)['decision'] == 'keep'
+    cand['rows'][0]['reconciled_cost'] = ''
+    assert compare(base, [cand], cost_branch=True)['decision'] != 'keep'
+
+
+def test_B_RUN_03_reliability_changes_need_no_gain_but_still_block_regressions(tmp_path):
+    base = baseline_for(tmp_path, {'a': [1, 1, 1], 'b': [1, 1, 1]})
+    cand = load_run(make_run(tmp_path, 'cand', {'a': [1, 1, 1], 'b': [1, 1, 1]}))
+    assert compare(base, [cand], reliability=True)['decision'] == 'keep'
+    cand['rows'][0]['reward'] = '0'
+    assert compare(base, [cand], reliability=True)['decision'] == 'pending'
+    cand['rows'][1]['reward'] = '0'
+    assert compare(base, [cand], reliability=True)['decision'] == 'revert'
+
+
+def test_B_RUN_04_completed_slots_are_checkpointed_with_cost_evidence(tmp_path):
+    row = {'trial_id': 'run/a/r1/a1', 'task': 'a', 'slot': 'run/a/r1', 'reward': 1,
+           'key_usage_delta': .1, 'reconciled_cost': None, 'cost_reconciliation': 'billing mismatch'}
+    save_results(str(tmp_path), [row])
+    rows = list(csv.DictReader((tmp_path / 'results.csv').open()))
+    assert len(rows) == 1 and rows[0]['reconciled_cost'] == '' and rows[0]['key_usage_delta'] == '0.1'
+    save_results(str(tmp_path), [row, dict(row, trial_id='run/a/r2/a1', slot='run/a/r2')])
+    assert len(list(csv.DictReader((tmp_path / 'results.csv').open()))) == 2
+    assert not (tmp_path / 'results.csv.tmp').exists()

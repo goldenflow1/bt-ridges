@@ -1,0 +1,17 @@
+{
+  "command": "uv run --no-sync python tools/gate.py --bundle /tmp/quarry-final-gate/agent.py",
+  "exit_code": 0,
+  "bundle_sha256": "060edea3568360c90aea234bf5227257c79a3e9926b8cd7275ec24af1dfeae1c",
+  "tests_collected": 221,
+  "passed": [
+    "G0 Ruff",
+    "G1 unit and scenario",
+    "G2 build",
+    "G2b Python 3.9 import",
+    "G3 bundled offline end-to-end",
+    "G4 lint",
+    "G4b originality (11 public references)",
+    "G5 traceability 94/94"
+  ],
+  "note": "Recorded from the completed gate run; the tested build matches the frozen upload byte-for-byte."
+}

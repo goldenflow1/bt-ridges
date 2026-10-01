@@ -1,5 +1,7 @@
 # v001 — first (calibration) upload
 
+**Retired before successful upload.** The updated firewall lint rejects SQL function-call text in this frozen file. Keep these historical bytes and measurements; use the release selected by `submissions/READY` after its own evaluation passes.
+
 **Bundle** `2b2d1281` (src unchanged since `550c4f8`): the M0 harness with the E005 check policy. No behaviour change since reconnaissance.
 
 **Why now:** G7 passed against the target declared before any held-out result existed (wave3 plan §6). The main purpose is calibration: how local solve rates map to validator scores.

@@ -1,0 +1,163 @@
+{
+ "baseline_version": 1,
+ "summary": {
+  "set": "heldout",
+  "agent_sha256": "2b2d12812ca668a05f79b8a60d1511dceb977353d2094c56a5d1087983fab1d6",
+  "expected_tasks": [
+   "ch-go-skip-index",
+   "ch-py-argmax-state",
+   "go-sqlc-interval",
+   "pg-expr-index-lower",
+   "py-django-annotate-subquery",
+   "py-sqla-distinct-on",
+   "ts-typeorm-fanout"
+  ],
+  "complete": true,
+  "missing_tasks": [],
+  "mean_solve": 0.8095238095238095,
+  "solved_every_repeat": [
+   "ch-py-argmax-state",
+   "go-sqlc-interval",
+   "py-django-annotate-subquery",
+   "py-sqla-distinct-on",
+   "ts-typeorm-fanout"
+  ],
+  "cost_per_task_mean": 0.00614,
+  "cost_coverage": "7/7",
+  "cost_complete": true,
+  "min_valid_trials": 3,
+  "per_task": {
+   "ch-go-skip-index": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 2,
+    "mechanical": 0,
+    "solve_fraction": 0.6666666666666666,
+    "solved_every_repeat": false,
+    "mean_cost": 0.005525,
+    "cost_complete": true
+   },
+   "ch-py-argmax-state": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.005764,
+    "cost_complete": true
+   },
+   "go-sqlc-interval": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.005246,
+    "cost_complete": true
+   },
+   "pg-expr-index-lower": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 0,
+    "mechanical": 0,
+    "solve_fraction": 0.0,
+    "solved_every_repeat": false,
+    "mean_cost": 0.008341,
+    "cost_complete": true
+   },
+   "py-django-annotate-subquery": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.005433,
+    "cost_complete": true
+   },
+   "py-sqla-distinct-on": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.005427,
+    "cost_complete": true
+   },
+   "ts-typeorm-fanout": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.007241,
+    "cost_complete": true
+   }
+  }
+ },
+ "cohort": {
+  "set": "heldout",
+  "agent_sha256": "2b2d12812ca668a05f79b8a60d1511dceb977353d2094c56a5d1087983fab1d6",
+  "tasks": {
+   "ch-go-skip-index": "task-tree-v1:a2b9f5ce85449df4239e2b8d68eb0357297b683d13723b26f8e5bbc7d59ce856",
+   "ch-py-argmax-state": "task-tree-v1:10f911d7ecac1c8f85a48ccc8175045d0b7b0c24903118bda3413b2f78a76558",
+   "go-sqlc-interval": "task-tree-v1:d337fef56b69408418a02324ac7e75d80acb3fcb51c414b10cd79a1b1b3c5af7",
+   "pg-expr-index-lower": "task-tree-v1:5f42f20ff10a182c254741a913c224c7b2bb96db5ae821ed87698c19e0085c3b",
+   "py-django-annotate-subquery": "task-tree-v1:42a1799ac45eb0d3966e0dd47fedb54c3ed70685f9ae01c03036188c38fd7c79",
+   "py-sqla-distinct-on": "task-tree-v1:a6eaef97a264f644d2321fbf32e5191dd31e1cef96697e1ded9dbe6898a9b3bb",
+   "ts-typeorm-fanout": "task-tree-v1:566fc655f9087598d00f528f9be30a67542667cca095ffc28db1d68042999b57"
+  },
+  "runtime": [
+   "d74410d8484f",
+   "0.20.0"
+  ],
+  "model_override": {}
+ },
+ "runs": [
+  {
+   "dir": "/root/bittensor/ridges/bench/runs/20260930-105435-heldout",
+   "results_sha256": "26a15e7844a530ccad9007e295dfcd127d85ff7dc9f2ba857f1e7422b797476a",
+   "trial_ids": [
+    "20260930-105435-heldout/ch-go-skip-index/r1/a1",
+    "20260930-105435-heldout/ch-go-skip-index/r2/a1",
+    "20260930-105435-heldout/ch-go-skip-index/r3/a1",
+    "20260930-105435-heldout/ch-py-argmax-state/r1/a1",
+    "20260930-105435-heldout/ch-py-argmax-state/r2/a1",
+    "20260930-105435-heldout/ch-py-argmax-state/r3/a1",
+    "20260930-105435-heldout/go-sqlc-interval/r1/a1",
+    "20260930-105435-heldout/go-sqlc-interval/r2/a1",
+    "20260930-105435-heldout/go-sqlc-interval/r3/a1",
+    "20260930-105435-heldout/pg-expr-index-lower/r1/a1",
+    "20260930-105435-heldout/pg-expr-index-lower/r2/a1",
+    "20260930-105435-heldout/pg-expr-index-lower/r3/a1",
+    "20260930-105435-heldout/py-django-annotate-subquery/r1/a1",
+    "20260930-105435-heldout/py-django-annotate-subquery/r2/a1",
+    "20260930-105435-heldout/py-django-annotate-subquery/r3/a1",
+    "20260930-105435-heldout/py-sqla-distinct-on/r1/a1",
+    "20260930-105435-heldout/py-sqla-distinct-on/r2/a1",
+    "20260930-105435-heldout/py-sqla-distinct-on/r3/a1",
+    "20260930-105435-heldout/ts-typeorm-fanout/r1/a1",
+    "20260930-105435-heldout/ts-typeorm-fanout/r2/a1",
+    "20260930-105435-heldout/ts-typeorm-fanout/r3/a1"
+   ]
+  }
+ ]
+}

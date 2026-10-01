@@ -1,0 +1,11 @@
+{
+  "material_regressions": [],
+  "confirmed_regressions": [],
+  "not_reproduced": [],
+  "needs_confirmation": [],
+  "gains": [],
+  "baseline_cost": 0.00614,
+  "candidate_cost": 0.0067,
+  "decision": "keep",
+  "reason": "reliability change: no confirmed regression or agent mechanical failure"
+}

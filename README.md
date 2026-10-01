@@ -112,17 +112,17 @@ _Last updated 2026-09-30._
 
 | Area | State |
 |---|---|
-| Harness (M0) | Built; three external review rounds fixed; all gates green, 93/93 traced requirements |
-| Measurement integrity (M0.5A, B1) | Done: cost provenance, cache telemetry, key-usage ledger, run provenance, trial labels, decoy calibration |
+| Harness (M0) | Runtime deadline and malformed-response accounting fixes in v003; G0–G5 pass, 94/94 traced requirements |
+| Measurement integrity (M0.5A, B1) | Confirmation checks enforce version identity and three unique trials; cost approval requires agreement between provider billing and key usage. Runner freezes its input and checkpoints each slot. |
 | Smoke test | Passed on a dev task (solved, $0.0092) |
 | Reconnaissance (dev set, 1 run each) | **5/5 solved**, $0.0102 per task on average (provider-reported = key usage), cache read share 83–95% |
-| Baselines (3 trials per task, bundle `2b2d1281`) | Dev 17 tasks **51/51** ($0.0095/trial); NetBox public **17/18** ($0.0153); promoted in `bench/baselines/` |
-| Held-out gate G7 | **Passed**: 17/21 (target ≥ 11), 0 mechanical, $0.0061/trial → `submissions/v001` ready to upload (`tools/submission_gate.py`) |
+| Baselines (3 trials per task, bundle `2b2d1281`) | Dev 17 tasks **51/51** ($0.009685/trial); NetBox public **17/18** ($0.015860); reconciled figures in `bench/baselines/` |
+| Held-out gate G7 | **v003 uploaded** (`060edea3`): 17/21 solved, 0 mechanical, $0.006700/trial, 21/21 costs reconciled. Same per-task outcomes as v001; reliability comparison keeps the fixes. Full evidence is packaged in `submissions/v003/evidence/`. v001 is retired due to the firewall lint. |
 | Originality | ≈ 1% overlap with 10 public agents (limit 30%) |
-| Spend | See `bench/runs/ledger.json` (key-usage reconciled); OpenRouter key limit **$15** |
+| Spend | See `bench/runs/ledger.json`; shared local envelope $30. Check the current OpenRouter key limit separately; historical dashboard values are not current evidence. |
 | Competition (set 28, checked 2026-09-29) | Open, no end date, 90% of emissions. Best approved agent: 0.36 at $0.091/task. To qualify: ≥ 0.36 at ≤ $0.086 (cost route) or ≥ 0.38 (performance route) |
 
 **Next steps**:
-1. Upload `submissions/v001` (calibration upload; ~$5 + validator inference, 12 h cooldown), then record the validator score in `submissions/README.md`.
-2. E008 (extra fix rounds) comparison against the NetBox baseline: trending to revert (not better on prefix-hierarchy, ~2× cost).
+1. v003 uploaded successfully as agent `3cb91034-fe6f-5271-94be-c8be974fefdf`. The payment receipt is saved in `submissions/v003/manifest.json`; next record the screening/validator result and calibration metrics. No validator score has been recorded yet.
+2. Extra fix rounds (`a76e441b`, historical log named E008): finished 16/18 vs 17/18. Confirmation is pending; do not promote it. Mean key delta $0.086119 differs from telemetry $0.021208, so the raw delta is not reliable per-trial cost evidence. E008 in the experiment catalog is a different, task-authoring experiment.
 3. Weak spots from held-out: `pg-expr-index-lower` 0/3 (checks failed), `ch-go-skip-index` 2/3. Diagnose on dev-equivalent tasks, never by tuning on held-out.

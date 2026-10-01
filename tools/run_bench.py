@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import fcntl
 import glob
 import hashlib
 import json
@@ -23,12 +24,14 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from contextlib import contextmanager
 from typing import Callable, Dict, List, Optional
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 sys.path.insert(0, ROOT)
 from quarry.telemetry import parse_log  # noqa: E402  (shared parser: the agent's telemetry contract)
+from tools.bench_cost import reconcile  # noqa: E402
 from tools.bench_records import (  # noqa: E402
     MAX_SETUP_REPLACEMENTS,
     ImageWatcher,
@@ -50,6 +53,37 @@ TELEMETRY_FIELDS = [
     "unknown_reserved", "cost_accounted", "accounting_complete", "cache_read_reported", "cache_read_tokens",
     "cache_write_reported", "cache_write_tokens", "successful_calls", "read_share", "read_share_calls", "agent_sec",
 ]
+
+
+@contextmanager
+def bench_lock(identity):
+    """Exclude concurrent local consumers of the same key/ledger; never expose the key."""
+    digest = hashlib.sha256(identity.encode()).hexdigest()
+    path = os.path.join('/tmp', 'quarry-bench-' + digest + '.lock')
+    with open(path, 'a') as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError('Another benchmark holds this key or ledger; wait for it to finish.') from None
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def save_results(out_dir, rows):
+    if not rows:
+        return
+    obs_fields = sorted({k for row in rows for k in row if k.startswith('obs_')})
+    fields = ['trial_id', 'purpose', 'slot', 'attempt', 'repeat', 'task', 'task_digest', 'bundle_sha256', 'inputs_changed',
+              'images', 'validity', 'auto_label', 'manual_label', 'manual_reason', 'reward', 'reconciled_cost',
+              'key_usage_delta', 'cost_reconciliation'] + TELEMETRY_FIELDS + obs_fields + ['wall_sec', 'error', 'trial_dir']
+    temp = os.path.join(out_dir, 'results.csv.tmp')
+    with open(temp, 'w', newline='') as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows(rows)
+    os.replace(temp, os.path.join(out_dir, 'results.csv'))
 
 
 def flatten_telemetry(record: Optional[Dict], legacy_text: str = "") -> Dict:
@@ -259,6 +293,20 @@ def cost_report(rows: List[Dict]) -> str:
 
 
 def main() -> int:
+    # Older runners do not hold this lock: the per-trial reconciliation also detects unrelated usage.
+    key = read_key()
+    lock_parser = argparse.ArgumentParser(add_help=False)
+    lock_parser.add_argument('--ledger', default=os.path.join(ROOT, 'bench', 'runs', 'ledger.json'))
+    lock_args, _ = lock_parser.parse_known_args()
+    try:
+        with bench_lock('ledger:' + os.path.realpath(lock_args.ledger)), bench_lock('key:' + key if key else 'no-key'):
+            return run_bench()
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+
+def run_bench() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--set", default="public", choices=["public", "dev", "heldout"])
     parser.add_argument("--repeats", type=int, default=1)
@@ -287,9 +335,16 @@ def main() -> int:
         return 2
     out_dir = os.path.join(ROOT, "bench", "runs", time.strftime("%Y%m%d-%H%M%S") + f"-{args.set}")
     os.makedirs(os.path.join(out_dir, "raw"), exist_ok=True)
+    # The measured file never follows a later rebuild of dist/agent.py.
+    source_agent = os.path.abspath(args.agent)
+    frozen_agent = os.path.join(out_dir, 'agent.py')
+    with open(source_agent, 'rb') as source, open(frozen_agent, 'xb') as frozen:
+        frozen.write(source.read())
+    args.agent = frozen_agent
     manifest = {
         "started": time.strftime("%Y-%m-%dT%H:%M:%S"), "set": args.set, "repeats": args.repeats,
         "agent": args.agent, "agent_sha256": sha256_file(args.agent),
+        "agent_source_path": source_agent,
         "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip(),
         "git_dirty": bool(subprocess.run(["git", "status", "--porcelain", "src"], cwd=ROOT, capture_output=True, text=True).stdout),
         "model_override": {k: v for k, v in os.environ.items() if k.startswith("QUARRY_")},
@@ -324,7 +379,8 @@ def main() -> int:
                 raw = os.path.join(out_dir, "raw", f"{name}-r{repeat}-a{attempt}.log")
                 row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw)
                 after = settled_usage(fetch) if before is not None else None
-                row["reconciled_cost"] = round(after - before, 6) if (before is not None and after is not None) else None
+                delta = round(after - before, 6) if (before is not None and after is not None) else None
+                row.update(reconcile(row, delta))
                 changed = inputs_unchanged(inputs_before, {name: task_digest(task), "bundle": sha256_file(args.agent)})
                 row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": f"{slot}/a{attempt}",
                             "purpose": args.purpose, "bundle_sha256": manifest["agent_sha256"][:16],
@@ -332,7 +388,8 @@ def main() -> int:
                             })
                 if changed:
                     row["validity"], row["outcome"] = "unresolved", "unknown"  # not comparable: inputs moved
-                ledger.record(row["trial_id"], args.allowance, row["reconciled_cost"], row.get("cost_accounted"))
+                ledger.record(row["trial_id"], args.allowance, delta if delta is not None and delta >= 0 else None,
+                              row.get("cost_accounted"))
                 print(f"[{repeat}.{attempt}] {row['task']}: {row['outcome']} ({row['validity']}) reward={row['reward']} "
                       f"cost={format_cost(row)} wall={row['wall_sec']}s {row['error']}"
                       + (f" INPUTS CHANGED: {changed}" if changed else ""), flush=True)
@@ -340,6 +397,7 @@ def main() -> int:
 
             slot_rows, blocked, stop_reason = run_slot(attempt_fn, lambda: ledger.fits(args.allowance))
             rows.extend(slot_rows)
+            save_results(out_dir, rows)
             if blocked:
                 print(f"slot {slot}: infrastructure-blocked after {MAX_SETUP_REPLACEMENTS} setup replacements")
             if stop_reason:
@@ -353,15 +411,7 @@ def main() -> int:
     if not rows:
         print("no runs executed", file=sys.stderr)
         return 1
-    obs_fields = sorted({k for r in rows for k in r if k.startswith("obs_")})
-    fields = ["trial_id", "purpose", "slot", "attempt", "repeat", "task", "task_digest", "bundle_sha256", "inputs_changed",
-              "images", "validity", "auto_label",
-              "manual_label", "manual_reason", "reward", "reconciled_cost"] + TELEMETRY_FIELDS + obs_fields + [
-        "wall_sec", "error", "trial_dir"]
-    with open(os.path.join(out_dir, "results.csv"), "w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
+    save_results(out_dir, rows)
 
     counted = [r for r in rows if r["validity"] != "void-infrastructure"]  # void attempts leave the denominator
     solved = [(r["reward"] or 0) >= 1 for r in counted]

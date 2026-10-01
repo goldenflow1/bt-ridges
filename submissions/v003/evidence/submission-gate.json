@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "numbers": {
+    "heldout_solve": 0.8095,
+    "heldout_trials": 21,
+    "heldout_solved": 17,
+    "cost_usd": 0.0067,
+    "p50_sec": 120.0,
+    "mechanical": 0,
+    "heldout_run": "heldout",
+    "sha256": "060edea3568360c90aea234bf5227257c79a3e9926b8cd7275ec24af1dfeae1c"
+  },
+  "checks": [
+    {
+      "name": "bundle is the one measured",
+      "passed": true,
+      "detail": "file 060edea3568360c9, run 060edea3568360c9, trials ['060edea3568360c9']"
+    },
+    {
+      "name": "production model routing",
+      "passed": true,
+      "detail": "default routing"
+    },
+    {
+      "name": "complete held-out evaluation",
+      "passed": true,
+      "detail": "set heldout, purposes ['evaluation'], min valid trials 3, unresolved 0"
+    },
+    {
+      "name": "solve rate",
+      "passed": true,
+      "detail": "17/21 solved, need >= 11"
+    },
+    {
+      "name": "mechanical failures",
+      "passed": true,
+      "detail": "0"
+    },
+    {
+      "name": "cost per trial",
+      "passed": true,
+      "detail": "mean $0.0067 over 21/21 reconciled"
+    },
+    {
+      "name": "pre-screen lint",
+      "passed": true,
+      "detail": "clean"
+    },
+    {
+      "name": "originality",
+      "passed": true,
+      "detail": "highest overlap: set-28/loveridges_v0_da8a27eb/agent.py 1.2% 0.9%"
+    }
+  ]
+}

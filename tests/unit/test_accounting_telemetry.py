@@ -9,7 +9,8 @@ import pytest
 from quarry.llm import LLMError, ModelRoute, ProxyClient
 from quarry.telemetry import TELEMETRY_PREFIX, build_record, format_line, parse_log
 from quarry.wallet import BudgetExhausted, Wallet
-from tools.run_bench import SessionLedger, flatten_telemetry, format_cost, settled_usage
+from tools.bench_cost import reconcile, trusted_cost
+from tools.run_bench import SessionLedger, bench_lock, flatten_telemetry, format_cost, settled_usage
 
 PRICES = {"m": (1.0, 1.0), "fb": (1.0, 1.0)}
 
@@ -97,6 +98,40 @@ def test_H_WALLET_06_retry_refused_when_estimate_no_longer_fits():
     assert len(c.telemetry) == 1 and c.telemetry[0].cost_source == "unknown"
 
 
+@pytest.mark.parametrize("body", ['{', '[]', '{}', '{"choices": [null]}', '{"choices": [{"message": []}]}'])
+def test_H_WALLET_06_malformed_success_keeps_reservation_and_blocks_unaffordable_retry(body):
+    c = client([(200, body), ok_body({"cost": 0})], cap=0.00025)
+    with pytest.raises(BudgetExhausted):
+        call(c)
+    assert len(c.telemetry) == 1 and c.telemetry[0].cost_source == "unknown"
+    assert c.wallet.consumed_usd > 0 and not c.wallet.accounting_complete
+
+
+def test_H_WALLET_06_broken_message_with_usage_still_counts_reported_charge():
+    c = client([(200, '{"usage": {"cost": 0.001}, "choices": []}'), ok_body({"cost": 0.002})])
+    call(c)
+    assert [r.cost_source for r in c.telemetry] == ["provider", "provider"]
+    assert c.wallet.consumed_usd == pytest.approx(0.003)
+
+
+@pytest.mark.parametrize("delta", [0.1, -1, float('nan'), float('inf'), None])
+def test_H_WALLET_06_unattributable_key_usage_is_not_trial_cost(delta):
+    row = {'cost_provider': 0.01, 'accounting_complete': True, 'estimated_calls': 0, 'unknown_attempts': 0}
+    result = reconcile(row, delta)
+    assert result['reconciled_cost'] is None and result['cost_reconciliation'] != 'matched'
+    assert trusted_cost(dict(row, reconciled_cost=delta)) is None
+
+
+def test_H_WALLET_06_reconciliation_requires_complete_provider_accounting():
+    row = {'cost_provider': 0.01, 'accounting_complete': True, 'estimated_calls': 0, 'unknown_attempts': 0}
+    assert reconcile(row, .01001)['reconciled_cost'] == .01001
+    assert reconcile(dict(row, unknown_attempts=1), .01)['reconciled_cost'] is None
+    assert reconcile(dict(row, estimated_calls=1), .01)['reconciled_cost'] is None
+    assert reconcile(dict(row, accounting_complete=False), .01)['reconciled_cost'] is None
+    zero = dict(row, cost_provider=0)
+    assert trusted_cost(dict(zero, **reconcile(zero, 0))) == 0
+
+
 def test_H_WALLET_06_reservation_is_replaced_not_doubled():
     w = Wallet(1.0, PRICES)
     res = w.reserve(0.05)
@@ -134,6 +169,15 @@ def test_H_WALLET_06_host_ledger_uses_key_usage_delta_and_never_double_counts(tm
 def test_H_WALLET_06_settled_usage_waits_for_billing_to_catch_up():
     reads = iter([1.0, 1.2, 1.3, 1.3])
     assert settled_usage(lambda: next(reads), sleep=lambda s: None) == 1.3
+
+
+def test_H_WALLET_06_concurrent_bench_cannot_share_a_key(tmp_path):
+    identity = str(tmp_path)
+    with bench_lock(identity), pytest.raises(RuntimeError, match='Another benchmark'):
+        with bench_lock(identity):
+            pytest.fail('overlapping run acquired the lock')
+    with bench_lock(identity):
+        pass
 
 
 # ---------------------------------------------------------------- H-LLM-08

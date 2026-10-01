@@ -15,7 +15,7 @@ import pytest
 from tests.conftest import write
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-BUNDLE = os.path.join(ROOT, "dist", "agent.py")
+BUNDLE = os.environ.get("QUARRY_TEST_BUNDLE", os.path.join(ROOT, "dist", "agent.py"))
 
 MOD = '''"""Reporting helpers."""
 
@@ -110,7 +110,7 @@ open(sys.argv[3], "w").write(patch)
 
 @pytest.fixture(scope="module", autouse=True)
 def bundle():
-    subprocess.run([sys.executable, os.path.join(ROOT, "tools", "build.py")], check=True, capture_output=True)
+    subprocess.run([sys.executable, os.path.join(ROOT, "tools", "build.py"), "--out", BUNDLE], check=True, capture_output=True)
 
 
 def run_bundle(tmp_path, replies, statement=STATEMENT):

@@ -209,26 +209,36 @@ class ProxyClient:
                 status, text = 0, f"transport error: {exc}"
                 never_sent = _never_sent(exc)
             latency = self.clock() - started
+            rejected = status >= 400
             usage: Dict = {}
             if status == 200:
                 try:
                     data = json.loads(text)
-                    choice = (data.get("choices") or [{}])[0]
-                    message = choice.get("message") or {}
+                    if not isinstance(data, dict):
+                        raise ValueError("response is not an object")
                     usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
-                except (ValueError, AttributeError, IndexError) as exc:
+                    if data.get("error"):
+                        status = int(data["error"].get("code") or 502)
+                        text = json.dumps(data["error"])
+                        rejected = True
+                    else:
+                        choices = data.get("choices")
+                        if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+                            raise ValueError("response has no usable choice")
+                        message = choices[0].get("message")
+                        if not isinstance(message, dict):
+                            raise ValueError("response has no usable message")
+                except (ValueError, TypeError, AttributeError, IndexError) as exc:
                     status, text = 502, f"unparseable response: {exc}"
                 else:
-                    if data.get("error"):
-                        status, text = int((data["error"] or {}).get("code") or 502), json.dumps(data["error"])
-                    else:
+                    if not rejected:
                         return self._success(data, message, model, role, latency, reservation)
             # Failed attempt. An HTTP error response means the request was rejected (no charge); a sent request
             # with no usable answer (timeout, reset, broken body) may have been charged: keep its reservation.
-            if never_sent or status >= 400:
-                cost, source = self.wallet.release(reservation)
-            elif usage:
+            if usage:
                 cost, source = self.wallet.settle(reservation, model, usage)
+            elif never_sent or rejected:
+                cost, source = self.wallet.release(reservation)
             else:
                 cost, source = self.wallet.keep_unknown(reservation)
             record = CallRecord(role, model, status, latency, cost, source, ok=False, **usage_fields(usage))
@@ -270,4 +280,3 @@ class ProxyClient:
         if isinstance(content, list):
             content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
         return ChatResult(content, calls, usage, str(data.get("model") or model), assistant)
-

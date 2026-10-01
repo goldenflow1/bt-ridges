@@ -1,0 +1,67 @@
+{
+  "checked_at_utc": "2026-10-01T04:57:11.365493+00:00",
+  "endpoint": "https://agent-upload.ridges.ai/upload/agent/check",
+  "agent_sha256": "060edea3568360c90aea234bf5227257c79a3e9926b8cd7275ec24af1dfeae1c",
+  "http_status": 422,
+  "authenticated": false,
+  "submitted": false,
+  "response": {
+    "detail": [
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "public_key"
+        ],
+        "msg": "Field required",
+        "input": null
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "file_info"
+        ],
+        "msg": "Field required",
+        "input": null
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "signature"
+        ],
+        "msg": "Field required",
+        "input": null
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "name"
+        ],
+        "msg": "Field required",
+        "input": null
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "openrouter_api_key"
+        ],
+        "msg": "Field required",
+        "input": null
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "openrouter_management_key"
+        ],
+        "msg": "Field required",
+        "input": null
+      }
+    ]
+  },
+  "meaning": "The multipart file reached API validation without a Cloudflare block. Missing signatures and API keys prevent submission. This does not certify authenticated admission."
+}

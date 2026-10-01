@@ -1,0 +1,62 @@
+{
+  "version": "v003",
+  "status": "uploaded",
+  "sha256": "060edea3568360c90aea234bf5227257c79a3e9926b8cd7275ec24af1dfeae1c",
+  "competition_set_id": 28,
+  "source_base_commit": "668138ab1df120d9bd11abb4b2c879a027d0f3b6",
+  "source_dirty": true,
+  "models": {
+    "driver": "openai/gpt-5.6-luna",
+    "fallback": "deepseek/deepseek-v4-pro-0813"
+  },
+  "upload": {
+    "agent_id": "3cb91034-fe6f-5271-94be-c8be974fefdf",
+    "quote_id": "b0c13524-d9ff-4cf7-9e3c-944466325e55",
+    "block_hash": "0x0b67ac1d802ded460a60bc69234f83e01dfdd870d8d7b64c5f8de7848f6f5f08",
+    "extrinsic_index": 12,
+    "miner_hotkey": "5F75YfqeRcywNW7LR8HD1AHqzRhjMdfLR9HtBVN63JcD3GCB",
+    "receipt_source": "User-provided successful CLI upload output",
+    "receipt_recorded_at_utc": "2026-10-01T05:50:28.902476+00:00"
+  },
+  "validator": {
+    "score": null,
+    "cost_usd": null,
+    "status": "not yet checked"
+  },
+  "local": {
+    "offline_gates": "G0-G5 passed; 94/94 requirements traced",
+    "heldout": {
+      "heldout_solve": 0.8095,
+      "heldout_trials": 21,
+      "heldout_solved": 17,
+      "cost_usd": 0.0067,
+      "p50_sec": 120.0,
+      "mechanical": 0,
+      "heldout_run": "heldout",
+      "sha256": "060edea3568360c90aea234bf5227257c79a3e9926b8cd7275ec24af1dfeae1c"
+    },
+    "heldout_run": "bench/runs/20260930-214235-heldout",
+    "historical_comparison": "bench/baselines/heldout-2b2d1281.json",
+    "firewall_probe": "evidence/firewall-check.json (unsigned HTTP 422; API validation reached)",
+    "comparison": {
+      "material_regressions": [],
+      "confirmed_regressions": [],
+      "not_reproduced": [],
+      "needs_confirmation": [],
+      "gains": [],
+      "baseline_cost": 0.00614,
+      "candidate_cost": 0.0067,
+      "decision": "keep",
+      "reason": "reliability change: no confirmed regression or agent mechanical failure"
+    },
+    "gate": "G0-G5 and G7 passed on exact upload; reliability comparison keep",
+    "evaluation_cost_total_usd": 0.140696,
+    "tests_passed": 221
+  },
+  "evidence_sha256": {
+    "manifest.json": "1d40cf818f34869e1cd37ee3a211c3a0efa6c6e26b0d22182c35383f14a2ac41",
+    "results.csv": "76a768d798c3c85eaf1e9ef9887bd9f38c44f3da75d78c1cd4e9982471c2de6c"
+  },
+  "source_patch_sha256": "287c925696f577438f574df75f9dc52c33d90be9573580022fa142537141bd8f",
+  "validated_at_utc": "2026-10-01T05:29:53.771316+00:00"
+}

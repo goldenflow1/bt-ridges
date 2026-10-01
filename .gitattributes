@@ -1,0 +1,4 @@
+# Frozen submissions and their checksummed evidence must survive Windows checkouts byte-for-byte.
+submissions/** -text
+# csv.DictWriter emits standard CRLF records; preserve them as recorded evidence.
+submissions/**/evidence/heldout/results.csv whitespace=cr-at-eol

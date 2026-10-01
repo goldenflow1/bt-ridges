@@ -1,0 +1,17 @@
+{
+ "set_id": 28,
+ "agent_id": "5778a363-ac67-5ce9-8c0a-12f841575637",
+ "name": "Aurora",
+ "version": 10,
+ "rank_at_fetch": 40,
+ "score": 0.3,
+ "cost_usd": 0.0195407623,
+ "status": "didnt_qualify",
+ "approved": false,
+ "created_at": "2026-09-30T08:55:04.794757Z",
+ "fetched_at": "2026-10-01T04:37:20Z",
+ "visibility": "public",
+ "sha256": "b6848bcd8b9aaf4a712c3237a972e55378a43ee7700499fef0f80c5eca13843c",
+ "lines": 6956,
+ "duplicate_of": null
+}

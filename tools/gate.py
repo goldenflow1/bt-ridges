@@ -115,26 +115,29 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-py39", action="store_true", help="skip importing the bundle under Python 3.9")
     parser.add_argument("--close-stage", default="", help="fail if any requirement owned by this stage is still planned")
+    parser.add_argument("--bundle", default="dist/agent.py", help="build and test this path without touching other bundles")
     args = parser.parse_args()
     py = sys.executable
+    bundle = os.path.abspath(args.bundle)
+    os.environ["QUARRY_TEST_BUNDLE"] = bundle
     gates = [
         ("G0 ruff", [py, "-m", "ruff", "check", "src", "tools", "tests"]),
         ("G1 unit + scenario tests", [py, "-m", "pytest", "-q", "tests/unit", "tests/scenario"]),
-        ("G2 bundle builds", [py, "tools/build.py"]),
+        ("G2 bundle builds", [py, "tools/build.py", "--out", bundle]),
         ("G3 offline e2e on the bundle", [py, "-m", "pytest", "-q", "tests/e2e"]),
-        ("G4 pre-screen lint", [py, "tools/prescreen_lint.py", "dist/agent.py"]),
+        ("G4 pre-screen lint", [py, "tools/prescreen_lint.py", bundle]),
     ]
     for label, cmd in gates:
         if not run(label, cmd):
             return 1
         if label.startswith("G2") and not args.skip_py39:
             if not run("G2b bundle imports on Python 3.9", ["uv", "run", "--no-project", "--python", "3.9", "python", "-c",
-                                                         "import importlib.util as u; s=u.spec_from_file_location('a','dist/agent.py'); "
+                                                         f"import importlib.util as u; s=u.spec_from_file_location('a',{bundle!r}); "
                                                          "m=u.module_from_spec(s); s.loader.exec_module(m); assert callable(m.agent_main)"]):
                 return 1
     refs = os.path.join(ROOT, "references", "miners")
     if glob.glob(os.path.join(refs, "**", "agent.py"), recursive=True):
-        if not run("G4b originality vs public agents", [py, "tools/originality_check.py", "dist/agent.py"]):
+        if not run("G4b originality vs public agents", [py, "tools/originality_check.py", bundle]):
             return 1
     else:
         print("SKIP  G4b originality: no references fetched (required before upload: tools/fetch_references.py)")
