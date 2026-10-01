@@ -2,6 +2,7 @@
 
 H-LLM-02/03/07/09 and H-WALLET-04 as revised 2026-10-01 after the v003 screening incident."""
 
+import http.client
 import json
 import threading
 import time
@@ -9,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from quarry.llm import LLMError, ModelRoute, ProxyClient, http_transport
+from quarry.llm import LLMError, ModelRoute, ProxyClient, http_transport, retry_after_seconds
 from quarry.wallet import BudgetExhausted, Wallet, is_budget_refusal, is_temporary_budget_refusal
 
 OK = {"choices": [{"message": {"content": "ok"}}], "usage": {"prompt_tokens": 10, "completion_tokens": 2, "cost": 0.001}}
@@ -119,7 +120,7 @@ HARD = json.dumps({"error": {"code": 402, "message": "budget_exhausted"}})
 
 def test_H_WALLET_04_temporary_and_hard_budget_refusals_are_classified_apart():
     assert is_temporary_budget_refusal(402, TEMP, {})
-    assert is_temporary_budget_refusal(402, HARD, {"retry-after": "3"})
+    assert not is_temporary_budget_refusal(402, HARD, {"retry-after": "3"})
     assert not is_temporary_budget_refusal(402, HARD, {})
     assert not is_temporary_budget_refusal(429, "rate limited", {"retry-after": "3"})
     assert is_budget_refusal(402, HARD) and is_budget_refusal(429, '{"error": "max cost exceeded for this run"}')
@@ -254,3 +255,171 @@ def test_H_LLM_07_a_cut_off_exchange_keeps_its_cost_reservation():
     with pytest.raises(LLMError):
         c.complete(MSG, ModelRoute("primary"), deadline=1000.0 + 60)
     assert all(r.cost_source == "unknown" for r in c.telemetry) and c.wallet.consumed_usd > 0
+
+
+def test_H_LLM_07_slow_connection_setup_returns_on_time_and_never_sends_later(monkeypatch):
+    connected = threading.Event()
+    requested = []
+
+    class SlowConnection:
+        sock = None
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def connect(self):
+            time.sleep(0.35)  # models a resolver/connect operation with no attached socket yet
+            connected.set()
+
+        def request(self, *args, **kwargs):
+            if not connected.is_set():
+                self.connect()
+            requested.append(True)
+            raise OSError("late connection")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(http.client, "HTTPConnection", SlowConnection)
+    started = time.monotonic()
+    with pytest.raises(TimeoutError):
+        http_transport("http://proxy/x", b"{}", {}, 0.08)
+    elapsed = time.monotonic() - started
+    assert connected.wait(1)
+    assert elapsed < 0.25
+    assert not requested
+
+
+def test_H_LLM_07_connection_close_body_stall_cannot_restart_the_timeout():
+    class Stall(Trickle):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            time.sleep(0.2)
+            self.send_response(200)  # HTTP/1.0 detaches the socket from HTTPConnection
+            self.send_header("Content-Length", "10")
+            self.end_headers()
+            self.wfile.flush()
+            time.sleep(0.6)
+
+    server = serve(Stall)
+    try:
+        started = time.monotonic()
+        with pytest.raises(TimeoutError):
+            http_transport(f"http://127.0.0.1:{server.server_port}/x", b"{}", {}, 0.3)
+        assert time.monotonic() - started < 0.45
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_H_LLM_07_truncated_content_length_is_not_a_success():
+    class Truncated(Trickle):
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"]))
+            body = json.dumps(OK).encode()
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body) + 10))
+            self.end_headers()
+            self.wfile.write(body)
+
+    server = serve(Truncated)
+    try:
+        with pytest.raises(http.client.IncompleteRead):
+            http_transport(f"http://127.0.0.1:{server.server_port}/x", b"{}", {}, 1)
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+@pytest.mark.parametrize("header", ["7", "soon", "inf"])
+def test_H_LLM_03_H_WALLET_04_hard_cap_overrides_retry_after(header):
+    transport = Scripted(primary=[(402, HARD, {"retry-after": header})])
+    c, clock = make(transport)
+    with pytest.raises(BudgetExhausted):
+        c.complete(MSG, ROUTE)
+    assert transport.models == ["primary"] and c.wallet.spent and not clock.slept
+
+
+@pytest.mark.parametrize("body", [
+    '{"error": {"code": "invalid_request", "message": "Invalid budget parameter"}}',
+    '{"error": "access denied", "request": {"message": "budget_exhausted"}}',
+])
+def test_H_WALLET_04_unrelated_budget_words_do_not_spend_the_wallet(body):
+    transport = Scripted(primary=[(400, body)])
+    c, _ = make(transport)
+    with pytest.raises(LLMError):
+        c.complete(MSG, ROUTE)
+    assert not c.wallet.spent and transport.models == ["primary"]
+
+
+@pytest.mark.parametrize("header", ["soon", "-1", "inf", "NaN"])
+def test_H_LLM_03_invalid_retry_after_does_not_make_unknown_402_temporary(header):
+    assert not is_temporary_budget_refusal(402, "payment required", {"retry-after": header})
+
+
+@pytest.mark.parametrize("header", ["inf", "NaN", "-inf"])
+def test_H_LLM_09_nonfinite_retry_after_is_ignored(header):
+    assert retry_after_seconds({"retry-after": header}) is None
+
+
+def test_H_LLM_09_no_sleep_after_the_last_attempt():
+    transport = Scripted(primary=[(503, "busy")] * 3 + [(503, "busy", {"retry-after": "1000000"})])
+    c, clock = make(transport)
+    with pytest.raises(LLMError):
+        c.complete(MSG, ModelRoute("primary"))
+    assert len(clock.slept) == 3 and clock() < 1020
+
+
+def test_H_LLM_02_cooldown_entry_and_recovery_probe_are_recorded():
+    c, clock = make(Scripted(primary=[(503, "busy")] * 2))
+    c.complete(MSG, ROUTE)
+    c.complete(MSG, ROUTE)
+    assert "cooldown" in c.telemetry[-1].note
+    clock.now += 61
+    c.complete(MSG, ROUTE)
+    assert "recovery" in c.telemetry[-1].note
+
+
+def test_H_LLM_03_symbolic_temporary_error_in_success_envelope_does_not_switch_models():
+    temporary = {"error": {"code": "in_flight_budget_exhausted"}}
+    transport = Scripted(primary=[(200, temporary), (200, temporary), (200, OK)])
+    c, _ = make(transport)
+    c.complete(MSG, ROUTE)
+    assert transport.models == ["primary"] * 3 and not c.wallet.spent
+
+
+def test_H_LLM_03_symbolic_hard_cap_in_success_envelope_stops():
+    transport = Scripted(primary=[(200, {"error": {"code": "budget_exhausted"}})])
+    c, clock = make(transport)
+    with pytest.raises(BudgetExhausted):
+        c.complete(MSG, ROUTE)
+    assert transport.models == ["primary"] and not clock.slept and c.wallet.spent
+
+
+def test_H_LLM_09_header_name_is_case_insensitive_and_unbounded_wait_is_refused():
+    c, clock = make(Scripted(primary=[(429, "slow", {"Retry-After": "7"}), (200, OK)]))
+    c.complete(MSG, ROUTE)
+    assert clock.slept == [7]
+    c, clock = make(Scripted(primary=[(429, "slow", {"Retry-After": "1000000"})]))
+    with pytest.raises(LLMError):
+        c.complete(MSG, ROUTE)
+    assert not clock.slept
+
+
+def test_H_LLM_03_unknown_402_with_valid_retry_advice_is_temporary():
+    c, clock = make(Scripted(primary=[(402, "payment required", {"Retry-After": "3"}), (200, OK)]))
+    c.complete(MSG, ROUTE)
+    assert not c.wallet.spent and clock.slept == [3]
+
+
+def test_H_LLM_02_fallback_equal_to_primary_does_not_create_a_cooldown():
+    c, _ = make(Scripted(primary=[(503, "busy")] * 2))
+    c.complete(MSG, ModelRoute("primary", "primary"))
+    assert not c.cooldown_until
+
+
+def test_H_LLM_02_other_server_errors_receive_bounded_retries():
+    transport = Scripted(primary=[(507, "temporary capacity failure"), (200, OK)])
+    c, _ = make(transport)
+    c.complete(MSG, ROUTE)
+    assert transport.models == ["primary"] * 2

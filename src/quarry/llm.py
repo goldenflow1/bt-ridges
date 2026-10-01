@@ -15,7 +15,14 @@ import uuid
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple
 
-from quarry.wallet import BudgetExhausted, Wallet, is_budget_refusal, is_temporary_budget_refusal
+from quarry.wallet import (
+    BudgetExhausted,
+    Wallet,
+    budget_error_kind,
+    is_budget_refusal,
+    is_temporary_budget_refusal,
+    retry_after_seconds,
+)
 
 RETRY_STATUS = {408, 409, 425, 429, 500, 502, 503, 504, 520, 522, 524, 529}
 MAX_ATTEMPTS = 4
@@ -120,69 +127,91 @@ MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 def http_transport(url: str, body: bytes, headers: Dict[str, str], timeout: float,
                    max_bytes: int = MAX_RESPONSE_BYTES) -> Tuple[int, str, Dict[str, str]]:
-    """POST and read the whole response within `timeout` seconds in total (H-LLM-07). A socket timeout alone only
-    bounds each read, so a body sent in small pieces could outlive it; a watchdog closes the socket at the deadline."""
+    """Bound the caller's wait including DNS and close-delimited response reads (H-LLM-07).
+
+    DNS cannot be interrupted portably. A daemon worker may finish connecting after cancellation, but checks
+    cancellation before sending. Socket shutdown interrupts sent exchanges; their billing remains unknown.
+    """
+    if timeout <= 0:
+        raise TimeoutError("no time left for the exchange")
     deadline = time.monotonic() + timeout
     parts = urllib.parse.urlsplit(url)
     connection_class = http.client.HTTPSConnection if parts.scheme == "https" else http.client.HTTPConnection
-    connection = connection_class(parts.hostname, parts.port, timeout=max(0.01, timeout))
+    connection = connection_class(parts.hostname, parts.port, timeout=timeout)
     expired = threading.Event()
+    done = threading.Event()
+    outcome: Dict = {}
+    sockets: List = []  # keep the original socket when getresponse detaches it for Connection: close
 
-    def cut_off() -> None:
-        expired.set()
-        sock = connection.sock
-        if sock is not None:
-            try:
-                sock.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass
-
-    watchdog = threading.Timer(max(0.0, timeout), cut_off)
-    watchdog.daemon = True
-    watchdog.start()
-    try:
-        path = (parts.path or "/") + ("?" + parts.query if parts.query else "")
-        connection.request("POST", path, body=body, headers=headers)
-        response = connection.getresponse()
-        chunks: List[bytes] = []
-        total = 0
-        while True:
-            left = deadline - time.monotonic()
-            if left <= 0 or expired.is_set():
-                raise TimeoutError("response exceeded the attempt deadline")
-            if connection.sock is not None:
-                connection.sock.settimeout(left)
-            chunk = response.read1(65536)
-            if not chunk:
-                break
-            total += len(chunk)
-            if total > max_bytes:
-                raise ValueError(f"response larger than {max_bytes} bytes")
-            chunks.append(chunk)
-        if expired.is_set():
+    def time_left() -> float:
+        left = deadline - time.monotonic()
+        if left <= 0 or expired.is_set():
             raise TimeoutError("response exceeded the attempt deadline")
-        reply_headers = {name.lower(): value for name, value in response.getheaders()}
-        return response.status, b"".join(chunks).decode("utf-8", "replace"), reply_headers
-    except (OSError, http.client.HTTPException) as exc:
-        if expired.is_set():
-            raise TimeoutError("response exceeded the attempt deadline") from exc
-        raise
-    finally:
-        watchdog.cancel()
-        connection.close()
+        return left
+
+    def exchange() -> None:
+        response = None
+        try:
+            time_left()
+            connection.connect()
+            sock = connection.sock
+            if sock is not None:
+                sockets.append(sock)
+                sock.settimeout(time_left())
+            time_left()  # a late DNS/connect must not issue a request
+            path = (parts.path or "/") + ("?" + parts.query if parts.query else "")
+            connection.request("POST", path, body=body, headers=headers)
+            if sock is not None:
+                sock.settimeout(time_left())
+            response = connection.getresponse()
+            if response.length is not None and response.length > max_bytes:
+                raise ValueError(f"response larger than {max_bytes} bytes")
+            chunks: List[bytes] = []
+            total = 0
+            while True:
+                left = time_left()
+                if sock is not None:
+                    sock.settimeout(left)
+                chunk = response.read1(min(65536, max_bytes - total + 1))
+                if not chunk:
+                    if response.length:
+                        raise http.client.IncompleteRead(b"", response.length)
+                    break
+                total += len(chunk)
+                if total > max_bytes:
+                    raise ValueError(f"response larger than {max_bytes} bytes")
+                chunks.append(chunk)
+                if response.isclosed():
+                    break
+            time_left()
+            reply_headers = {name.lower(): value for name, value in response.getheaders()}
+            outcome["reply"] = response.status, b"".join(chunks).decode("utf-8", "replace"), reply_headers
+        except Exception as exc:
+            outcome["error"] = exc
+        finally:
+            try:
+                if response is not None:
+                    response.close()
+                connection.close()
+            finally:
+                done.set()
+
+    threading.Thread(target=exchange, daemon=True).start()
+    if not done.wait(max(0.0, deadline - time.monotonic())) or time.monotonic() >= deadline:
+        expired.set()
+        for sock in sockets + [connection.sock]:
+            if sock is not None:
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+        raise TimeoutError("response exceeded the attempt deadline")
+    if "error" in outcome:
+        raise outcome["error"]
+    return outcome["reply"]
 
 
 urllib_transport = http_transport  # earlier name, kept for callers outside the package
-
-
-def retry_after_seconds(headers: Dict[str, str]) -> Optional[float]:
-    """Seconds from a `Retry-After` header; None when absent, malformed or negative (H-LLM-09)."""
-    value = (headers or {}).get("retry-after")
-    try:
-        seconds = float(str(value).strip())
-    except (TypeError, ValueError):
-        return None
-    return seconds if seconds >= 0 else None
 
 
 def parse_tool_calls(message: Dict) -> List[ToolCall]:
@@ -244,8 +273,12 @@ class ProxyClient:
         """One completion. `deadline` is an absolute time on `self.clock`; no attempt, wait or backoff passes it."""
         max_out = max_tokens or route.max_tokens
         model = route.model
+        route_note = ""
         if route.fallback and self.cooldown_until.get(route.model, float("-inf")) > self.clock():
             model = route.fallback  # the primary failed recently: let it recover (H-LLM-02)
+            route_note = f"primary {route.model} in cooldown; using fallback {model}"
+        elif route.model in self.cooldown_until:
+            route_note = f"primary recovery probe {route.model} after cooldown"
         streak = 0  # consecutive retryable failures of the current model within this call
         prompt_est = estimate_tokens(messages, tools)
         last_error = ""
@@ -288,8 +321,12 @@ class ProxyClient:
                         raise ValueError("response is not an object")
                     usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
                     if data.get("error"):
-                        status = int(data["error"].get("code") or 502)
                         text = json.dumps(data["error"])
+                        error = data["error"]
+                        code = error.get("code") if isinstance(error, dict) else None
+                        status = int(code) if str(code).isdigit() and 400 <= int(code) <= 599 else 502
+                        if budget_error_kind(text):
+                            status = 402
                         rejected = True
                     else:
                         choices = data.get("choices")
@@ -304,7 +341,7 @@ class ProxyClient:
                     if not rejected:
                         if model == route.model:
                             self.cooldown_until.pop(route.model, None)
-                        return self._success(data, message, model, role, latency, reservation)
+                        return self._success(data, message, model, role, latency, reservation, route_note)
             # Failed attempt. An HTTP error response means the request was rejected (no charge); a sent request
             # with no usable answer (timeout, reset, broken body) may have been charged: keep its reservation.
             if usage:
@@ -317,25 +354,31 @@ class ProxyClient:
             temporary = is_temporary_budget_refusal(status, text, reply_headers)
             if not temporary and is_budget_refusal(status, text):
                 self.wallet.mark_spent()
-                record.note = f"budget refusal {status}"
+                record.note = f"{route_note}; budget refusal {status}".lstrip("; ")
                 self.telemetry.append(record)
                 raise BudgetExhausted(f"provider refused on budget grounds ({status})")
             last_error = f"{status}: {text[:300]}"
-            record.note = last_error[:120]
+            record.note = f"{route_note}; {last_error}".lstrip("; ")[:240]
+            route_note = ""
             self.telemetry.append(record)
-            retryable = status == 0 or status in RETRY_STATUS or temporary
+            retryable = status == 0 or status in RETRY_STATUS or 500 <= status <= 599 or temporary
             if not retryable:
                 break
+            if attempt == MAX_ATTEMPTS - 1:
+                break  # no next attempt: neither backoff nor a model transition is useful
             if not temporary:  # a momentary spending reservation says nothing about the model (H-LLM-03)
                 streak += 1
-            if route.fallback and model == route.model and streak >= SWITCH_AFTER:
+            if route.fallback and route.fallback != model and model == route.model and streak >= SWITCH_AFTER:
                 record.note = f"switch {route.model} -> fallback {route.fallback} after {streak} failures; {last_error}"[:160]
+                route_note = f"fallback after {streak} retryable failures on {route.model}"
                 model, streak = route.fallback, 0
                 self.cooldown_until[route.model] = self.clock() + PRIMARY_COOLDOWN_SEC
             pause = min(20.0, (2 ** attempt) + random.random())
             wait = retry_after_seconds(reply_headers)
             if wait is not None:
                 pause = max(pause, wait)
+                if deadline is None and wait > 20.0:
+                    break
             if deadline is not None:
                 room = deadline - self.clock() - MIN_ATTEMPT_SEC
                 if wait is not None and wait > room:
@@ -346,10 +389,11 @@ class ProxyClient:
             self.sleep(pause)
         raise LLMError(f"model call failed after retries: {last_error}")
 
-    def _success(self, data: Dict, message: Dict, model: str, role: str, latency: float, reservation) -> ChatResult:
+    def _success(self, data: Dict, message: Dict, model: str, role: str, latency: float, reservation,
+                 note: str = "") -> ChatResult:
         usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
         cost, source = self.wallet.settle(reservation, model, usage)
-        self.telemetry.append(CallRecord(role, model, 200, latency, cost, source, **usage_fields(usage)))
+        self.telemetry.append(CallRecord(role, model, 200, latency, cost, source, note=note, **usage_fields(usage)))
         calls = parse_tool_calls(message)
         assistant = {"role": "assistant", "content": message.get("content") or ""}
         if message.get("tool_calls"):

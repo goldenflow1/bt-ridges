@@ -10,7 +10,10 @@ Spending checks use everything consumed, including unknown reservations; reports
 
 from __future__ import annotations
 
+import json
+import math
 import os
+import re
 from contextlib import contextmanager
 from typing import Dict, Iterator, Optional, Tuple
 
@@ -188,13 +191,49 @@ class Wallet:
         }
 
 
+def retry_after_seconds(headers: Optional[Dict[str, str]]) -> Optional[float]:
+    """Only finite, nonnegative seconds are usable retry instructions (H-LLM-09)."""
+    value = next((v for k, v in (headers or {}).items() if k.lower() == "retry-after"), None)
+    try:
+        seconds = float(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return seconds if math.isfinite(seconds) and seconds >= 0 else None
+
+
+def budget_error_kind(body: str) -> str:
+    """Classify explicit error fields, excluding echoed requests and unrelated response metadata."""
+    try:
+        payload = json.loads(body)
+    except (ValueError, TypeError):
+        payload = body
+    if isinstance(payload, dict):
+        payload = payload.get("error", payload.get("detail", payload))
+    if isinstance(payload, dict):
+        values = [payload.get(key) for key in ("code", "type", "reason", "message")]
+        text = " ".join(value for value in values if isinstance(value, str))
+    else:
+        text = payload if isinstance(payload, str) else ""
+    text = re.sub(r"[_-]+", " ", text.lower())
+    temporary = re.search(r"\bin ?flight (?:budget |reservations? )?exhausted\b", text)
+    # Do not mistake the tail of a temporary error code for a hard exhaustion marker.
+    hard_text = re.sub(r"\bin ?flight (?:budget |reservations? )?exhausted\b", "", text)
+    hard = re.search(
+        r"\b(?:budget|cost (?:cap|limit)|max cost|spend(?:ing)? limit|credits?)"
+        r"(?: (?:is|has been))? (?:exhausted|exceeded|reached)\b|\binsufficient credits?\b",
+        hard_text,
+    )
+    if hard:
+        return "hard"
+    return "temporary" if temporary else ""
+
+
 def is_temporary_budget_refusal(status: int, body: str, headers: Optional[Dict[str, str]] = None) -> bool:
-    """A 402 that only says spending is momentarily reserved by requests still in flight, or that names a time
-    to retry: worth retrying within the call, and not evidence that the cap was reached (H-LLM-03)."""
+    """Explicit hard exhaustion wins over retry advice; unknown 402s need valid retry advice."""
     if status != 402:
         return False
-    text = (body or "").lower()
-    return any(marker in text for marker in ("in_flight", "in-flight", "inflight")) or "retry-after" in (headers or {})
+    kind = budget_error_kind(body)
+    return kind == "temporary" or (not kind and retry_after_seconds(headers) is not None)
 
 
 def is_budget_refusal(status: int, body: str) -> bool:
@@ -202,7 +241,4 @@ def is_budget_refusal(status: int, body: str) -> bool:
     is_temporary_budget_refusal first: a temporary 402 is not a cap."""
     if status == 402:
         return True
-    text = (body or "").lower()
-    return status in (400, 403, 429) and any(
-        marker in text for marker in ("budget", "cost cap", "max cost", "spend limit", "insufficient credit")
-    )
+    return status in (400, 403, 429) and budget_error_kind(body) == "hard"
