@@ -1,0 +1,3 @@
+{"name": "cost-x15", "seed": 0,
+ "purpose": "E016 synthetic budget pressure: every returned usage.cost x15. Tests unexpected billing pressure (pre-call estimates unchanged), not a faithful expensive-model or provider-cap simulation. Real billing unchanged and logged.",
+ "rules": [{"id": "cost-x15", "action": "cost_multiplier", "factor": 15}]}

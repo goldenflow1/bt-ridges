@@ -179,7 +179,8 @@ def promote(runs: List[Dict], out: str) -> Dict:
         "baseline_version": 1, "summary": summary,
         "cohort": {"set": summary["set"], "agent_sha256": summary["agent_sha256"],
                    "tasks": runs[0]["manifest"].get("tasks"), "runtime": list(runtime_key(runs[0]["manifest"])),
-                   "model_override": runs[0]["manifest"].get("model_override") or {}},
+                   "model_override": runs[0]["manifest"].get("model_override") or {},
+                   "fault_scenario": runs[0]["manifest"].get("fault_scenario")},
         "runs": [{"dir": r["dir"], "results_sha256": r["results_sha256"],
                   "trial_ids": sorted(row["trial_id"] for row in r["rows"])} for r in runs],
     }
@@ -203,7 +204,17 @@ def compatibility_problems(baseline: Dict, candidate_runs: List[Dict]) -> List[s
             problems.append(f"{run['dir']}: task membership or versions differ from the baseline (re-run the baseline)")
         if list(runtime_key(manifest)) != list(cohort["runtime"]):
             problems.append(f"{run['dir']}: runtime differs from the baseline")
+        if fault_key(manifest) != fault_key(cohort):
+            problems.append(f"{run['dir']}: fault scenario differs from the baseline "
+                            f"({fault_key(manifest) or 'none'} vs {fault_key(cohort) or 'none'})")
     return problems
+
+
+def fault_key(record: Dict) -> Optional[str]:
+    """Scenario identity (name and content digest) of a manifest or stored cohort; None for normal runs.
+    Baselines promoted before fault runs existed carry no scenario and are normal (B-FAULT-03)."""
+    scenario = record.get("fault_scenario")
+    return f"{scenario.get('name')}@{scenario.get('sha256')}" if scenario else None
 
 
 def _fraction(info: Dict) -> Tuple[int, int]:
@@ -217,8 +228,9 @@ def confirmation_problems(runs: List[Dict], identity: Dict, tasks: Dict) -> List
         if (m.get("purpose") != "confirmation" or m.get("set") != identity["set"]
                 or m.get("agent_sha256") != identity["agent_sha256"]
                 or (m.get("model_override") or {}) != (identity.get("model_override") or {})
-                or list(runtime_key(m)) != list(identity["runtime"])):
-            problems.append(f"{run['dir']}: confirmation purpose, agent, routing, set or runtime differs")
+                or list(runtime_key(m)) != list(identity["runtime"])
+                or fault_key(m) != fault_key(identity)):
+            problems.append(f"{run['dir']}: confirmation purpose, agent, routing, set, runtime or fault scenario differs")
         selected = m.get("tasks") or {}
         if not selected or any(t not in tasks or digest != tasks[t] for t, digest in selected.items()):
             problems.append(f"{run['dir']}: confirmation task versions differ")

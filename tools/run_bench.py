@@ -38,9 +38,11 @@ from tools.bench_records import (  # noqa: E402
     auto_label,
     cli_version,
     expected_tasks,
+    finalization_events,
     host_identity,
     inputs_unchanged,
     observe,
+    outcome_category,
     task_digest,
     trial_images,
     validity,
@@ -77,6 +79,8 @@ def save_results(out_dir, rows):
         return
     obs_fields = sorted({k for row in rows for k in row if k.startswith('obs_')})
     fault_fields = sorted({k for row in rows for k in row if k.startswith('proxy_') or k == 'fault_scenario'})
+    fault_fields += sorted({k for row in rows for k in row if k.startswith('fin_')})
+    fault_fields += [k for k in ('outcome_category', 'arm', 'pair_id', 'arm_position') if any(k in row for row in rows)]
     fields = ['trial_id', 'purpose', 'slot', 'attempt', 'repeat', 'task', 'task_digest', 'bundle_sha256', 'inputs_changed',
               'images', 'validity', 'auto_label', 'manual_label', 'manual_reason', 'reward', 'reconciled_cost',
               'key_usage_delta', 'cost_reconciliation'] + TELEMETRY_FIELDS + obs_fields + fault_fields + ['wall_sec', 'error', 'trial_dir']
@@ -211,8 +215,19 @@ class SessionLedger:
                     break
         return {"usd": round(total, 6), "source": "per-run records"}
 
+    def pending(self) -> float:
+        """Allowances reserved for trials that have not been recorded (in flight, or interrupted by a crash)."""
+        return sum(r.get("allowance") or 0.0 for r in self.data["runs"].values() if r.get("pending"))
+
     def fits(self, allowance: float) -> bool:
-        return self.spent()["usd"] + allowance <= self.ceiling
+        spent = self.spent()
+        held = self.pending() if spent["source"] == "key-usage" else 0.0  # per-run records already count them
+        return spent["usd"] + held + allowance <= self.ceiling
+
+    def reserve(self, trial_id: str, allowance: float) -> None:
+        """Persist the allowance before dispatch, so a crash or late key usage cannot leave a reservation gap."""
+        self.data["runs"][trial_id] = {"allowance": allowance, "reconciled": None, "consumed": None, "pending": True}
+        self.save()
 
     def record(self, trial_id: str, allowance: float, reconciled: Optional[float], consumed: Optional[float]) -> None:
         self.data["runs"][trial_id] = {"allowance": allowance, "reconciled": reconciled, "consumed": consumed}
@@ -249,6 +264,12 @@ def run_one(ridges: List[str], task: str, agent: str, timeout: int, raw_path: st
     row["validity"] = validity(obs)
     row["outcome"] = row["auto_label"] = auto_label(obs)
     row["manual_label"], row["manual_reason"] = "", ""
+    runtime_log = ""
+    if trial_dir and os.path.exists(os.path.join(trial_dir, "agent", "runtime.log")):
+        with open(os.path.join(trial_dir, "agent", "runtime.log"), encoding="utf-8", errors="replace") as handle:
+            runtime_log = handle.read()
+    row["outcome_category"] = outcome_category(trial_dir, obs, runtime_log)
+    row.update(finalization_events(runtime_log))
     row.update(flatten_telemetry(record, joined))
     return row
 
@@ -316,6 +337,8 @@ def run_bench() -> int:
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--tasks", default="", help="comma-separated task ids (default: all in the set)")
     parser.add_argument("--agent", default=os.path.join(ROOT, "dist", "agent.py"))
+    parser.add_argument("--agent-b", default="",
+                        help="paired comparison: a second bundle; each task and repeat runs both, order counterbalanced")
     parser.add_argument("--ridges", default="ridges", help="command that runs the ridges CLI")
     parser.add_argument("--timeout", type=int, default=3600)
     parser.add_argument("--min-solve", type=float, default=None, help="fail (exit 1) below this mean solve rate")
@@ -341,94 +364,130 @@ def run_bench() -> int:
     if not tasks:
         print("no tasks found", file=sys.stderr)
         return 2
-    out_dir = os.path.join(ROOT, "bench", "runs", time.strftime("%Y%m%d-%H%M%S") + f"-{args.set}")
-    os.makedirs(os.path.join(out_dir, "raw"), exist_ok=True)
-    # The measured file never follows a later rebuild of dist/agent.py.
-    source_agent = os.path.abspath(args.agent)
-    frozen_agent = os.path.join(out_dir, 'agent.py')
-    with open(source_agent, 'rb') as source, open(frozen_agent, 'xb') as frozen:
-        frozen.write(source.read())
-    args.agent = frozen_agent
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    arms = [("A", args.agent)] + ([("B", args.agent_b)] if args.agent_b else [])
+    paired = len(arms) > 1
     scenario = load_scenario(args.fault_scenario) if args.fault_scenario else None
     fault_identity = None
     if scenario is not None:
         with open(args.fault_scenario, "rb") as handle:
             fault_identity = {"name": scenario["name"], "path": args.fault_scenario,
                               "sha256": hashlib.sha256(handle.read()).hexdigest(), "host": args.fault_host}
-    manifest = {
-        "started": time.strftime("%Y-%m-%dT%H:%M:%S"), "set": args.set, "repeats": args.repeats,
-        "agent": args.agent, "agent_sha256": sha256_file(args.agent),
-        "agent_source_path": source_agent,
-        "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip(),
-        "git_dirty": bool(subprocess.run(["git", "status", "--porcelain", "src"], cwd=ROOT, capture_output=True, text=True).stdout),
-        "model_override": {k: v for k, v in os.environ.items() if k.startswith("QUARRY_")},
-        "expected_tasks": expected_tasks(ROOT, args.set),
-        "selected_tasks": [os.path.basename(t) for t in tasks],
-        "tasks": {os.path.basename(t): task_digest(t) for t in tasks},
-        "config": {"ceiling": args.ceiling, "allowance": args.allowance, "timeout": args.timeout, "ridges": args.ridges,
-                   "max_setup_replacements": MAX_SETUP_REPLACEMENTS},
-        "purpose": args.purpose,
-        "fault_scenario": fault_identity,
-        "host": host_identity(os.path.expanduser("~/bittensor/ridges-cli")),
-        "ridges_cli_commit": cli_version(os.path.expanduser("~/bittensor/ridges-cli")),
-        "python": sys.version.split()[0],
-    }
-    with open(os.path.join(out_dir, "manifest.json"), "w") as handle:
-        json.dump(manifest, handle, indent=1)
-    key = read_key()
+    git_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    git_dirty = bool(subprocess.run(["git", "status", "--porcelain", "src"], cwd=ROOT, capture_output=True, text=True).stdout)
+    host = host_identity(os.path.expanduser("~/bittensor/ridges-cli"))
+    state: Dict[str, Dict] = {}
+    for label, source in arms:
+        out_dir = os.path.join(ROOT, "bench", "runs", f"{stamp}-{args.set}" + (f"-{label}" if paired else ""))
+        os.makedirs(os.path.join(out_dir, "raw"), exist_ok=True)
+        # The measured file never follows a later rebuild of dist/agent.py.
+        source_agent = os.path.abspath(source)
+        frozen_agent = os.path.join(out_dir, 'agent.py')
+        with open(source_agent, 'rb') as src, open(frozen_agent, 'xb') as frozen:
+            frozen.write(src.read())
+        manifest = {
+            "started": time.strftime("%Y-%m-%dT%H:%M:%S"), "set": args.set, "repeats": args.repeats,
+            "agent": frozen_agent, "agent_sha256": sha256_file(frozen_agent),
+            "agent_source_path": source_agent,
+            "git_commit": git_commit, "git_dirty": git_dirty,
+            "model_override": {k: v for k, v in os.environ.items() if k.startswith("QUARRY_")},
+            "expected_tasks": expected_tasks(ROOT, args.set),
+            "selected_tasks": [os.path.basename(t) for t in tasks],
+            "tasks": {os.path.basename(t): task_digest(t) for t in tasks},
+            "config": {"ceiling": args.ceiling, "allowance": args.allowance, "timeout": args.timeout, "ridges": args.ridges,
+                       "max_setup_replacements": MAX_SETUP_REPLACEMENTS},
+            "purpose": args.purpose,
+            "fault_scenario": fault_identity,
+            "pairing": ({"arm": label, "arms": {lab: sha256_file(src) for lab, src in arms},
+                         "order": "counterbalanced: A,B on even pairs, B,A on odd pairs", "run_stamp": stamp}
+                        if paired else None),
+            "host": host,
+            "ridges_cli_commit": cli_version(os.path.expanduser("~/bittensor/ridges-cli")),
+            "python": sys.version.split()[0],
+        }
+        with open(os.path.join(out_dir, "manifest.json"), "w") as handle:
+            json.dump(manifest, handle, indent=1)
+        state[label] = {"out_dir": out_dir, "agent": frozen_agent, "manifest": manifest, "rows": []}
+    key = read_key()  # the one key used for usage reconciliation and, in fault runs, by the proxy (readiness P1)
     fetch = (lambda: fetch_key_usage(key)) if not args.no_key_usage else (lambda: None)
     ledger = SessionLedger(args.ledger, args.ceiling, fetch)
-    rows = []
     stopped = ""
+    pair_no = 0
+
+    def make_attempt(label, name, task, repeat, slot, pair_id, position):
+        arm = state[label]
+
+        def attempt_fn(attempt):
+            trial_id = f"{slot}/a{attempt}"
+            ledger.reserve(trial_id, args.allowance)
+            inputs_before = {name: task_digest(task), "bundle": sha256_file(arm["agent"])}
+            before = fetch()
+            raw = os.path.join(arm["out_dir"], "raw", f"{name}-r{repeat}-a{attempt}.log")
+            if scenario is None:
+                row = run_one(shlex.split(args.ridges), task, arm["agent"], args.timeout, raw)
+            else:
+                proxy_log = raw[:-4] + "-proxy.jsonl"
+                with FaultProxy(scenario, port=0, host="0.0.0.0", key=key, log_path=proxy_log) as proxy:
+                    row = run_one(shlex.split(args.ridges), task, arm["agent"], args.timeout, raw,
+                                  ["--provider", "custom"],
+                                  {"RIDGES_CUSTOM_SANDBOX_PROXY_URL": f"http://{args.fault_host}:{proxy.port}"})
+                row.update(proxy_summary(proxy_log), fault_scenario=scenario["name"])
+            after = settled_usage(fetch) if before is not None else None
+            delta = round(after - before, 6) if (before is not None and after is not None) else None
+            row.update(reconcile(row, delta) if scenario is None else reconcile_proxy(delta, row))
+            changed = inputs_unchanged(inputs_before, {name: task_digest(task), "bundle": sha256_file(arm["agent"])})
+            row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": trial_id,
+                        "purpose": args.purpose, "bundle_sha256": arm["manifest"]["agent_sha256"][:16],
+                        "task_digest": arm["manifest"]["tasks"][name], "inputs_changed": ",".join(changed)})
+            if paired:
+                row.update(arm=label, pair_id=pair_id, arm_position=position)
+            if changed:
+                row["validity"], row["outcome"] = "unresolved", "unknown"  # not comparable: inputs moved
+            ledger.record(trial_id, args.allowance, delta if delta is not None and delta >= 0 else None,
+                          row.get("cost_accounted"))
+            print(f"[{repeat}.{attempt}]{f' {label}' if paired else ''} {row['task']}: {row['outcome']} ({row['validity']}) "
+                  f"reward={row['reward']} cost={format_cost(row)} wall={row['wall_sec']}s {row['error']}"
+                  + (f" INPUTS CHANGED: {changed}" if changed else ""), flush=True)
+            return row
+
+        return attempt_fn
+
+    labels = [label for label, _ in arms]
     for repeat in range(1, args.repeats + 1):
         for task in tasks:
-            if not ledger.fits(args.allowance):
-                stopped = f"spending ceiling ${args.ceiling:.2f} reached ({ledger.spent()}); remaining runs not scheduled"
-                break
-            slot = f"{os.path.basename(out_dir)}/{os.path.basename(task)}/r{repeat}"
             name = os.path.basename(task)
-
-            def attempt_fn(attempt, name=name, task=task, repeat=repeat, slot=slot):
-                inputs_before = {name: task_digest(task), "bundle": sha256_file(args.agent)}
-                before = fetch()
-                raw = os.path.join(out_dir, "raw", f"{name}-r{repeat}-a{attempt}.log")
-                if scenario is None:
-                    row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw)
-                else:
-                    proxy_log = raw[:-4] + "-proxy.jsonl"
-                    with FaultProxy(scenario, port=0, host="0.0.0.0", log_path=proxy_log) as proxy:
-                        row = run_one(shlex.split(args.ridges), task, args.agent, args.timeout, raw,
-                                      ["--provider", "custom"],
-                                      {"RIDGES_CUSTOM_SANDBOX_PROXY_URL": f"http://{args.fault_host}:{proxy.port}"})
-                    row.update(proxy_summary(proxy_log), fault_scenario=scenario["name"])
-                after = settled_usage(fetch) if before is not None else None
-                delta = round(after - before, 6) if (before is not None and after is not None) else None
-                row.update(reconcile(row, delta) if scenario is None else reconcile_proxy(delta, row))
-                changed = inputs_unchanged(inputs_before, {name: task_digest(task), "bundle": sha256_file(args.agent)})
-                row.update({"repeat": repeat, "slot": slot, "attempt": attempt, "trial_id": f"{slot}/a{attempt}",
-                            "purpose": args.purpose, "bundle_sha256": manifest["agent_sha256"][:16],
-                            "task_digest": manifest["tasks"][name], "inputs_changed": ",".join(changed),
-                            })
-                if changed:
-                    row["validity"], row["outcome"] = "unresolved", "unknown"  # not comparable: inputs moved
-                ledger.record(row["trial_id"], args.allowance, delta if delta is not None and delta >= 0 else None,
-                              row.get("cost_accounted"))
-                print(f"[{repeat}.{attempt}] {row['task']}: {row['outcome']} ({row['validity']}) reward={row['reward']} "
-                      f"cost={format_cost(row)} wall={row['wall_sec']}s {row['error']}"
-                      + (f" INPUTS CHANGED: {changed}" if changed else ""), flush=True)
-                return row
-
-            slot_rows, blocked, stop_reason = run_slot(attempt_fn, lambda: ledger.fits(args.allowance))
-            rows.extend(slot_rows)
-            save_results(out_dir, rows)
-            if blocked:
-                print(f"slot {slot}: infrastructure-blocked after {MAX_SETUP_REPLACEMENTS} setup replacements")
-            if stop_reason:
-                stopped = stop_reason
+            order = labels if pair_no % 2 == 0 else list(reversed(labels))
+            pair_id = f"{stamp}/{name}/r{repeat}"
+            pair_no += 1
+            for position, label in enumerate(order):
+                if not ledger.fits(args.allowance):
+                    stopped = f"spending ceiling ${args.ceiling:.2f} reached ({ledger.spent()}); remaining runs not scheduled"
+                    break
+                arm = state[label]
+                slot = f"{os.path.basename(arm['out_dir'])}/{name}/r{repeat}"
+                attempt_fn = make_attempt(label, name, task, repeat, slot, pair_id, position)
+                slot_rows, blocked, stop_reason = run_slot(attempt_fn, lambda: ledger.fits(args.allowance))
+                arm["rows"].extend(slot_rows)
+                save_results(arm["out_dir"], arm["rows"])
+                if blocked:
+                    print(f"slot {slot}: infrastructure-blocked after {MAX_SETUP_REPLACEMENTS} setup replacements")
+                if stop_reason:
+                    stopped = stop_reason
+                if stopped:
+                    break
             if stopped:
                 break
         if stopped:
             break
+    exit_code = 0
+    for label in labels:
+        if paired:
+            print(f"\n==== arm {label}: {state[label]['manifest']['agent_sha256'][:16]}")
+        exit_code = max(exit_code, report_arm(args, state[label]["rows"], state[label]["out_dir"], ledger, stopped))
+    return exit_code
+
+
+def report_arm(args, rows: List[Dict], out_dir: str, ledger: SessionLedger, stopped: str) -> int:
     if stopped:
         print(stopped)
     if not rows:

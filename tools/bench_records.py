@@ -251,3 +251,31 @@ class ImageWatcher:
 def inputs_unchanged(before: Dict[str, str], after: Dict[str, str]) -> List[str]:
     """Names of inputs (task digests, bundle hash) that changed while a trial ran."""
     return sorted(key for key in set(before) | set(after) if before.get(key) != after.get(key))
+
+
+FINALIZATION_EVENTS = {
+    "fin_notices": "[quarry] finalization notice",
+    "fin_refusals": "[quarry] empty finish refused",
+    "fin_empty_accepts": "[quarry] empty finish accepted",
+    "fin_rounds": "[quarry] finalization round: no candidate",
+}
+
+
+def finalization_events(runtime_log: str) -> Dict[str, int]:
+    """Counts of the agent's finalization events (H-LOOP-06/07, H-SHELL-15) from its run log (E016 measurement)."""
+    lines = (runtime_log or "").splitlines()
+    return {field: sum(1 for line in lines if line.startswith(marker)) for field, marker in FINALIZATION_EVENTS.items()}
+
+
+def outcome_category(trial_dir: str, obs: Dict, runtime_log: str) -> str:
+    """What the trial produced, kept apart because they mean different things (E016 readiness P2):
+    patch | empty-output (the agent ran and returned nothing) | harness-exception | not-started | missing-evidence."""
+    if not trial_dir:
+        return "not-started"
+    if obs.get("exception_type"):
+        return "harness-exception"
+    if obs.get("patch_sha256"):
+        return "patch"
+    if "[quarry]" in (runtime_log or ""):
+        return "empty-output"
+    return "missing-evidence"

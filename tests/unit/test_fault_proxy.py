@@ -1,6 +1,9 @@
-"""B-FAULT-01..02: the fault-injecting inference proxy (v004 C1), against a fake upstream (no paid inference)."""
+"""B-FAULT-01..03: the fault-injecting inference proxy (v004 C1) and its bench accounting, against a fake upstream
+(no paid inference). Negative cases follow docs/reviews/2026-10-01-e016-readiness.md."""
 
+import csv
 import json
+import os
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -9,27 +12,32 @@ import pytest
 
 from quarry.llm import ModelRoute, ProxyClient, http_transport
 from quarry.wallet import Wallet
+from tools.bench_cost import proxy_summary, reconcile_proxy, trusted_cost
 from tools.fault_proxy import FaultProxy, Rules, ScenarioError, load_scenario
 
 OK = {"choices": [{"message": {"content": "ok"}}], "usage": {"prompt_tokens": 10, "completion_tokens": 2, "cost": 0.002}}
 
 
 class Upstream:
-    """Fake provider: records requests (model, Authorization) and answers OK."""
+    """Fake provider: records requests (model, Authorization); answers with `self.reply` after `self.delay`."""
 
     def __init__(self):
         self.requests = []
+        self.reply = (200, OK)
+        self.delay = 0.0
         outer = self
 
         class H(BaseHTTPRequestHandler):
             def do_POST(self):
                 body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 outer.requests.append((body.get("model"), self.headers.get("Authorization")))
-                payload = json.dumps(OK).encode()
-                self.send_response(200)
-                self.send_header("Content-Length", str(len(payload)))
+                time.sleep(outer.delay)
+                status, payload = outer.reply
+                data = json.dumps(payload).encode()
+                self.send_response(status)
+                self.send_header("Content-Length", str(len(data)))
                 self.end_headers()
-                self.wfile.write(payload)
+                self.wfile.write(data)
 
             def log_message(self, *_):
                 pass
@@ -55,21 +63,83 @@ def post(port, model="primary", timeout=5.0):
     return http_transport(f"http://127.0.0.1:{port}/api/v1/chat/completions", body, {"Content-Type": "application/json"}, timeout)
 
 
-def lines(path):
+def records(path):
     return [json.loads(line) for line in open(path)]
 
 
-def test_B_FAULT_01_forwards_with_the_bench_key_and_logs_without_it(upstream, tmp_path):
+def ends(path):
+    return [r for r in records(path) if r.get("event") == "request_end"]
+
+
+def proxy(scenario, upstream, log=None, **kw):
+    return FaultProxy(scenario, host="127.0.0.1", upstream=upstream.url, key=kw.pop("key", "k"), log_path=log, **kw)
+
+
+# ---------------------------------------------------------------- B-FAULT-01 forwarding, lifecycle, key
+
+
+def test_B_FAULT_01_forwards_with_the_bench_key_and_logs_a_complete_lifecycle_without_it(upstream, tmp_path):
     log = str(tmp_path / "proxy.jsonl")
-    with FaultProxy({"name": "clean", "rules": []}, host="127.0.0.1", upstream=upstream.url, key="sk-secret", log_path=log) as proxy:
-        status, text, _ = post(proxy.port)
-        missing = http_transport(f"http://127.0.0.1:{proxy.port}/other", b"{}", {}, 5.0)
-    assert status == 200 and json.loads(text) == OK
+    with proxy({"name": "clean", "rules": []}, upstream, log, key="sk-secret") as p:
+        status, text, _ = post(p.port)
+        missing = http_transport(f"http://127.0.0.1:{p.port}/other", b"{}", {}, 5.0)
+    assert status == 200 and json.loads(text) == OK and missing[0] == 404
     assert upstream.requests == [("primary", "Bearer sk-secret")]
-    assert missing[0] == 404
-    entries = lines(log)
-    assert entries[0]["upstream_status"] == 200 and entries[0]["real_cost"] == entries[0]["reported_cost"] == 0.002
+    assert [r["event"] for r in records(log)] == ["proxy_start", "request_start", "request_end", "proxy_stop"]
+    end = ends(log)[0]
+    assert end["charge"] == "known" and end["real_cost"] == end["reported_cost"] == 0.002
     assert "sk-secret" not in open(log).read()
+    summary = proxy_summary(log)
+    assert summary["proxy_complete"] and summary["proxy_real_cost"] == 0.002
+
+
+def test_B_FAULT_01_a_request_still_in_flight_at_shutdown_leaves_the_accounting_incomplete(upstream, tmp_path):
+    log = str(tmp_path / "proxy.jsonl")
+    upstream.delay = 1.0
+    p = proxy({"name": "clean", "rules": []}, upstream, log, drain_sec=0.1)
+    p.__enter__()
+    worker = threading.Thread(target=lambda: post(p.port, timeout=5.0))
+    worker.start()
+    time.sleep(0.3)
+    p.__exit__(None, None, None)
+    worker.join()
+    stop = [r for r in records(log) if r["event"] == "proxy_stop"][0]
+    assert stop["outstanding"] == 1
+    assert not proxy_summary(log)["proxy_complete"]
+
+
+def test_B_FAULT_01_forward_errors_are_logged_as_uncertain_charges(tmp_path):
+    log = str(tmp_path / "proxy.jsonl")
+    with FaultProxy({"name": "clean", "rules": []}, host="127.0.0.1", upstream="http://127.0.0.1:9/none", key="k",
+                    log_path=log) as p:
+        status, _, _ = post(p.port)
+    assert status == 502
+    end = ends(log)[0]
+    assert end["stage"] == "forward_error" and end["charge"] == "uncertain"
+    assert not proxy_summary(log)["proxy_complete"]
+
+
+def test_B_FAULT_01_charges_reported_on_error_responses_are_counted_and_unpriced_5xx_are_uncertain(upstream, tmp_path):
+    billed = str(tmp_path / "billed.jsonl")
+    upstream.reply = (503, {"error": {"code": 503}, "usage": {"cost": 0.003}})
+    with proxy({"name": "clean", "rules": []}, upstream, billed) as p:
+        post(p.port)
+    assert proxy_summary(billed)["proxy_real_cost"] == 0.003 and proxy_summary(billed)["proxy_complete"]
+    unpriced = str(tmp_path / "unpriced.jsonl")
+    upstream.reply = (503, {"error": {"code": 503}})
+    with proxy({"name": "clean", "rules": []}, upstream, unpriced) as p:
+        post(p.port)
+    assert proxy_summary(unpriced)["proxy_uncertain"] == 1 and not proxy_summary(unpriced)["proxy_complete"]
+
+
+def test_B_FAULT_01_a_missing_log_is_missing_evidence_not_zero_cost(tmp_path):
+    summary = proxy_summary(str(tmp_path / "never-written.jsonl"))
+    assert summary["proxy_log_present"] is False and summary["proxy_complete"] is False
+    assert summary["proxy_real_cost"] is None
+    assert reconcile_proxy(0.0, summary)["reconciled_cost"] is None
+
+
+# ---------------------------------------------------------------- B-FAULT-02 scenarios
 
 
 def test_B_FAULT_02_before_forward_faults_are_never_sent_upstream(upstream, tmp_path):
@@ -79,27 +149,40 @@ def test_B_FAULT_02_before_forward_faults_are_never_sent_upstream(upstream, tmp_
         {"action": "malformed", "from_request": 3, "until_request": 3},
     ]}
     log = str(tmp_path / "proxy.jsonl")
-    with FaultProxy(scenario, host="127.0.0.1", upstream=upstream.url, key="k", log_path=log) as proxy:
-        first, second, third, fourth = (post(proxy.port) for _ in range(4))
+    with proxy(scenario, upstream, log) as p:
+        first, second, third, fourth = (post(p.port) for _ in range(4))
     assert first[0] == 429 and first[2]["retry-after"] == "3"
     assert second[0] == 402 and "in_flight" in second[1]
     assert third[0] == 200 and json.loads(third[1])["choices"] == "not a list"
-    assert fourth[0] == 200 and len(upstream.requests) == 1          # only the clean request was forwarded
-    assert [e["stage"] for e in lines(log)] == ["before", "before", "before", None]
+    assert fourth[0] == 200 and len(upstream.requests) == 1
+    assert [(e["stage"], e["charge"]) for e in ends(log)] == [("before", "none")] * 3 + [(None, "known")]
 
 
 def test_B_FAULT_02_after_forward_faults_are_forwarded_and_logged_as_possibly_billed(upstream, tmp_path):
     scenario = {"name": "s", "rules": [{"action": "drop", "until_request": 1}, {"action": "cost_multiplier", "factor": 10}]}
     log = str(tmp_path / "proxy.jsonl")
-    with FaultProxy(scenario, host="127.0.0.1", upstream=upstream.url, key="k", log_path=log) as proxy:
-        with pytest.raises((OSError, Exception)):
-            post(proxy.port)                                        # forwarded, then no response
-        status, text, _ = post(proxy.port)
+    with proxy(scenario, upstream, log) as p:
+        with pytest.raises(OSError):
+            post(p.port)
+        status, text, _ = post(p.port)
     assert len(upstream.requests) == 2
     assert status == 200 and json.loads(text)["usage"]["cost"] == pytest.approx(0.02)
-    dropped, multiplied = lines(log)
-    assert dropped["stage"] == "after" and dropped["rule"] == "drop" and dropped["real_cost"] == 0.002
-    assert multiplied["real_cost"] == 0.002 and multiplied["reported_cost"] == pytest.approx(0.02)
+    dropped, multiplied = ends(log)
+    assert dropped["stage"] == "after" and dropped["charge"] == "known" and dropped["real_cost"] == 0.002
+    assert multiplied["scaled"] is True and multiplied["reported_cost"] == pytest.approx(0.02)
+    summary = proxy_summary(log)
+    assert summary["proxy_real_cost"] == 0.004 and summary["proxy_reported_cost"] == pytest.approx(0.02)
+
+
+def test_B_FAULT_02_responses_the_multiplier_cannot_scale_are_counted(upstream, tmp_path):
+    upstream.reply = (200, {"choices": [{"message": {"content": "ok"}}], "usage": {"prompt_tokens": 3}})
+    log = str(tmp_path / "proxy.jsonl")
+    with proxy({"name": "x", "rules": [{"action": "cost_multiplier", "factor": 15}]}, upstream, log) as p:
+        post(p.port)
+    end = ends(log)[0]
+    assert end["scaled"] is False and end["charge"] == "uncertain"
+    summary = proxy_summary(log)
+    assert summary["proxy_unscaled"] == 1 and not summary["proxy_complete"]
 
 
 def test_B_FAULT_02_schedules_are_deterministic_for_a_seed():
@@ -118,29 +201,35 @@ def test_B_FAULT_02_rules_match_by_model_window_and_period():
     assert hits == [False, True, False, True, False, True, False, False]
 
 
-def test_B_FAULT_02_invalid_scenarios_are_rejected():
-    for bad in ({"rules": []}, {"name": "x", "rules": [{"action": "explode"}]},
-                {"name": "x", "rules": [{"action": "status"}]}, {"name": "x", "rules": [{"action": "cost_multiplier"}]}):
-        with pytest.raises(ScenarioError):
-            load_scenario(bad)
+@pytest.mark.parametrize("bad", [
+    {"rules": []},
+    {"name": "x", "rules": [{"action": "explode"}]},
+    {"name": "x", "rules": [{"action": "status"}]},
+    {"name": "x", "rules": [{"action": "cost_multiplier"}]},
+    {"name": "x", "rules": [{"action": "cost_multiplier", "factor": float("inf")}]},
+    {"name": "x", "rules": [{"action": "cost_multiplier", "factor": True}]},
+    {"name": "x", "rules": [{"action": "cost_multiplier", "factor": "10"}]},
+    {"name": "x", "rules": [{"action": "cost_multiplier", "factor": -2}]},
+])
+def test_B_FAULT_02_invalid_scenarios_are_rejected(bad):
+    with pytest.raises(ScenarioError):
+        load_scenario(bad)
 
 
 def test_B_FAULT_02_slow_body_is_cut_off_by_the_agent_transport(upstream):
-    with FaultProxy({"name": "slow", "rules": [{"action": "slow_body", "seconds": 5}]}, host="127.0.0.1",
-                    upstream=upstream.url, key="k") as proxy:
+    with proxy({"name": "slow", "rules": [{"action": "slow_body", "seconds": 5}]}, upstream) as p:
         started = time.monotonic()
         with pytest.raises(TimeoutError):
-            post(proxy.port, timeout=0.4)
+            post(p.port, timeout=0.4)
         assert time.monotonic() - started < 1.5
 
 
-def test_B_FAULT_02_quarry_client_recovers_through_the_proxy(upstream, tmp_path):
-    # End to end over HTTP: two 503s on the primary -> this call uses the fallback; later calls return to the primary.
+def test_B_FAULT_02_quarry_client_recovers_through_the_proxy(upstream):
     scenario = {"name": "burst", "rules": [{"action": "status", "status": 503, "model": "primary", "until_request": 2}]}
-    with FaultProxy(scenario, host="127.0.0.1", upstream=upstream.url, key="k") as proxy:
+    with proxy(scenario, upstream) as p:
         now = [1000.0]
         client = ProxyClient(Wallet(1.0, {"primary": (0.2, 1.2), "fallback": (0.48, 4.2)}),
-                             {"SANDBOX_PROXY_URL": f"http://127.0.0.1:{proxy.port}"},
+                             {"SANDBOX_PROXY_URL": f"http://127.0.0.1:{p.port}"},
                              sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
         route = ModelRoute("primary", "fallback")
         client.complete([{"role": "user", "content": "hi"}], route)
@@ -149,62 +238,169 @@ def test_B_FAULT_02_quarry_client_recovers_through_the_proxy(upstream, tmp_path)
     assert [m for m, _ in upstream.requests] == ["fallback", "primary"]
 
 
-# ---------------------------------------------------------------- B-FAULT-03 (run_bench wiring)
+# ---------------------------------------------------------------- B-FAULT-03 bench accounting and comparison
 
 
-def test_B_FAULT_03_proxy_summary_and_reconciliation_use_the_real_cost(tmp_path):
-    from tools.bench_cost import proxy_summary, reconcile_proxy
-
-    log = tmp_path / "p.jsonl"
-    log.write_text("\n".join(json.dumps(e) for e in [
-        {"model": "primary", "stage": "before", "rule": "status", "upstream_status": None},
-        {"model": "fallback", "stage": "after", "rule": "cost_multiplier", "upstream_status": 200,
-         "real_cost": 0.002, "reported_cost": 0.02},
-        {"model": "primary", "stage": None, "rule": None, "upstream_status": 200, "real_cost": 0.003, "reported_cost": 0.003},
-    ]) + "\n")
-    summary = proxy_summary(str(log))
-    assert summary["proxy_requests"] == 3 and summary["proxy_injected_before"] == 1 and summary["proxy_injected_after"] == 0
-    assert summary["proxy_real_cost"] == 0.005 and summary["proxy_reported_cost"] == 0.023
-    assert json.loads(summary["proxy_models"]) == {"fallback": 1, "primary": 2}
-    assert reconcile_proxy(0.00502, summary)["cost_reconciliation"] == "matched-proxy"
-    assert reconcile_proxy(0.02, summary)["reconciled_cost"] is None      # another client spent on the key
+def fault_row(cost, real, complete=True):
+    return {"reconciled_cost": str(cost), "cost_reconciliation": "matched-proxy", "proxy_real_cost": str(real),
+            "proxy_complete": str(complete), "cost_provider": str(real * 15)}   # agent saw the multiplied cost
 
 
-def test_B_FAULT_03_run_one_routes_the_trial_through_the_custom_provider(tmp_path, monkeypatch):
-    import tools.run_bench as rb
-
-    seen = {}
-
-    def fake_run(cmd, **kwargs):
-        if "run-local" in cmd:  # the image watcher's `docker images` calls use the same module
-            seen["cmd"], seen["env"] = cmd, kwargs.get("env") or {}
-
-        class P:
-            stdout, stderr = "FAILED: stub\n", ""
-        return P()
-
-    monkeypatch.setattr(rb.subprocess, "run", fake_run)
-    rb.run_one(["ridges"], str(tmp_path / "task-a"), "agent.py", 10, str(tmp_path / "raw.log"),
-               ["--provider", "custom"], {"RIDGES_CUSTOM_SANDBOX_PROXY_URL": "http://172.17.0.1:18801"})
-    assert seen["cmd"][-2:] == ["--provider", "custom"]
-    assert seen["env"]["RIDGES_CUSTOM_SANDBOX_PROXY_URL"] == "http://172.17.0.1:18801"
+def test_B_FAULT_03_trusted_cost_validates_proxy_evidence_instead_of_the_altered_agent_cost():
+    assert trusted_cost(fault_row(0.002, 0.002)) == pytest.approx(0.002)
+    assert trusted_cost(fault_row(0.002, 0.002, complete=False)) is None
+    assert trusted_cost(fault_row(0.02, 0.002)) is None                      # key usage includes someone else
+    assert trusted_cost({"reconciled_cost": "0.002", "cost_reconciliation": "matched-proxy"}) is None
 
 
-def test_B_FAULT_03_fault_runs_never_share_a_cohort_with_normal_runs():
-    from tools.bench_summary import cohort_key
+def test_B_FAULT_03_fault_runs_aggregate_with_trusted_costs(tmp_path):
+    from tools.bench_summary import load_run, summarize
+
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "manifest.json").write_text(json.dumps({"set": "dev", "agent_sha256": "a", "tasks": {"t": "d"},
+                                                   "expected_tasks": ["t"], "purpose": "diagnostic", "host": {},
+                                                   "fault_scenario": {"name": "cost-x15", "sha256": "s"}}))
+    rows = [dict(fault_row(0.002, 0.002), trial_id=f"t/r{i}", slot=f"t/r{i}", task="t", reward="1.0",
+                 validity="valid", auto_label="solved") for i in (1, 2, 3)]
+    with open(run / "results.csv", "w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    summary = summarize([load_run(str(run))])
+    assert summary["per_task"]["t"]["mean_cost"] == pytest.approx(0.002) and summary["per_task"]["t"]["cost_complete"]
+
+
+def test_B_FAULT_03_fault_and_normal_conditions_are_never_compared_or_confirmed_together():
+    from tools.bench_summary import cohort_key, compatibility_problems, confirmation_problems
 
     normal = {"set": "dev", "agent_sha256": "a", "tasks": {"t": "d"}, "host": {}}
-    faulted = dict(normal, fault_scenario={"name": "cost-x10", "sha256": "s"})
+    faulted = dict(normal, fault_scenario={"name": "cost-x15", "sha256": "s"})
     assert cohort_key(normal) != cohort_key(faulted)
+    baseline = {"cohort": {"set": "dev", "tasks": {"t": "d"}, "runtime": [None, None],
+                           "fault_scenario": faulted["fault_scenario"]}}
+    assert any("fault scenario" in p for p in compatibility_problems(baseline, [{"dir": "c", "manifest": normal}]))
+    assert not compatibility_problems(baseline, [{"dir": "c", "manifest": faulted}])
+    identity = dict(baseline["cohort"], agent_sha256="a")
+    run = {"dir": "c", "manifest": dict(normal, purpose="confirmation"), "rows": []}
+    assert any("fault scenario" in p for p in confirmation_problems([run], identity, {"t": "d"}))
 
 
-def test_B_FAULT_03_results_csv_keeps_the_fault_columns(tmp_path):
-    import csv
+def test_B_FAULT_03_promoted_cohorts_keep_the_fault_scenario(tmp_path, monkeypatch):
+    import tools.bench_summary as bs
 
+    monkeypatch.setattr(bs, "promotion_problems", lambda runs: [])
+    monkeypatch.setattr(bs, "summarize", lambda runs, purposes=None: {"set": "dev", "agent_sha256": "a"})
+    run = {"dir": "r", "results_sha256": "x", "rows": [{"trial_id": "t1"}],
+           "manifest": {"tasks": {"t": "d"}, "host": {}, "fault_scenario": {"name": "cost-x15", "sha256": "s"}}}
+    record = bs.promote([run], str(tmp_path / "b.json"))
+    assert record["cohort"]["fault_scenario"] == {"name": "cost-x15", "sha256": "s"}
+
+
+def test_B_FAULT_03_ledger_holds_in_flight_reservations(tmp_path):
+    from tools.run_bench import SessionLedger
+
+    ledger = SessionLedger(str(tmp_path / "l.json"), 1.0, lambda: 0.0)
+    ledger.reserve("t1", 0.6)
+    assert not ledger.fits(0.5)                      # 0.6 still held although key usage shows nothing yet
+    ledger.record("t1", 0.6, 0.01, 0.01)
+    assert ledger.fits(0.5)
+    reopened = SessionLedger(str(tmp_path / "l.json"), 1.0, lambda: 0.0)
+    reopened.reserve("t2", 0.6)                       # a crash here leaves t2 pending: still held on restart
+    assert not SessionLedger(str(tmp_path / "l.json"), 1.0, lambda: 0.0).fits(0.5)
+
+
+def test_B_FAULT_03_results_csv_keeps_the_fault_and_pairing_columns(tmp_path):
     from tools.run_bench import save_results
 
-    save_results(str(tmp_path), [{"trial_id": "t1", "fault_scenario": "cost-x10", "proxy_requests": 9,
-                                  "proxy_real_cost": 0.004, "proxy_reported_cost": 0.04}])
+    save_results(str(tmp_path), [{"trial_id": "t1", "fault_scenario": "cost-x15", "proxy_requests": 9,
+                                  "proxy_real_cost": 0.004, "proxy_reported_cost": 0.06, "fin_notices": 1,
+                                  "outcome_category": "patch", "arm": "B", "pair_id": "p/t/r1", "arm_position": 0}])
     row = next(csv.DictReader(open(tmp_path / "results.csv")))
-    assert row["fault_scenario"] == "cost-x10" and row["proxy_requests"] == "9" and row["proxy_reported_cost"] == "0.04"
+    assert row["proxy_reported_cost"] == "0.06" and row["fin_notices"] == "1" and row["arm"] == "B"
+    assert row["outcome_category"] == "patch" and row["pair_id"] == "p/t/r1"
 
+
+def test_B_FAULT_03_outcomes_and_finalization_events_are_classified():
+    from tools.bench_records import finalization_events, outcome_category
+
+    log = ("[quarry] finalization notice at turn 9 (verify)\n[quarry] empty finish refused at turn 3\n"
+           "[quarry] finalization round: no candidate after the driver (budget); $0.03 and 200s left\n")
+    assert finalization_events(log) == {"fin_notices": 1, "fin_refusals": 1, "fin_empty_accepts": 0, "fin_rounds": 1}
+    assert outcome_category("", {}, "") == "not-started"
+    assert outcome_category("d", {"exception_type": "AgentTimeoutError"}, log) == "harness-exception"
+    assert outcome_category("d", {"patch_sha256": "abc"}, log) == "patch"
+    assert outcome_category("d", {}, log) == "empty-output"
+    assert outcome_category("d", {}, "") == "missing-evidence"
+
+
+# ---------------------------------------------------------------- B-FAULT-03 runner wiring (stubbed trials)
+
+
+def stub_bench(tmp_path, monkeypatch, argv, env_key, file_key):
+    """Run tools.run_bench with every external effect stubbed; return (captured FaultProxy keys, run order, dirs)."""
+    import tools.run_bench as rb
+
+    root = tmp_path / "repo"
+    for name in ("t1", "t2"):
+        (root / "bench" / "tasks" / "dev" / name).mkdir(parents=True)
+        (root / "bench" / "tasks" / "dev" / name / "task.toml").write_text("x")
+    for arm in ("a.py", "b.py"):
+        (tmp_path / arm).write_text(f"# {arm}\n")
+    home = tmp_path / "home"
+    (home / ".ridges").mkdir(parents=True)
+    (home / ".ridges" / ".env.miner").write_text(f"RIDGES_OPENROUTER_API_KEY={file_key}\n")
+    monkeypatch.setenv("HOME", str(home))
+    if env_key:
+        monkeypatch.setenv("RIDGES_OPENROUTER_API_KEY", env_key)
+    else:
+        monkeypatch.delenv("RIDGES_OPENROUTER_API_KEY", raising=False)
+        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setattr(rb, "ROOT", str(root))
+    monkeypatch.setattr(rb, "host_identity", lambda path: {})
+    monkeypatch.setattr(rb, "cli_version", lambda path: "x")
+    monkeypatch.setattr(rb, "fetch_key_usage", lambda key: None)
+    seen = {"keys": [], "order": []}
+
+    class StubProxy:
+        def __init__(self, scenario, **kw):
+            seen["keys"].append(kw.get("key"))
+            self.port = 1
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+    def stub_run_one(ridges, task, agent, timeout, raw, extra_args=None, extra_env=None):
+        seen["order"].append((os.path.basename(task), open(agent).read().strip()))
+        return {"task": os.path.basename(task), "reward": 1.0, "wall_sec": 1, "error": "", "validity": "valid",
+                "outcome": "solved", "auto_label": "solved", "images": "{}"}
+
+    monkeypatch.setattr(rb, "FaultProxy", StubProxy)
+    monkeypatch.setattr(rb, "run_one", stub_run_one)
+    scenario = tmp_path / "s.json"
+    scenario.write_text(json.dumps({"name": "s", "rules": []}))
+    monkeypatch.setattr("sys.argv", ["run_bench"] + argv + ["--fault-scenario", str(scenario),
+                                                            "--ledger", str(tmp_path / "ledger.json")])
+    rb.run_bench()
+    dirs = sorted(os.listdir(root / "bench" / "runs"))
+    return seen, dirs
+
+
+def test_B_FAULT_03_the_proxy_uses_the_same_resolved_key_as_the_ledger(tmp_path, monkeypatch):
+    seen, _ = stub_bench(tmp_path, monkeypatch, ["--set", "dev", "--agent", str(tmp_path / "a.py")],
+                         env_key="dummy-env-key", file_key="dummy-file-key")
+    assert seen["keys"] and set(seen["keys"]) == {"dummy-env-key"}
+
+
+def test_B_FAULT_03_paired_runs_counterbalance_the_order_and_keep_one_cohort_per_arm(tmp_path, monkeypatch):
+    seen, dirs = stub_bench(tmp_path, monkeypatch, ["--set", "dev", "--repeats", "2", "--agent", str(tmp_path / "a.py"),
+                                                    "--agent-b", str(tmp_path / "b.py")],
+                            env_key="", file_key="dummy-file-key")
+    arms = [agent for _, agent in seen["order"]]
+    pairs = [tuple(arms[i:i + 2]) for i in range(0, len(arms), 2)]
+    assert pairs == [("# a.py", "# b.py"), ("# b.py", "# a.py")] * 2   # 2 tasks x 2 repeats, alternating
+    assert [task for task, _ in seen["order"][::2]] == ["t1", "t2", "t1", "t2"]
+    assert len(dirs) == 2 and dirs[0].endswith("-dev-A") and dirs[1].endswith("-dev-B")

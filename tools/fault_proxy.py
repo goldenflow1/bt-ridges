@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import random
 import threading
@@ -47,8 +48,10 @@ def load_scenario(path_or_dict) -> Dict:
             raise ScenarioError(f"unknown action {rule.get('action')!r}; expected one of {sorted(ACTIONS)}")
         if rule["action"] == "status" and not isinstance(rule.get("status"), int):
             raise ScenarioError("a status rule needs an integer status")
-        if rule["action"] == "cost_multiplier" and not float(rule.get("factor", 0)) > 0:
-            raise ScenarioError("a cost_multiplier rule needs a positive factor")
+        if rule["action"] == "cost_multiplier":
+            factor = rule.get("factor")
+            if isinstance(factor, bool) or not isinstance(factor, (int, float)) or not math.isfinite(factor) or factor <= 0:
+                raise ScenarioError("a cost_multiplier rule needs a finite positive numeric factor")
     return scenario
 
 
@@ -118,22 +121,22 @@ def reported_cost(body: bytes) -> Optional[float]:
     return float(cost) if isinstance(cost, (int, float)) and not isinstance(cost, bool) else None
 
 
-def multiply_cost(body: bytes, factor: float) -> bytes:
-    data = json.loads(body)
-    usage = data.get("usage")
-    if isinstance(usage, dict) and isinstance(usage.get("cost"), (int, float)):
-        usage["cost"] = usage["cost"] * factor
-    return json.dumps(data).encode()
+def multiply_cost(body: bytes, factor: float) -> Tuple[bytes, bool]:
+    """(body with usage.cost multiplied, whether a cost was present to scale)."""
+    try:
+        data = json.loads(body)
+    except ValueError:
+        return body, False
+    usage = data.get("usage") if isinstance(data, dict) else None
+    cost = usage.get("cost") if isinstance(usage, dict) else None
+    if not isinstance(cost, (int, float)) or isinstance(cost, bool):
+        return body, False
+    usage["cost"] = cost * factor
+    return json.dumps(data).encode(), True
 
 
-def make_handler(rules: Rules, upstream: str, key: str, log_path: Optional[str]):
-    log_lock = threading.Lock()
-
-    def log(entry: Dict) -> None:
-        if not log_path:
-            return
-        with log_lock, open(log_path, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+def make_handler(rules: Rules, upstream: str, key: str, log, tracker):
+    """`log(entry)` writes one JSON line; `tracker` counts requests in flight (B-FAULT-01 lifecycle)."""
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -157,11 +160,22 @@ def make_handler(rules: Rules, upstream: str, key: str, log_path: Optional[str])
                 return
             try:
                 model = str(json.loads(body).get("model") or "")
-            except ValueError:
+            except (ValueError, AttributeError):
                 model = ""
             index, fault, multipliers = rules.next(model)
-            entry = {"t": round(time.time(), 3), "index": index, "model": model, "rule": None, "stage": None,
-                     "upstream_status": None, "real_cost": None, "reported_cost": None}
+            tracker(+1)
+            log({"event": "request_start", "index": index, "model": model, "t": round(time.time(), 3)})
+            # charge: none (never forwarded) | known (cost reported) | uncertain (forwarded, cost unknown)
+            entry = {"event": "request_end", "index": index, "model": model, "rule": None, "stage": None,
+                     "upstream_status": None, "charge": "none", "real_cost": None, "reported_cost": None}
+            try:
+                self.handle_request(body, entry, fault, multipliers)
+            finally:
+                entry["t"] = round(time.time(), 3)
+                log(entry)
+                tracker(-1)
+
+        def handle_request(self, body: bytes, entry: Dict, fault: Optional[Dict], multipliers: List[Dict]) -> None:
             if fault and STAGE[fault["action"]] == "before":
                 entry.update(rule=fault.get("id") or fault["action"], stage="before")
                 if fault["action"] == "status":
@@ -184,13 +198,18 @@ def make_handler(rules: Rules, upstream: str, key: str, log_path: Optional[str])
                             time.sleep(pause)
                     except (BrokenPipeError, ConnectionResetError):
                         entry["client_disconnected"] = True
-                log(entry)
                 return
-            status, upstream_body, upstream_headers = forward(upstream, key, body)
-            entry.update(upstream_status=status, real_cost=reported_cost(upstream_body))
+            try:
+                status, upstream_body, upstream_headers = forward(upstream, key, body)
+            except Exception as exc:  # sent or not, the provider may have started work: cost unknown
+                entry.update(stage="forward_error", charge="uncertain", error=f"{type(exc).__name__}: {exc}"[:200])
+                self.reply(502, b'{"error": {"code": 502, "message": "upstream unreachable"}}')
+                return
+            real = reported_cost(upstream_body)
+            entry.update(upstream_status=status, real_cost=real, charge="known" if real is not None else
+                         ("uncertain" if status == 200 or status >= 500 or status == 0 else "none"))
             if fault and fault["action"] == "drop":
                 entry.update(rule=fault.get("id") or "drop", stage="after")
-                log(entry)
                 self.close_connection = True
                 self.connection.close()  # forwarded (possibly billed), then no response
                 return
@@ -198,35 +217,57 @@ def make_handler(rules: Rules, upstream: str, key: str, log_path: Optional[str])
                 factor = 1.0
                 for rule in multipliers:
                     factor *= float(rule["factor"])
-                upstream_body = multiply_cost(upstream_body, factor)
-                entry.update(rule="cost_multiplier", stage="after", factor=factor)
+                upstream_body, scaled = multiply_cost(upstream_body, factor)
+                entry.update(rule="cost_multiplier", stage="after", factor=factor, scaled=scaled)
             entry["reported_cost"] = reported_cost(upstream_body)
             keep = {k: v for k, v in upstream_headers.items() if k in ("retry-after",)}
-            log(entry)
             self.reply(status, upstream_body, keep)
 
     return Handler
 
 
 class FaultProxy:
-    """Run the proxy in a background thread (for run_bench and tests)."""
+    """Run the proxy in a background thread (for run_bench and tests). The log opens with `proxy_start` and closes
+    with `proxy_stop` and the number of requests still outstanding after draining (B-FAULT-01)."""
 
     def __init__(self, scenario, port: int = 0, host: str = "0.0.0.0", upstream: str = UPSTREAM,
-                 key: Optional[str] = None, log_path: Optional[str] = None):
+                 key: Optional[str] = None, log_path: Optional[str] = None, drain_sec: float = 330.0):
         self.scenario = load_scenario(scenario)
         self.rules = Rules(self.scenario)
-        handler = make_handler(self.rules, upstream, read_bench_key() if key is None else key, log_path)
+        self.log_path, self.drain_sec = log_path, drain_sec
+        self._log_lock = threading.Lock()
+        self._inflight = 0
+        self._inflight_lock = threading.Condition()
+        handler = make_handler(self.rules, upstream, read_bench_key() if key is None else key, self.log, self.track)
         self.server = ThreadingHTTPServer((host, port), handler)
         self.server.daemon_threads = True
         self.port = self.server.server_address[1]
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
+    def log(self, entry: Dict) -> None:
+        if not self.log_path:
+            return
+        with self._log_lock, open(self.log_path, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+
+    def track(self, delta: int) -> None:
+        with self._inflight_lock:
+            self._inflight += delta
+            self._inflight_lock.notify_all()
+
     def __enter__(self) -> FaultProxy:
+        self.log({"event": "proxy_start", "scenario": self.scenario["name"], "t": round(time.time(), 3)})
         self.thread.start()
         return self
 
     def __exit__(self, *exc) -> None:
-        self.server.shutdown()
+        self.server.shutdown()  # stop accepting; handlers already running continue
+        deadline = time.monotonic() + self.drain_sec
+        with self._inflight_lock:
+            while self._inflight > 0 and time.monotonic() < deadline:
+                self._inflight_lock.wait(timeout=max(0.0, deadline - time.monotonic()))
+            outstanding = self._inflight
+        self.log({"event": "proxy_stop", "outstanding": outstanding, "t": round(time.time(), 3)})
         self.server.server_close()
 
 
