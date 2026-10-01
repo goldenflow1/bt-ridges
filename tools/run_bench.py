@@ -288,21 +288,46 @@ class StopConditions:
 class ExperimentEnvelope:
     """Experiment-level spending control, checked before every dispatch: real settled cost plus held (unreconciled)
     allowances plus the next allowance must fit the limit, and the key must keep `keep_headroom` of unspent limit.
-    Unknown key headroom refuses dispatch (fail closed)."""
+    Unknown key headroom refuses dispatch (fail closed). With a `state_path` (one per experiment identity, e.g.
+    e016-pilot) the settled cost and held reservations persist, so a relaunch continues the same envelope instead of
+    starting from zero (E016 second follow-up)."""
 
-    def __init__(self, limit: Optional[float], keep_headroom: Optional[float], key_remaining: Callable[[], Optional[float]]):
+    def __init__(self, limit: Optional[float], keep_headroom: Optional[float],
+                 key_remaining: Callable[[], Optional[float]], state_path: Optional[str] = None):
         self.limit, self.keep_headroom, self.key_remaining = limit, keep_headroom, key_remaining
+        self.state_path = state_path
         self.settled = 0.0
         self.held: Dict[str, float] = {}
+        if state_path and os.path.exists(state_path):
+            with open(state_path) as handle:
+                state = json.load(handle)
+            if limit is not None and state.get("limit") is not None and float(state["limit"]) != float(limit):
+                raise RuntimeError(f"experiment envelope {state_path} was declared with limit ${state['limit']}, "
+                                   f"not ${limit}; refusing to relaunch under a different limit")
+            self.settled = float(state.get("settled") or 0.0)
+            self.held = {k: float(v) for k, v in (state.get("held") or {}).items()}
+
+    def save(self) -> None:
+        if not self.state_path:
+            return
+        os.makedirs(os.path.dirname(self.state_path) or ".", exist_ok=True)
+        temp = self.state_path + ".tmp"
+        with open(temp, "w") as handle:
+            json.dump({"limit": self.limit, "settled": round(self.settled, 6), "held": self.held}, handle, indent=1)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp, self.state_path)
 
     def reserve(self, trial_id: str, allowance: float) -> None:
         self.held[trial_id] = allowance
+        self.save()
 
     def settle(self, trial_id: str, real_cost: Optional[float]) -> None:
         if real_cost is None:
-            return  # unresolved: the allowance stays held
+            return  # unresolved: the allowance stays held, across relaunches too
         self.held.pop(trial_id, None)
         self.settled += float(real_cost)
+        self.save()
 
     def refusal(self, allowance: float) -> str:
         held = sum(self.held.values())
@@ -446,6 +471,8 @@ def run_bench() -> int:
                         help="address at which task containers reach the fault proxy on this host")
     parser.add_argument("--spend-limit", type=float, default=None,
                         help="experiment real-spend envelope in USD, enforced before every dispatch (settled + held + allowance)")
+    parser.add_argument("--experiment-id", default="",
+                        help="stable identity (e.g. e016-pilot) whose spend envelope persists across relaunches")
     parser.add_argument("--keep-headroom", type=float, default=None,
                         help="never dispatch unless the key keeps this much unspent limit after held + new allowances")
     parser.add_argument("--stop-on-billing-mismatch", action="store_true",
@@ -468,6 +495,11 @@ def run_bench() -> int:
         print("no tasks found", file=sys.stderr)
         return 2
     stamp = time.strftime("%Y%m%d-%H%M%S")
+    runs_dir = os.path.join(ROOT, "bench", "runs")
+    base_stamp, n = stamp, 1
+    while glob.glob(os.path.join(runs_dir, f"{stamp}-{args.set}*")):  # a relaunch within the same second
+        n += 1
+        stamp = f"{base_stamp}.{n}"
     arms = [("A", args.agent)] + ([("B", args.agent_b)] if args.agent_b else [])
     paired = len(arms) > 1
     scenario = load_scenario(args.fault_scenario) if args.fault_scenario else None
@@ -519,7 +551,13 @@ def run_bench() -> int:
     halt = {"reason": ""}
     stops = StopConditions(args.stop_on_billing_mismatch, args.stop_on_input_change, args.max_blocked_slots,
                            args.max_consecutive_incomplete)
-    envelope = ExperimentEnvelope(args.spend_limit, args.keep_headroom, lambda: fetch_key_remaining(key))
+    if args.spend_limit is not None and not args.experiment_id:
+        print("--spend-limit needs --experiment-id so the envelope survives a relaunch", file=sys.stderr)
+        return 2
+    envelope = ExperimentEnvelope(
+        args.spend_limit, args.keep_headroom, lambda: fetch_key_remaining(key),
+        os.path.join(os.path.dirname(os.path.abspath(args.ledger)), "envelopes", f"{args.experiment_id}.json")
+        if args.experiment_id else None)
 
     def dispatch_refusal() -> str:
         """Why the next dispatch (first attempt or replacement) must not happen; empty when it may."""

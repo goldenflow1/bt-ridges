@@ -13,6 +13,7 @@ import os
 import re
 import stat
 import subprocess
+import sys
 import threading
 from typing import Callable, Dict, List, Optional
 
@@ -264,8 +265,21 @@ TELEMETRY_MARKER = "[quarry-telemetry] {"  # written by run_agent just before it
 
 
 def completed(runtime_log: str) -> bool:
-    """Completion evidence: the agent's telemetry record, written at the end of run_agent (not just any log line)."""
-    return TELEMETRY_MARKER in (runtime_log or "")
+    """Completion evidence: a parsed, supported telemetry record — written at the end of run_agent. A truncated,
+    unparseable or unknown-version record is not completion (E016 second follow-up)."""
+    if TELEMETRY_MARKER not in (runtime_log or ""):
+        return False
+    record = _parse_telemetry(runtime_log)
+    return isinstance(record, dict) and not record.get("unsupported") and record.get("version") is not None
+
+
+def _parse_telemetry(text: str) -> Optional[Dict]:
+    src = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
+    if src not in sys.path:
+        sys.path.insert(0, src)
+    from quarry.telemetry import parse_log  # the agent's telemetry contract, shared with run_bench
+
+    return parse_log(text)
 
 
 def finalization_events(runtime_log: str) -> Dict[str, Optional[int]]:

@@ -61,7 +61,7 @@ Recorded per trial: outcome category, reward, real (trusted) and simulated cost,
 - *Solve-based acceptance* needs a known outcome for every planned slot; an unresolved slot (missing evidence, changed inputs, unknown reward) leaves its task **pending** under the comparison rules — it never passes acceptance by being left out.
 - *Cost-based acceptance* needs **complete** trusted (proxy-reconciled) real cost for every counted trial of both arms; otherwise the cost branch is unavailable, not passed.
 - *Diagnostic fields* — finalization counts (`fin_*`, unknown when `fin_observed` is false), simulated cost, model mix — may be missing for up to 10% of trials per arm without invalidating a decision; their coverage is reported.
-- Outcome categories follow the completion contract (B-RUN-06): the agent's own no-change exit is `empty-output`; other exceptions are `harness-exception`; no completion record is `missing-evidence`.
+- Outcome categories follow the completion contract (B-RUN-06): completion needs a parsed, supported telemetry record (truncated, malformed or unknown-version records are not completion); the agent's own no-change exit is `empty-output`; other exceptions are `harness-exception`; no completion record is `missing-evidence`.
 
 **Outcomes:**
 
@@ -77,7 +77,7 @@ Recorded per trial: outcome category, reward, real (trusted) and simulated cost,
 - Key headroom at declaration: $20.72 of the key's $30 limit (proposal figure; refresh before starting). Keep ≥ $5 for the later normal-condition comparison (~$1), held-out G7 (~$0.2) and confirmations.
 - The ledger now reserves each allowance before dispatch and releases it on reconciliation, so serial trials hold one $0.29 allowance at a time; worst-case 102 × $0.29 is never reserved at once.
 - **Enforced by `bench/launch/e016.sh`** (B-RUN-06), all checked before every dispatch including setup replacements:
-  - `--spend-limit 0.50` (pilot) / `--spend-limit 4.00` (main): settled real cost + held unreconciled allowances + next allowance;
+  - `--spend-limit 0.50 --experiment-id e016-pilot` (pilot) / `--spend-limit 4.00 --experiment-id e016-main` (main): settled real cost + held unreconciled allowances + next allowance. The envelope persists per experiment id (`bench/runs/envelopes/<id>.json`): a relaunch restores its settled cost and held reservations, and refuses a different limit;
   - `--keep-headroom 5`: the key's `limit_remaining` minus held and next allowances must stay ≥ $5; unknown headroom refuses dispatch;
   - `--stop-on-billing-mismatch` (another client on the key), `--stop-on-input-change`, `--max-blocked-slots 2`, `--max-consecutive-incomplete 3`.
 - A trial without reconciled real cost keeps its $0.29 allowance held (also across restarts) until its cost is established; a stopped run is reported as inconclusive.

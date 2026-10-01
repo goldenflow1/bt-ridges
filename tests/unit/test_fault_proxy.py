@@ -347,12 +347,12 @@ def stub_bench(tmp_path, monkeypatch, argv, env_key, file_key, row_overrides=Non
 
     root = tmp_path / "repo"
     for name in ("t1", "t2"):
-        (root / "bench" / "tasks" / "dev" / name).mkdir(parents=True)
+        (root / "bench" / "tasks" / "dev" / name).mkdir(parents=True, exist_ok=True)
         (root / "bench" / "tasks" / "dev" / name / "task.toml").write_text("x")
     for arm in ("a.py", "b.py"):
         (tmp_path / arm).write_text(f"# {arm}\n")
     home = tmp_path / "home"
-    (home / ".ridges").mkdir(parents=True)
+    (home / ".ridges").mkdir(parents=True, exist_ok=True)
     (home / ".ridges" / ".env.miner").write_text(f"RIDGES_OPENROUTER_API_KEY={file_key}\n")
     monkeypatch.setenv("HOME", str(home))
     if env_key:
@@ -422,6 +422,7 @@ MISMATCH = {"key_usage_delta": 0.02, "reconciled_cost": None, "cost_reconciliati
 INCOMPLETE = {"key_usage_delta": 0.0, "reconciled_cost": None, "cost_reconciliation": "proxy accounting incomplete"}
 MATCHED = {"key_usage_delta": 0.01, "reconciled_cost": 0.01, "cost_reconciliation": "matched-proxy"}
 BASE = ["--set", "dev", "--repeats", "2"]
+LIMIT = ["--spend-limit", "0.50", "--experiment-id", "e016-test"]
 
 
 def agent_args(tmp_path):
@@ -465,11 +466,11 @@ def test_B_RUN_06_consecutive_incomplete_accounting_stops_at_the_threshold(tmp_p
 
 def test_B_RUN_06_the_spend_limit_holds_unreconciled_allowances_before_dispatch(tmp_path, monkeypatch):
     # $0.50 limit, $0.29 allowance: an unreconciled first trial keeps its allowance held -> no second dispatch
-    seen, _ = stub_bench(tmp_path, monkeypatch, BASE + agent_args(tmp_path) + ["--spend-limit", "0.50"],
+    seen, _ = stub_bench(tmp_path, monkeypatch, BASE + agent_args(tmp_path) + LIMIT,
                          "", "k", reconciliation=lambda n: INCOMPLETE)
     assert len(seen["order"]) == 1
     # reconciled trials settle at their real cost and release the allowance -> all eight run
-    seen, _ = stub_bench(tmp_path / "again", monkeypatch, BASE + agent_args(tmp_path / "again") + ["--spend-limit", "0.50"],
+    seen, _ = stub_bench(tmp_path / "again", monkeypatch, BASE + agent_args(tmp_path / "again") + LIMIT,
                          "", "k", reconciliation=lambda n: MATCHED)
     assert len(seen["order"]) == 8
 
@@ -517,4 +518,55 @@ def test_B_RUN_06_outcome_contract_for_the_wrapped_no_change_and_missing_evidenc
     assert outcome_category("d", {"patch_sha256": "ab"}, done) == "patch"
     assert finalization_events("")["fin_notices"] is None and finalization_events("")["fin_observed"] is False
     assert finalization_events(done)["fin_notices"] == 0 and finalization_events(done)["fin_observed"] is True
+
+
+def test_B_RUN_06_a_relaunch_continues_the_same_envelope(tmp_path, monkeypatch):
+    # first launch: one unreconciled trial ($0.29 held) -> stopped by the $0.50 limit
+    seen, _ = stub_bench(tmp_path, monkeypatch, BASE + agent_args(tmp_path) + LIMIT, "", "k",
+                         reconciliation=lambda n: INCOMPLETE)
+    assert len(seen["order"]) == 1
+    # relaunch under the same experiment id: the held $0.29 is restored, so no new $0.29 reservation fits
+    seen, _ = stub_bench(tmp_path, monkeypatch, BASE + agent_args(tmp_path) + LIMIT, "", "k",
+                         reconciliation=lambda n: MATCHED)
+    assert seen["order"] == []
+    # a different experiment id is a different envelope
+    seen, _ = stub_bench(tmp_path, monkeypatch, BASE + agent_args(tmp_path) + ["--spend-limit", "0.50", "--experiment-id", "other"],
+                         "", "k", reconciliation=lambda n: MATCHED)
+    assert len(seen["order"]) == 8
+
+
+def test_B_RUN_06_settled_spending_is_restored_and_the_limit_cannot_change(tmp_path):
+    from tools.run_bench import ExperimentEnvelope
+
+    path = str(tmp_path / "envelopes" / "e016-pilot.json")
+    first = ExperimentEnvelope(0.50, None, lambda: None, path)
+    first.reserve("t1", 0.29)
+    first.settle("t1", 0.20)
+    again = ExperimentEnvelope(0.50, None, lambda: None, path)
+    assert again.settled == 0.20 and again.held == {}
+    assert again.refusal(0.29) == "" and again.refusal(0.31)       # 0.20 + 0.31 > 0.50
+    with pytest.raises(RuntimeError):
+        ExperimentEnvelope(4.00, None, lambda: None, path)           # same identity, different declared limit
+
+
+def test_B_RUN_06_a_spend_limit_without_an_experiment_identity_is_refused(tmp_path, monkeypatch):
+    seen, _ = stub_bench(tmp_path, monkeypatch, BASE + agent_args(tmp_path) + ["--spend-limit", "0.50"], "", "k",
+                         reconciliation=lambda n: MATCHED)
+    assert seen["order"] == []
+
+
+@pytest.mark.parametrize("log", [
+    '[quarry] [quarry-telemetry] {"version":1,"cost":\n',                 # truncated
+    '[quarry] [quarry-telemetry] {"version": 1, "cost": }\n',             # malformed JSON
+    '[quarry] [quarry-telemetry] {"version": 99}\n',                      # unsupported version
+    '[quarry] [quarry-telemetry] {"cost": 1}\n',                          # no version
+])
+def test_B_RUN_06_only_a_parsed_supported_telemetry_record_is_completion(log):
+    from tools.bench_records import completed, finalization_events, outcome_category
+
+    assert not completed(log)
+    assert outcome_category("d", {}, log) == "missing-evidence"
+    events = finalization_events(log)
+    assert events["fin_observed"] is False and events["fin_notices"] is None
+    assert completed('[quarry] [quarry-telemetry] {"version": 1, "final": {}}\n')
 

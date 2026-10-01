@@ -15,8 +15,8 @@ COMMON=(--set dev --agent "$A" --agent-b "$B" --fault-scenario "$SCENARIO" --all
         --max-blocked-slots 2 --max-consecutive-incomplete 3
         --ridges "uv run --project $HOME/bittensor/ridges-cli --no-sync ridges")
 case "${1:-}" in
-  pilot) exec uv run python tools/run_bench.py "${COMMON[@]}" --purpose diagnostic --repeats 1 --spend-limit 0.50 \
+  pilot) exec uv run python tools/run_bench.py "${COMMON[@]}" --purpose diagnostic --repeats 1 --spend-limit 0.50 --experiment-id e016-pilot \
            --tasks py-django-n-plus-one,py-sqla-orders-fanout,ts-prisma-groupby,ch-py-prewhere-orderkey ;;
-  main)  exec uv run python tools/run_bench.py "${COMMON[@]}" --purpose evaluation --repeats 3 --spend-limit 4.00 ;;
+  main)  exec uv run python tools/run_bench.py "${COMMON[@]}" --purpose evaluation --repeats 3 --spend-limit 4.00 --experiment-id e016-main ;;
   *) echo "usage: $0 pilot|main" >&2; exit 2 ;;
 esac
