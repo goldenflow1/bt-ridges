@@ -7,3 +7,8 @@ date__day,model,tokens_completion
 2026-10-01,DeepSeek V4 Pro 0423,73324
 2026-10-01,DeepSeek V4 Pro 0813,437177
 2026-10-01,GPT-5.6 Luna,195552
+# Second export, user-provided 2026-10-01: "last 3 hours" window covering the v003 screening (05:53-06:07 UTC Oct 1); dates shown in local time.
+# window,model,tokens_completion
+# last-3h,DeepSeek V4 Pro 0813,437177
+# last-3h,GPT-5.6 Luna,105069
+# (no DeepSeek V4 Pro 0423 in this window)
