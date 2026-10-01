@@ -44,6 +44,10 @@ class Settings:
     baseline_min_sec: float = 60.0
     check_factor: float = 3.0  # later check runs may take this multiple of the baseline duration
     check_min_sec: float = 120.0
+    finish_reserve_share: float = 0.25  # finalization notice once this share of the driver budget or time is left (H-LOOP-06)
+    finalize_turns: int = 8  # turns of the finalization round (H-SHELL-15)
+    finalize_min_sec: float = 60.0
+    finalize_min_share: float = 0.05  # of the spendable budget, left outside the driver phase
 
     @classmethod
     def from_env(cls, environ: Optional[dict] = None) -> Settings:
@@ -260,10 +264,19 @@ class Workflow:
             self.root, self.spec, self.runner, self.scratch, self.profile.databases,
             command_timeout=lambda: max(5.0, min(self.clock.command_timeout(300), timer.remaining())),
         )
+        slice_sec = max(1.0, timer.remaining())
+
+        def reserve_reached() -> bool:
+            share = self.settings.finish_reserve_share
+            left = self.wallet.phase_fraction_left()
+            return (left is not None and left <= share) or timer.remaining() <= share * slice_sec
+
+        last_outcome = None
         with self.wallet.phase("driver", self.wallet.spendable * self.settings.driver_budget_share):
             for round_no in range(self.settings.fix_rounds + 1):
-                loop = DriverLoop(self.client, self.settings.driver, registry, ctx, timer, self.settings.max_turns)
-                outcome = loop.run(messages)
+                loop = DriverLoop(self.client, self.settings.driver, registry, ctx, timer, self.settings.max_turns,
+                                  reserve=reserve_reached, has_changes=self.tree_changed)
+                outcome = last_outcome = loop.run(messages)
                 self.note(f"round {round_no}: {outcome.reason} after {outcome.turns} turns; consumed ${self.wallet.consumed_usd:.4f}")
                 report, failures, checks = self.gate(ctx, f"r{round_no}")
                 self.rounds.append({
@@ -285,7 +298,46 @@ class Workflow:
                 if report.repairs:
                     feedback += "\nAutomatic corrections applied to the working tree: " + "; ".join(report.repairs)
                 messages.append({"role": "user", "content": feedback + "\n\n" + "\n\n".join(problems)[:6000]})
+        self.finalization_round(messages, registry, ctx, last_outcome)
         return self.result()
+
+    def tree_changed(self) -> bool:
+        try:
+            return bool(self.repo.changed().all_paths())
+        except Exception:
+            return True  # unknown: never refuse a finish on a guess
+
+    def finalization_round(self, messages: List[Dict], registry: ToolRegistry, ctx: ToolContext, outcome) -> None:
+        """With no candidate after the driver rounds, spend the budget kept outside the driver phase on one short
+        round that turns the gathered evidence into a change (H-SHELL-15)."""
+        if outcome is None or self.store.best() is not None or self.wallet.spent:
+            return
+        reserve = self.wallet.remaining()
+        if reserve < self.settings.finalize_min_share * self.wallet.spendable:
+            return
+        if self.clock.remaining() < self.settings.finalize_min_sec:
+            return
+        self.note(f"finalization round: no candidate after the driver ({outcome.reason}); "
+                  f"${reserve:.4f} and {self.clock.remaining():.0f}s left")
+        timer = self.clock.slice(1.0)
+        ctx.finished = False
+        name = "prompts/finalize_verify.md" if self.tree_changed() else "prompts/finalize.md"
+        messages.append({"role": "user", "content": asset(name).strip()})
+        with self.wallet.phase("finalize", reserve):
+            loop = DriverLoop(self.client, self.settings.driver, registry, ctx, timer, self.settings.finalize_turns,
+                              has_changes=self.tree_changed)
+            final = loop.run(messages)
+            self.note(f"finalization round: {final.reason} after {final.turns} turns; consumed ${self.wallet.consumed_usd:.4f}")
+            report, failures, checks = self.gate(ctx, "final")
+            self.rounds.append({
+                "round": "final", "loop": final.reason, "turns": final.turns, "guard_eligible": report.eligible,
+                "guard_failed": [r.name for r in report.failures() if r.hard], "checks": checks,
+            })
+            problems = [f"{r.name}: {r.detail}" for r in report.failures() if r.hard] + failures
+            self.store.add(Candidate(
+                report.diff, self.evidence_of(report, checks, final), report.eligible and checks is not False,
+                report.repairs, checks, problems,
+            ))
 
     def result(self) -> str:
         best = self.store.best()

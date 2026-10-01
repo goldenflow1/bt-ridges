@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
+from quarry.assets import asset
 from quarry.clock import PhaseTimer
 from quarry.llm import LLMError, ModelRoute, estimate_tokens
 from quarry.tools import ToolContext, ToolRegistry
@@ -12,6 +13,7 @@ from quarry.wallet import BudgetExhausted
 
 NUDGE = "Continue with tool calls. When the change is complete and verified, call `finish`."
 KEEP_RECENT = 8
+REFUSE_EMPTY_FINISH_MIN_SEC = 30.0  # an empty `finish` is refused only while this much of the phase remains (H-LOOP-07)
 
 
 @dataclass
@@ -33,6 +35,8 @@ class DriverLoop:
         compact_tokens: int = 40_000,
         pinned: int = 2,
         role: str = "driver",
+        reserve: Optional[Callable[[], bool]] = None,
+        has_changes: Optional[Callable[[], bool]] = None,
     ):
         self.client = client
         self.route = route
@@ -43,6 +47,10 @@ class DriverLoop:
         self.compact_tokens = compact_tokens
         self.pinned = pinned
         self.role = role
+        self.reserve = reserve  # True once the finishing reserve is reached (H-LOOP-06)
+        self.has_changes = has_changes  # True when the working tree differs from the start (H-LOOP-07)
+        self.notified = False
+        self.empty_finish_refused = False
 
     def run(self, messages: List[Dict]) -> LoopOutcome:
         stalls = 0
@@ -53,6 +61,7 @@ class DriverLoop:
             if self.timer.expired():
                 return LoopOutcome("deadline", turn - 1)
             self.compact(messages)
+            self.notify_if_reserve(messages)
             try:
                 reply = self.client.complete(
                     messages, self.route, tools=schemas, role=self.role, timeout=180.0, deadline=self.timer.end
@@ -74,12 +83,35 @@ class DriverLoop:
                     output = "skipped: the time for this phase is over"
                 else:
                     output = call.error or self.registry.dispatch(self.ctx, call.name, call.arguments)
+                    if call.name == "finish" and self.ctx.finished and self.refuse_empty_finish():
+                        self.ctx.finished = False
+                        output = asset("prompts/empty_finish.md").strip()
                 messages.append({"role": "tool", "tool_call_id": call.id, "content": output})
             if self.timer.expired() and not self.ctx.finished:
                 return LoopOutcome("deadline", turn)
             if self.ctx.finished:
                 return LoopOutcome("finished", turn)
         return LoopOutcome("max-turns", self.max_turns)
+
+    def changed(self) -> bool:
+        return bool(self.has_changes and self.has_changes())
+
+    def notify_if_reserve(self, messages: List[Dict]) -> None:
+        """One wrap-up instruction when the finishing reserve is reached (H-LOOP-06)."""
+        if self.notified or self.reserve is None or not self.reserve():
+            return
+        self.notified = True
+        name = "prompts/finalize_verify.md" if self.changed() else "prompts/finalize.md"
+        messages.append({"role": "user", "content": asset(name).strip()})
+
+    def refuse_empty_finish(self) -> bool:
+        """Refuse one `finish` on an unchanged tree while time remains (H-LOOP-07)."""
+        if self.empty_finish_refused or self.has_changes is None or self.changed():
+            return False
+        if self.timer.remaining() < REFUSE_EMPTY_FINISH_MIN_SEC:
+            return False
+        self.empty_finish_refused = True
+        return True
 
     def compact(self, messages: List[Dict]) -> Optional[int]:
         """Shrink old tool outputs once the transcript is too large. Pinned messages are never touched."""

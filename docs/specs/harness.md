@@ -24,6 +24,7 @@ Gate G5 fails if an ID with `unit|scenario|e2e` has no test whose name contains 
 | H-SHELL-11 | Baseline checks share one phase budget (default 35% of the run, preferred minimum 60 s), capped by time remaining minus 60 s for editing. The minimum never overrides the deadline; checks that cannot start within the phase are skipped and reported. Duration, exit status and timeout are recorded on the unmodified tree. | scenario |
 | H-SHELL-12 | Check timeouts come from the baseline: about 3× its duration (at least 120 s, never past the deadline). If the baseline timed out, later runs are skipped as `unknown` rather than failed; if the baseline itself failed, a later failure is `unknown` ("fails before any change too"), not evidence against the patch. | scenario |
 | H-SHELL-13 | Check observations are logged, not only shown to the model: per run of each check its round, command, exit code, seconds, timeout flag and a short output tail go to the run log and the telemetry record, along with per-round loop outcome, guard eligibility and the final candidate's status. | scenario, e2e |
+| H-SHELL-15 | Finalization round (v004 B2): when the driver rounds end — budget, deadline, model error or max turns — with no stored candidate, no hard budget refusal, at least 60 s before wrap-up and at least 5% of the spendable budget left outside the driver phase, one short round (≤ 8 turns) runs on that reserve with the finalization instruction; its result is gated and stored like any round. (H-SHELL-14 is reserved by the parked E010 branch.) | scenario |
 
 ## 2. Wallet (`quarry.wallet`)
 | ID | Requirement | Verify |
@@ -126,6 +127,8 @@ Repairs run first, then checks. A check failure makes the candidate ineligible (
 | H-LOOP-03 | When the transcript exceeds a token budget, old tool results are replaced by one-line summaries; the system prompt and the spec block are never compacted. | unit |
 | H-LOOP-04 | Three consecutive empty replies → the loop ends with reason `stalled`. | unit |
 | H-LOOP-05 | Tool calls in one reply stop at the phase deadline; skipped calls still get an answer. | scenario |
+| H-LOOP-06 | Finalization notice (v004 B2): when the loop's phase budget or time falls to its finishing reserve (default 25% left), the model receives one wrap-up instruction — make the best-supported change now if the working tree is unchanged, otherwise verify briefly and finish. Sent at most once per loop; never asks for an arbitrary edit. | unit |
+| H-LOOP-07 | Empty finish (v004 B3): a `finish` call while the working tree is unchanged and at least 30 s of the phase remain is refused once with an explanation and the loop continues; a second `finish` is accepted (an honest no-patch result). A changed tree, or no time left, is never refused. | unit |
 
 ## 10. Build and lint (`tools/build.py`, `tools/prescreen_lint.py`)
 | ID | Requirement | Verify |

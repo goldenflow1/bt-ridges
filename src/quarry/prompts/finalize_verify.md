@@ -1,0 +1,1 @@
+Most of the budget and time for this task is used. Your change is in the working tree: verify it briefly if a check is cheap, fix only what that check shows, and call `finish`. Do not start new exploration.

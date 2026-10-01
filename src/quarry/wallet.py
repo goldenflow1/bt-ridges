@@ -93,6 +93,12 @@ class Wallet:
             left = min(left, self._phase_cap - self._phase_spent)
         return max(0.0, left)
 
+    def phase_fraction_left(self) -> Optional[float]:
+        """Share of the current phase cap still spendable (None outside a phase); used for the finishing reserve."""
+        if not self._phase_cap:
+            return None
+        return max(0.0, self.remaining() / self._phase_cap)
+
     def can_afford(self, estimate_usd: float) -> bool:
         return not self.spent and estimate_usd <= self.remaining()
 

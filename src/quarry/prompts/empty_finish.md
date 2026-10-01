@@ -1,0 +1,1 @@
+Not finished: the working tree has no change, and the task asks for a code change. Make the change the evidence supports in the files the task allows, verify it if a check is cheap, and call `finish` again. If no change is possible, call `finish` again and explain why.
