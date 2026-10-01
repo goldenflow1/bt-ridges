@@ -278,7 +278,7 @@ class Workflow:
             for round_no in range(self.settings.fix_rounds + 1):
                 loop = DriverLoop(self.client, self.settings.driver, registry, ctx, timer, self.settings.max_turns,
                                   reserve=reserve_reached, has_changes=self.tree_changed,
-                                  can_continue=lambda m: self.can_afford_turn(m, registry))
+                                  can_continue=lambda m: self.can_afford_turn(m, registry), on_event=self.note)
                 outcome = last_outcome = loop.run(messages)
                 self.note(f"round {round_no}: {outcome.reason} after {outcome.turns} turns; consumed ${self.wallet.consumed_usd:.4f}")
                 report, failures, checks = self.gate(ctx, f"r{round_no}")
@@ -339,7 +339,7 @@ class Workflow:
         with self.wallet.phase("finalize", reserve):
             loop = DriverLoop(self.client, self.settings.driver, registry, ctx, timer, self.settings.finalize_turns,
                               has_changes=self.tree_changed,
-                              can_continue=lambda m: self.can_afford_turn(m, registry))
+                              can_continue=lambda m: self.can_afford_turn(m, registry), on_event=self.note)
             final = loop.run(messages)
             self.note(f"finalization round: {final.reason} after {final.turns} turns; consumed ${self.wallet.consumed_usd:.4f}")
             report, failures, checks = self.gate(ctx, "final")

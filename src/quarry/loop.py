@@ -38,6 +38,7 @@ class DriverLoop:
         reserve: Optional[Callable[[], bool]] = None,
         has_changes: Optional[Callable[[], bool]] = None,
         can_continue: Optional[Callable[[List[Dict]], bool]] = None,
+        on_event: Optional[Callable[[str], None]] = None,
     ):
         self.client = client
         self.route = route
@@ -51,6 +52,8 @@ class DriverLoop:
         self.reserve = reserve  # True once the finishing reserve is reached (H-LOOP-06)
         self.has_changes = has_changes  # True when the working tree differs from the start (H-LOOP-07)
         self.can_continue = can_continue
+        self.on_event = on_event  # run-log writer for finalization events (H-LOOP-06/07)
+        self.turn = 0
         self.notified = False
         self.empty_finish_refused = False
 
@@ -58,6 +61,7 @@ class DriverLoop:
         stalls = 0
         schemas = self.registry.schemas()
         for turn in range(1, self.max_turns + 1):
+            self.turn = turn
             if self.ctx.finished:
                 return LoopOutcome("finished", turn - 1)
             if self.timer.expired():
@@ -94,6 +98,9 @@ class DriverLoop:
                 self.ctx.summary = ""
                 self.ctx.target_symbol = ""
                 finish_message["content"] = asset("prompts/empty_finish.md").strip()
+                self.event(f"empty finish refused at turn {turn}")
+            elif finish_message is not None and self.ctx.finished and self.has_changes is not None and not self.changed():
+                self.event(f"empty finish accepted at turn {turn} (no change in the working tree)")
             if self.timer.expired() and not self.ctx.finished:
                 return LoopOutcome("deadline", turn)
             if self.ctx.finished:
@@ -108,8 +115,14 @@ class DriverLoop:
         if self.notified or self.reserve is None or not self.reserve():
             return
         self.notified = True
-        name = "prompts/finalize_verify.md" if self.changed() else "prompts/finalize.md"
+        changed = self.changed()
+        name = "prompts/finalize_verify.md" if changed else "prompts/finalize.md"
         messages.append({"role": "user", "content": asset(name).strip()})
+        self.event(f"finalization notice at turn {self.turn} ({'verify' if changed else 'make the change'})")
+
+    def event(self, text: str) -> None:
+        if self.on_event is not None:
+            self.on_event(text)
 
     def refuse_empty_finish(self, messages: List[Dict]) -> bool:
         """Refuse one completed empty batch only when another turn is possible (H-LOOP-07)."""

@@ -282,3 +282,17 @@ def test_H_LOOP_07_finish_then_edit_in_one_reply_is_not_mistaken_for_empty(tmp_p
 
     loop, ctx = loop_for(str(tmp_path), Client([FINISH + EDIT]), changed=changed)
     assert loop.run([]).turns == 1 and ctx.finished and not loop.empty_finish_refused
+
+
+def test_H_LOOP_06_and_07_finalization_events_are_recorded_in_the_run_log(tmp_path):
+    write(str(tmp_path), "m.py", M)
+    events = []
+    client = Client([READ, FINISH, READ, FINISH])
+    loop, _ = loop_for(str(tmp_path), client, reserve=lambda: client.n >= 2)
+    loop.on_event = events.append
+    loop.run([])
+    # the reserve is checked before each model call: reached after call 2, so the notice opens turn 3
+    assert events == ["empty finish refused at turn 2",
+                      "finalization notice at turn 3 (make the change)",
+                      "empty finish accepted at turn 4 (no change in the working tree)"]
+
