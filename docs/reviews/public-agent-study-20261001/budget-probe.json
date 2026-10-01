@@ -1,0 +1,18 @@
+[
+  {
+    "scenario": "temporary reservation",
+    "http_status": 402,
+    "error_code": "in_flight_budget_exhausted",
+    "outcome": "terminal_budget_exhaustion",
+    "transport_calls": 1,
+    "wallet_marked_spent": true
+  },
+  {
+    "scenario": "hard spending cap",
+    "http_status": 402,
+    "error_code": "budget_exhausted",
+    "outcome": "terminal_budget_exhaustion",
+    "transport_calls": 1,
+    "wallet_marked_spent": true
+  }
+]

@@ -1,0 +1,156 @@
+{
+  "price_basis": "v003 price table, not independently verified historical provider pricing",
+  "prices": {
+    "openai/gpt-5.6-luna": [
+      0.2,
+      1.2
+    ],
+    "xiaomi/mimo-v2.5": [
+      0.14,
+      0.28
+    ],
+    "tencent/hy3": [
+      0.132,
+      0.528
+    ],
+    "minimax/minimax-m2.5": [
+      0.27,
+      1.08
+    ],
+    "google/gemini-3.7-flash": [
+      0.75,
+      3.75
+    ],
+    "deepseek/deepseek-v4-pro-0813": [
+      0.48,
+      4.2
+    ]
+  },
+  "trials": 21,
+  "calls": 284,
+  "complete_calls": 284,
+  "cache_reported_calls": 284,
+  "cache_read_share": 0.9179495265466804,
+  "actual_mean": 0.006699809523809524,
+  "no_cache_estimate_mean": 0.018477933333333335,
+  "no_cache_estimate_max": 0.0396258,
+  "per_trial": [
+    {
+      "task": "ch-go-skip-index",
+      "actual_cost": "0.004606",
+      "no_cache_estimate": 0.0090724
+    },
+    {
+      "task": "ch-py-argmax-state",
+      "actual_cost": "0.004321",
+      "no_cache_estimate": 0.0096702
+    },
+    {
+      "task": "go-sqlc-interval",
+      "actual_cost": "0.005871",
+      "no_cache_estimate": 0.0193978
+    },
+    {
+      "task": "pg-expr-index-lower",
+      "actual_cost": "0.010196",
+      "no_cache_estimate": 0.0350534
+    },
+    {
+      "task": "py-django-annotate-subquery",
+      "actual_cost": "0.00359",
+      "no_cache_estimate": 0.0078256
+    },
+    {
+      "task": "py-sqla-distinct-on",
+      "actual_cost": "0.005777",
+      "no_cache_estimate": 0.0123284
+    },
+    {
+      "task": "ts-typeorm-fanout",
+      "actual_cost": "0.014621",
+      "no_cache_estimate": 0.0396258
+    },
+    {
+      "task": "ch-go-skip-index",
+      "actual_cost": "0.004668",
+      "no_cache_estimate": 0.010653800000000001
+    },
+    {
+      "task": "ch-py-argmax-state",
+      "actual_cost": "0.005845",
+      "no_cache_estimate": 0.0155926
+    },
+    {
+      "task": "go-sqlc-interval",
+      "actual_cost": "0.005367",
+      "no_cache_estimate": 0.016855000000000002
+    },
+    {
+      "task": "pg-expr-index-lower",
+      "actual_cost": "0.00939",
+      "no_cache_estimate": 0.0295066
+    },
+    {
+      "task": "py-django-annotate-subquery",
+      "actual_cost": "0.007527",
+      "no_cache_estimate": 0.019250200000000002
+    },
+    {
+      "task": "py-sqla-distinct-on",
+      "actual_cost": "0.005145",
+      "no_cache_estimate": 0.0126614
+    },
+    {
+      "task": "ts-typeorm-fanout",
+      "actual_cost": "0.009027",
+      "no_cache_estimate": 0.025251000000000003
+    },
+    {
+      "task": "ch-go-skip-index",
+      "actual_cost": "0.004426",
+      "no_cache_estimate": 0.008838
+    },
+    {
+      "task": "ch-py-argmax-state",
+      "actual_cost": "0.007281",
+      "no_cache_estimate": 0.021219000000000002
+    },
+    {
+      "task": "go-sqlc-interval",
+      "actual_cost": "0.005758",
+      "no_cache_estimate": 0.0175916
+    },
+    {
+      "task": "pg-expr-index-lower",
+      "actual_cost": "0.007951",
+      "no_cache_estimate": 0.025637800000000002
+    },
+    {
+      "task": "py-django-annotate-subquery",
+      "actual_cost": "0.004651",
+      "no_cache_estimate": 0.0097888
+    },
+    {
+      "task": "py-sqla-distinct-on",
+      "actual_cost": "0.005587",
+      "no_cache_estimate": 0.015808
+    },
+    {
+      "task": "ts-typeorm-fanout",
+      "actual_cost": "0.009091",
+      "no_cache_estimate": 0.0264092
+    }
+  ],
+  "calculated_at_utc": "2026-10-01T06:55:34.784179+00:00",
+  "bundle_sha256": "060edea3568360c90aea234bf5227257c79a3e9926b8cd7275ec24af1dfeae1c",
+  "run": "bench/runs/20260930-214235-heldout",
+  "formula": "sum(prompt_tokens * uncached_input_price + completion_tokens * output_price) / 1_000_000, over the recorded calls; then mean over 21 trials",
+  "limitations": [
+    "Reprices the same observed local calls; it does not simulate changes in behavior, routing or retries under production.",
+    "Uses the submitted source price table, not a verified historical provider tariff. Does not include unrecorded provider overhead or cache-write premiums.",
+    "Production cache-hit rates have not been retrieved. Missing production cache data is not zero."
+  ],
+  "g7_mean_cost_threshold": 0.03,
+  "would_pass_existing_mean_cost_gate_without_cache": true,
+  "all_local_trials_below_proposed_005_target": true
+}

@@ -1,0 +1,15 @@
+{
+  "rank": 44,
+  "name": "Adidas",
+  "version": 11,
+  "agent_id": "6791c097-1362-5ef7-a0b4-758d82ac0a8b",
+  "score": 0.3,
+  "cost_usd": 0.03984302366666667,
+  "status": "didnt_qualify",
+  "validator_count": 3,
+  "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=6791c097-1362-5ef7-a0b4-758d82ac0a8b",
+  "http_status": 200,
+  "path": "references/miners/set-28/adidas_v11_6791c097/agent.py",
+  "sha256": "5ce8abba56fa937d12bc8bf89ae581115ff94806f267ac034353457b49616f14",
+  "lines": 5566
+}

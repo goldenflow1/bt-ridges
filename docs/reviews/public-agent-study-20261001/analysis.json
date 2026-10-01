@@ -1,0 +1,272 @@
+{
+  "written_at_utc": "2026-10-01T06:34:44.747884+00:00",
+  "scope": "Static study of the five highest-ranked publicly accessible finished/didnt_qualify agents in the saved competition-28 leaderboard snapshot. Public agents were parsed, not imported or executed.",
+  "selection": "references/miners/set-28/study-20261001/selection.json",
+  "probes": 40,
+  "hidden_before_first_public": 35,
+  "selected": [
+    {
+      "rank": 41,
+      "name": "Aurora",
+      "version": 10,
+      "agent_id": "5778a363-ac67-5ce9-8c0a-12f841575637",
+      "score": 0.3,
+      "cost_usd": 0.0195407623,
+      "status": "didnt_qualify",
+      "validator_count": 3,
+      "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=5778a363-ac67-5ce9-8c0a-12f841575637",
+      "http_status": 200,
+      "path": "references/miners/set-28/aurora_v10_5778a363/agent.py",
+      "sha256": "b6848bcd8b9aaf4a712c3237a972e55378a43ee7700499fef0f80c5eca13843c",
+      "lines": 6956
+    },
+    {
+      "rank": 42,
+      "name": "Enigma485",
+      "version": 13,
+      "agent_id": "d3e0be01-675e-5e0c-be8c-f18cdaad9d11",
+      "score": 0.3,
+      "cost_usd": 0.021461978180000004,
+      "status": "didnt_qualify",
+      "validator_count": 3,
+      "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=d3e0be01-675e-5e0c-be8c-f18cdaad9d11",
+      "http_status": 200,
+      "path": "references/miners/set-28/enigma485_v13_d3e0be01/agent.py",
+      "sha256": "ef935e51054a99b20c0cc82373640d643a298746a926adb0534028d3b855cc38",
+      "lines": 8144
+    },
+    {
+      "rank": 43,
+      "name": "ChatGPT",
+      "version": 0,
+      "agent_id": "aee8ab8e-22da-507b-997a-1d49da2e4140",
+      "score": 0.3,
+      "cost_usd": 0.02894006922266666,
+      "status": "didnt_qualify",
+      "validator_count": 3,
+      "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=aee8ab8e-22da-507b-997a-1d49da2e4140",
+      "http_status": 200,
+      "path": "references/miners/set-28/chatgpt_v0_aee8ab8e/agent.py",
+      "sha256": "48441a9a0d92796269eafa6876ca51d4621fd71c707ba52a5426f3dd68b98afa",
+      "lines": 8309
+    },
+    {
+      "rank": 44,
+      "name": "Adidas",
+      "version": 11,
+      "agent_id": "6791c097-1362-5ef7-a0b4-758d82ac0a8b",
+      "score": 0.3,
+      "cost_usd": 0.03984302366666667,
+      "status": "didnt_qualify",
+      "validator_count": 3,
+      "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=6791c097-1362-5ef7-a0b4-758d82ac0a8b",
+      "http_status": 200,
+      "path": "references/miners/set-28/adidas_v11_6791c097/agent.py",
+      "sha256": "5ce8abba56fa937d12bc8bf89ae581115ff94806f267ac034353457b49616f14",
+      "lines": 5566
+    },
+    {
+      "rank": 45,
+      "name": "Emerge victory",
+      "version": 3,
+      "agent_id": "d78218d7-ad21-5e47-bf4e-8b20c3a5fd88",
+      "score": 0.3,
+      "cost_usd": 0.04219191987466667,
+      "status": "didnt_qualify",
+      "validator_count": 3,
+      "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=d78218d7-ad21-5e47-bf4e-8b20c3a5fd88",
+      "http_status": 200,
+      "path": "references/miners/set-28/emerge-victory_v3_d78218d7/agent.py",
+      "sha256": "561a2e014b55d54a0d97fcf0d848b279e6de008932258d26ba3a13b60702234d",
+      "lines": 8382
+    }
+  ],
+  "limitations": [
+    "The absolute top five returned HTTP 403; their implementations could not be inspected.",
+    "Many source definitions are identical between references. This is correlated evidence, not five independent experiments.",
+    "Source patterns do not prove which features caused screening success.",
+    "Production tracebacks for Quarry are unavailable in the public response. Neither local reproduction proves the production root cause.",
+    "Peer evaluation details were retrieved for Adidas. An additional Aurora metrics request returned HTTP 403, so no missing peer screening metrics are inferred.",
+    "Screening scores and final three-validator consensus scores use different stages and must not be compared as the same metric."
+  ],
+  "definition_overlap": [
+    {
+      "a": "Aurora",
+      "b": "Enigma485",
+      "shared_definition_names": 87,
+      "identical_ast_definitions": 53
+    },
+    {
+      "a": "Aurora",
+      "b": "ChatGPT",
+      "shared_definition_names": 87,
+      "identical_ast_definitions": 53
+    },
+    {
+      "a": "Aurora",
+      "b": "Adidas",
+      "shared_definition_names": 122,
+      "identical_ast_definitions": 105
+    },
+    {
+      "a": "Aurora",
+      "b": "Emerge victory",
+      "shared_definition_names": 87,
+      "identical_ast_definitions": 53
+    },
+    {
+      "a": "Enigma485",
+      "b": "ChatGPT",
+      "shared_definition_names": 215,
+      "identical_ast_definitions": 200
+    },
+    {
+      "a": "Enigma485",
+      "b": "Adidas",
+      "shared_definition_names": 62,
+      "identical_ast_definitions": 28
+    },
+    {
+      "a": "Enigma485",
+      "b": "Emerge victory",
+      "shared_definition_names": 208,
+      "identical_ast_definitions": 184
+    },
+    {
+      "a": "ChatGPT",
+      "b": "Adidas",
+      "shared_definition_names": 62,
+      "identical_ast_definitions": 28
+    },
+    {
+      "a": "ChatGPT",
+      "b": "Emerge victory",
+      "shared_definition_names": 209,
+      "identical_ast_definitions": 185
+    },
+    {
+      "a": "Adidas",
+      "b": "Emerge victory",
+      "shared_definition_names": 62,
+      "identical_ast_definitions": 29
+    }
+  ],
+  "quarry_screening": {
+    "agent_id": "3cb91034-fe6f-5271-94be-c8be974fefdf",
+    "stage": "screener_1",
+    "runs": 30,
+    "solved": 18,
+    "error_codes": {
+      "3060": 5,
+      "1000": 6
+    },
+    "mean_reported_cost_usd": 0.147227452184,
+    "cost_count": 25,
+    "source": "https://agent-upload.ridges.ai/retrieval/evaluations-for-agent?agent_id=3cb91034-fe6f-5271-94be-c8be974fefdf"
+  },
+  "adidas_evaluations": {
+    "source": "https://agent-upload.ridges.ai/retrieval/evaluations-for-agent?agent_id=6791c097-1362-5ef7-a0b4-758d82ac0a8b",
+    "stages": [
+      {
+        "stage": "screener_1",
+        "evaluation_id": "c5f52122-6959-4ce1-996f-ab17f05fed23",
+        "runs": 30,
+        "solved": 27,
+        "error_codes": {
+          "1000": 2
+        },
+        "mean_reported_cost_usd": 0.02388205357142857
+      },
+      {
+        "stage": "screener_2",
+        "evaluation_id": "640a79c7-f553-4ccc-8fc1-1bb2696612be",
+        "runs": 30,
+        "solved": 27,
+        "error_codes": {},
+        "mean_reported_cost_usd": 0.022406342
+      },
+      {
+        "stage": "validator",
+        "evaluation_id": "da625571-547d-4f45-9229-b92e1e44682b",
+        "runs": 50,
+        "solved": 21,
+        "error_codes": {
+          "1000": 1
+        },
+        "mean_reported_cost_usd": 0.0390658063
+      },
+      {
+        "stage": "validator",
+        "evaluation_id": "d66d17f1-fbe7-43b2-815d-edb9d55ce622",
+        "runs": 50,
+        "solved": 22,
+        "error_codes": {
+          "1000": 1
+        },
+        "mean_reported_cost_usd": 0.0406437357
+      },
+      {
+        "stage": "validator",
+        "evaluation_id": "eceb68d9-9472-4267-aa58-65e8271c491b",
+        "runs": 50,
+        "solved": 19,
+        "error_codes": {
+          "1000": 1
+        },
+        "mean_reported_cost_usd": 0.039819529
+      }
+    ]
+  },
+  "findings": [
+    {
+      "priority": 1,
+      "topic": "Distinguish temporary reservations from a hard budget cap",
+      "evidence": "Aurora:635, Adidas:563, ChatGPT:2035, and Emerge victory:2042 special-case HTTP 402 in_flight_budget_exhausted with bounded waiting. Enigma lacks that special case. Quarry wallet.py:191 treats every HTTP 402 as terminal.",
+      "confirmed_local": "budget-probe.json: one temporary reservation response ends the call, marks the wallet spent, and never reaches the prepared successful response.",
+      "hypothesis": "A production proxy reservation response could end a run before its first patch. Actual occurrence in the failed screening is unknown.",
+      "experiment": "Inject temporary reservation then success, repeated temporary reservation, genuine cap exhaustion, and Retry-After beyond the remaining deadline; preserve unknown-cost accounting."
+    },
+    {
+      "priority": 2,
+      "topic": "Enforce total response deadlines",
+      "evidence": "Aurora agent.py:406 reads with an absolute deadline and agent.py:6836 adds an outer stop. Quarry llm.py:115 uses a socket timeout followed by full response.read().",
+      "confirmed_local": "timeout-probe.json: a 0.1-second requested timeout returned after 0.636 seconds while bytes arrived every 0.03 seconds.",
+      "experiment": "Bound response bodies, HTTP error bodies, tool processes and finalization by one monotonic deadline. Test a trickling response, a stalled response and cleanup near expiry."
+    },
+    {
+      "priority": 3,
+      "topic": "Recover while no patch exists",
+      "evidence": "All five references inspect edit progress and nudge toward a first change; Aurora agent.py:6606 and Enigma agent.py:7628 are examples. Aurora optional read-tool withholding is disabled by default. Quarry loop.py has no edit-progress trigger or dedicated first-patch recovery phase.",
+      "experiment": "Measure time and spend before the first applicable in-scope patch, repeated read calls, finish attempts on unchanged trees, and rejection reasons. Reserve bounded recovery capacity without forcing irrelevant edits."
+    },
+    {
+      "priority": 4,
+      "topic": "Recognize truncation and retain usable work",
+      "evidence": "Aurora agent.py:733 detects an empty length-truncated completion and its request loop handles it. ChatGPT agent.py:8239 retries an empty derivation when budget allows and preserves applicable alternatives. Quarry has candidate ranking and handoff checks already, but llm.py does not retain finish_reason.",
+      "experiment": "Inject length-truncated responses, errors after useful edits, failed whole-patch apply checks and handoff exceptions. Retain applicable full patches; never count an empty or irrelevant diff as a success."
+    },
+    {
+      "priority": 5,
+      "topic": "Replace weak generalization evidence",
+      "evidence": "v003 local evidence contains seven distinct tasks repeated three times, and all 21 runtime logs show cap_usd=0.29. The cap value was not missing locally. Local G7 required 50% solve rate. Production performance cannot be inferred from that local gate.",
+      "experiment": "Build broader independent repository tasks, retain an untouched holdout, run paired repetitions against frozen v003, and report per-task solve consistency, no-patch failures, total/p95 cost and time. Verify environment differences explicitly."
+    }
+  ],
+  "proposed_order": [
+    "Record stop reasons and first-patch time/spend before tuning.",
+    "Add failing offline regressions for temporary reservations and total response deadlines; implement original fixes and prove both pass.",
+    "Add bounded no-patch recovery and test patch preservation.",
+    "Compare one behavioral change at a time on broader frozen tasks using the existing paired confirmation protocol.",
+    "Only then compare model/reasoning/output-limit configurations under identical caps.",
+    "Review an exact frozen bundle with full evidence and current competition criteria before another paid upload."
+  ],
+  "validation": {
+    "downloaded_files": 5,
+    "all_sha256_match": true,
+    "all_ast_parse": true,
+    "reference_code_executed": false,
+    "paid_inference_used": false,
+    "runtime_source_modified": false,
+    "v003_originality_check": "PASS against 14 references; highest distinctive-line overlap 1.4%, highest token-shingle overlap 1.2%"
+  }
+}

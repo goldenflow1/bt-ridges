@@ -1,0 +1,15 @@
+{
+  "rank": 42,
+  "name": "Enigma485",
+  "version": 13,
+  "agent_id": "d3e0be01-675e-5e0c-be8c-f18cdaad9d11",
+  "score": 0.3,
+  "cost_usd": 0.021461978180000004,
+  "status": "didnt_qualify",
+  "validator_count": 3,
+  "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=d3e0be01-675e-5e0c-be8c-f18cdaad9d11",
+  "http_status": 200,
+  "path": "references/miners/set-28/enigma485_v13_d3e0be01/agent.py",
+  "sha256": "ef935e51054a99b20c0cc82373640d643a298746a926adb0534028d3b855cc38",
+  "lines": 8144
+}

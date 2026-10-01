@@ -1,0 +1,15 @@
+{
+  "rank": 41,
+  "name": "Aurora",
+  "version": 10,
+  "agent_id": "5778a363-ac67-5ce9-8c0a-12f841575637",
+  "score": 0.3,
+  "cost_usd": 0.0195407623,
+  "status": "didnt_qualify",
+  "validator_count": 3,
+  "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=5778a363-ac67-5ce9-8c0a-12f841575637",
+  "http_status": 200,
+  "path": "references/miners/set-28/aurora_v10_5778a363/agent.py",
+  "sha256": "b6848bcd8b9aaf4a712c3237a972e55378a43ee7700499fef0f80c5eca13843c",
+  "lines": 6956
+}

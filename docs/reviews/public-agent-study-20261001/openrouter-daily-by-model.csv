@@ -1,0 +1,9 @@
+# Source: OpenRouter Activity export, user-provided 2026-10-01 (daily rollup, UTC days). Prompt-token sums from the Activity page view of the same date.
+# prompt tokens on 2026-10-01: GPT-5.6 Luna 5.42M, DeepSeek V4 Pro 0423 6.09M, DeepSeek V4 Pro 0813 30.2M (0813 has no other day).
+date__day,model,tokens_completion
+2026-09-29,GPT-5.6 Luna,8319
+2026-09-30,DeepSeek V4 Pro 0423,8405
+2026-09-30,GPT-5.6 Luna,901668
+2026-10-01,DeepSeek V4 Pro 0423,73324
+2026-10-01,DeepSeek V4 Pro 0813,437177
+2026-10-01,GPT-5.6 Luna,195552

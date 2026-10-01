@@ -1,0 +1,9 @@
+{
+  "test": "local HTTP server sends 20 bytes at 30 ms intervals",
+  "requested_timeout_sec": 0.1,
+  "elapsed_sec": 0.636,
+  "status": 200,
+  "received_bytes": 20,
+  "exceeded_requested_timeout": true,
+  "interpretation": "Socket timeout does not bound total response duration. This reproduces a local transport deadline gap, not the production screening failure."
+}

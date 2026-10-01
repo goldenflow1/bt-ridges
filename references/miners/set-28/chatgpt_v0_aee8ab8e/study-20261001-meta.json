@@ -1,0 +1,15 @@
+{
+  "rank": 43,
+  "name": "ChatGPT",
+  "version": 0,
+  "agent_id": "aee8ab8e-22da-507b-997a-1d49da2e4140",
+  "score": 0.3,
+  "cost_usd": 0.02894006922266666,
+  "status": "didnt_qualify",
+  "validator_count": 3,
+  "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=aee8ab8e-22da-507b-997a-1d49da2e4140",
+  "http_status": 200,
+  "path": "references/miners/set-28/chatgpt_v0_aee8ab8e/agent.py",
+  "sha256": "48441a9a0d92796269eafa6876ca51d4621fd71c707ba52a5426f3dd68b98afa",
+  "lines": 8309
+}

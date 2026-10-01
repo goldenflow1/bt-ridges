@@ -1,0 +1,15 @@
+{
+  "rank": 45,
+  "name": "Emerge victory",
+  "version": 3,
+  "agent_id": "d78218d7-ad21-5e47-bf4e-8b20c3a5fd88",
+  "score": 0.3,
+  "cost_usd": 0.04219191987466667,
+  "status": "didnt_qualify",
+  "validator_count": 3,
+  "code_url": "https://agent-upload.ridges.ai/retrieval/agent-code?agent_id=d78218d7-ad21-5e47-bf4e-8b20c3a5fd88",
+  "http_status": 200,
+  "path": "references/miners/set-28/emerge-victory_v3_d78218d7/agent.py",
+  "sha256": "561a2e014b55d54a0d97fcf0d848b279e6de008932258d26ba3a13b60702234d",
+  "lines": 8382
+}

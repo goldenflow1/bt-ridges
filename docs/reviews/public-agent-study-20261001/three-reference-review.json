@@ -1,0 +1,73 @@
+{
+  "reviewed_at_utc": "2026-10-01T06:55:34.785956+00:00",
+  "verified_reference_metadata": [
+    {
+      "name": "thrush",
+      "version": 5,
+      "lines": 5914,
+      "score": 0.18,
+      "status": "didnt_qualify",
+      "source": "references/miners/inspect-2026-10-01/thrush_v5_2da1edae/agent.py",
+      "sha256": "0f7c23604ae5ea3b4c390a0b234ed0ec0ad27b4a2ed75c98d35409f30355dc76"
+    },
+    {
+      "name": "Harry",
+      "version": 10,
+      "lines": 7689,
+      "score": 0.22,
+      "status": "didnt_qualify",
+      "source": "references/miners/inspect-2026-10-01/harry_v10_00553ff9/agent.py",
+      "sha256": "b9d9767678698bae38b3cf828dbd49774382adfe1f21714ccd733f3bd36e3f5e"
+    },
+    {
+      "name": "Fred",
+      "version": 11,
+      "lines": 4611,
+      "score": 0.26,
+      "status": "didnt_qualify",
+      "source": "references/miners/inspect-2026-10-01/fred_v11_6c3d8ffd/agent.py",
+      "sha256": "c864c3c5e2174e373138746b2089e7b3b7408e11ac2c9dc2d41fef61aae5e2d8"
+    }
+  ],
+  "corrections": [
+    {
+      "claim": "A 50-turn plan runs when there is no edit",
+      "finding": "TURNS_PLANNED=50 is used in the transcript sizing formula. PLAN_TURN_CAP=40 and PLAN_SEAT defaults to false in all three files."
+    },
+    {
+      "claim": "All three use a fallback model",
+      "finding": "Fred defaults to a DeepSeek fallback. Harry and thrush default RELIEF_MODEL to an empty string; configuration could override this, but production configuration is not established from code."
+    },
+    {
+      "claim": "The transcript formula bounds per-turn cost",
+      "finding": "It is a heuristic using cached-input pricing, a character floor and selective trimming. It excludes some serialized tool/schema content and cannot establish a strict uncached total-call bound."
+    },
+    {
+      "claim": "Stable rewritten tool IDs fix cache hits",
+      "finding": "Quarry already stores each tool ID once and reuses it in subsequent messages. Deterministic new IDs alone do not prove a cache-hit improvement; provider routing, prefix mutation and retention also matter."
+    },
+    {
+      "claim": "Low cache hits explain everything about production cost",
+      "finding": "Production cache data is not available in this review. Same-trace local repricing gives mean $0.018478 without cache versus actual $0.006700; the repriced mean still passes $0.03 G7."
+    },
+    {
+      "claim": "First-edit pressure guards against exactly error 1000",
+      "finding": "It addresses one possible no-patch mechanism. Error 1000 also covers exceptions; no specific production root cause is established."
+    },
+    {
+      "claim": "Use no-cache cost in place of measured cost",
+      "finding": "Keep attributable measured cost and clearly labeled uncached estimates separately. Add a miss-with-cache-write stress scenario if the provider charges writes; never present estimates as billing records."
+    },
+    {
+      "claim": "Upload v002 and save the result under v001",
+      "finding": "Obsolete release context: v003 is the uploaded release and submissions/READY points to v003. Preserve its evidence; any candidate must be a new release."
+    }
+  ],
+  "recommended_order": [
+    "Obtain production per-generation billing/token/cache metadata for the exact screening interval without enabling prompt/response content logging.",
+    "Address confirmed deadline and HTTP-402 classification behaviors with regression tests.",
+    "Measure and bound full request cost, including tools, output reservations, fallback pricing and retries; add progress-aware patch recovery.",
+    "Use actual-cost and uncached-cost reports on a broader independent task set with paired comparisons.",
+    "Freeze a new release only after evidence improves; do not reuse v002 or overwrite v003."
+  ]
+}
