@@ -1,6 +1,6 @@
 # PROTOCOL — E016: B2/B3 under synthetic budget pressure
 
-Status: **declared 2026-10-01, before any E016 trial**; amended 2026-10-01 after the [follow-up review](../reviews/2026-10-01-e016-followup.md) (enforced limits, reservation hold, outcome contract, evidence rules); ×15 pilot passed; calibration amendment §3a: ×25 pilot passed and **×25 frozen for the main cohort**; main cohort not started.
+Status: **declared 2026-10-01, before any E016 trial**; amended 2026-10-01 after the [follow-up review](../reviews/2026-10-01-e016-followup.md) (enforced limits, reservation hold, outcome contract, evidence rules); ×15 pilot passed; calibration amendment §3a: ×25 pilot passed and ×25 frozen; main cohort complete; **decision: keep** (gain on 2 tasks; the one drop not reproduced in the confirmation block) — see E016.
 Reviews: [readiness](../reviews/2026-10-01-e016-readiness.md), [follow-up](../reviews/2026-10-01-e016-followup.md).
 
 ## 1. Question and what this can show
