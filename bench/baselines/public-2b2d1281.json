@@ -1,0 +1,139 @@
+{
+ "baseline_version": 1,
+ "summary": {
+  "set": "public",
+  "agent_sha256": "2b2d12812ca668a05f79b8a60d1511dceb977353d2094c56a5d1087983fab1d6",
+  "expected_tasks": [
+   "pg-netbox-bulk-tag-assignment-001",
+   "pg-netbox-cached-value-index-001",
+   "pg-netbox-contact-group-counts-001",
+   "pg-netbox-ipaddress-device-filter-001",
+   "pg-netbox-prefix-hierarchy-annotations-001",
+   "pg-netbox-vlangroup-utilization-001"
+  ],
+  "complete": true,
+  "missing_tasks": [],
+  "mean_solve": 0.9444444444444445,
+  "solved_every_repeat": [
+   "pg-netbox-bulk-tag-assignment-001",
+   "pg-netbox-cached-value-index-001",
+   "pg-netbox-contact-group-counts-001",
+   "pg-netbox-ipaddress-device-filter-001",
+   "pg-netbox-vlangroup-utilization-001"
+  ],
+  "cost_per_task_mean": 0.01586,
+  "cost_coverage": "6/6",
+  "min_valid_trials": 3,
+  "per_task": {
+   "pg-netbox-bulk-tag-assignment-001": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.009732
+   },
+   "pg-netbox-cached-value-index-001": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.004445
+   },
+   "pg-netbox-contact-group-counts-001": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.012665
+   },
+   "pg-netbox-ipaddress-device-filter-001": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.009721
+   },
+   "pg-netbox-prefix-hierarchy-annotations-001": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 2,
+    "mechanical": 0,
+    "solve_fraction": 0.6666666666666666,
+    "solved_every_repeat": false,
+    "mean_cost": 0.050329
+   },
+   "pg-netbox-vlangroup-utilization-001": {
+    "attempts": 3,
+    "void_attempts": 0,
+    "unresolved": 0,
+    "valid_trials": 3,
+    "solved": 3,
+    "mechanical": 0,
+    "solve_fraction": 1.0,
+    "solved_every_repeat": true,
+    "mean_cost": 0.008268
+   }
+  }
+ },
+ "cohort": {
+  "set": "public",
+  "agent_sha256": "2b2d12812ca668a05f79b8a60d1511dceb977353d2094c56a5d1087983fab1d6",
+  "tasks": {
+   "pg-netbox-bulk-tag-assignment-001": "task-tree-v1:64cd8ca03549d6a696b8fcfabec79ef0446a07d4564e5871d9e81892f6e32b25",
+   "pg-netbox-cached-value-index-001": "task-tree-v1:19822009a7832b8cf1735a295734ad756c8fa3e1986beb34a3d221d668da78f1",
+   "pg-netbox-contact-group-counts-001": "task-tree-v1:40c1a8eb094b58dcb11122250678c00458858040d251b1c5001ee406353fa3e4",
+   "pg-netbox-ipaddress-device-filter-001": "task-tree-v1:a84a4e8771e7ec8299e49ef8304cd2dfff4414c8913a2cb670a44097ab6acb5e",
+   "pg-netbox-prefix-hierarchy-annotations-001": "task-tree-v1:2e24b2ee193b1a5de8330d82bf35317cc8c45d512304497eb0fd56583be3eafc",
+   "pg-netbox-vlangroup-utilization-001": "task-tree-v1:0d8f740ea6daab5590117340e6bacd8ef78a6db726d5104713166a7eec753721"
+  },
+  "runtime": [
+   "d74410d8484f",
+   "0.20.0"
+  ],
+  "model_override": {}
+ },
+ "runs": [
+  {
+   "dir": "/root/bittensor/ridges/bench/runs/20260930-114250-public",
+   "results_sha256": "7881b549dd4f595ba30132da9d5c8d6fd420e4dbfe7b3fb37504b15545ad7bca",
+   "trial_ids": [
+    "20260930-114250-public/pg-netbox-bulk-tag-assignment-001/r1/a1",
+    "20260930-114250-public/pg-netbox-bulk-tag-assignment-001/r2/a1",
+    "20260930-114250-public/pg-netbox-bulk-tag-assignment-001/r3/a1",
+    "20260930-114250-public/pg-netbox-cached-value-index-001/r1/a1",
+    "20260930-114250-public/pg-netbox-cached-value-index-001/r2/a1",
+    "20260930-114250-public/pg-netbox-cached-value-index-001/r3/a1",
+    "20260930-114250-public/pg-netbox-contact-group-counts-001/r1/a1",
+    "20260930-114250-public/pg-netbox-contact-group-counts-001/r2/a1",
+    "20260930-114250-public/pg-netbox-contact-group-counts-001/r3/a1",
+    "20260930-114250-public/pg-netbox-ipaddress-device-filter-001/r1/a1",
+    "20260930-114250-public/pg-netbox-ipaddress-device-filter-001/r2/a1",
+    "20260930-114250-public/pg-netbox-ipaddress-device-filter-001/r3/a1",
+    "20260930-114250-public/pg-netbox-prefix-hierarchy-annotations-001/r1/a1",
+    "20260930-114250-public/pg-netbox-prefix-hierarchy-annotations-001/r2/a1",
+    "20260930-114250-public/pg-netbox-prefix-hierarchy-annotations-001/r3/a1",
+    "20260930-114250-public/pg-netbox-vlangroup-utilization-001/r1/a1",
+    "20260930-114250-public/pg-netbox-vlangroup-utilization-001/r2/a1",
+    "20260930-114250-public/pg-netbox-vlangroup-utilization-001/r3/a1"
+   ]
+  }
+ ]
+}

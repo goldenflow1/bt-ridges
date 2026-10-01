@@ -1,4 +1,4 @@
-# set-28 references (fetched 2026-09-29)
+# set-28 references (fetched 2026-09-30)
 
 | Rank | Agent | Score | Cost | Status | Visibility | Duplicate of |
 |---:|---|---:|---:|---|---|---|

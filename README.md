@@ -108,21 +108,21 @@ Watch the agent live: `tail -f $(ls -td ~/.ridges/runs/*/*/ | head -1)agent/runt
 ---
 
 ## Status
-_Last updated 2026-09-29 (new host)._
+_Last updated 2026-09-30._
 
 | Area | State |
 |---|---|
-| Harness (M0) | Built; three external review rounds fixed; all gates green, 90/90 traced requirements |
+| Harness (M0) | Built; three external review rounds fixed; all gates green, 93/93 traced requirements |
 | Measurement integrity (M0.5A, B1) | Done: cost provenance, cache telemetry, key-usage ledger, run provenance, trial labels, decoy calibration |
 | Smoke test | Passed on a dev task (solved, $0.0092) |
 | Reconnaissance (dev set, 1 run each) | **5/5 solved**, $0.0102 per task on average (provider-reported = key usage), cache read share 83–95% |
-| NetBox public samples | Run on the new host (Ryzen 9 7950X3D; cold check 198 s vs 600 s limit). Reconnaissance, 1 run each: **5/6 solved**, $0.0162 per task; `prefix-hierarchy-annotations` unsolved (max-turns, patch made the check worse). 3-trial evaluation running (Step 2b) |
+| Baselines (3 trials per task, bundle `2b2d1281`) | Dev 17 tasks **51/51** ($0.0095/trial); NetBox public **17/18** ($0.0153); promoted in `bench/baselines/` |
+| Held-out gate G7 | **Passed**: 17/21 (target ≥ 11), 0 mechanical, $0.0061/trial → `submissions/v001` ready to upload (`tools/submission_gate.py`) |
 | Originality | ≈ 1% overlap with 10 public agents (limit 30%) |
-| Spend | $0.194 of the $30 local envelope (new host ledger seeded with the key's pre-Quarry usage, so it includes the old host's spend); OpenRouter key limit **$15** |
+| Spend | See `bench/runs/ledger.json` (key-usage reconciled); OpenRouter key limit **$15** |
 | Competition (set 28, checked 2026-09-29) | Open, no end date, 90% of emissions. Best approved agent: 0.36 at $0.091/task. To qualify: ≥ 0.36 at ≤ $0.086 (cost route) or ≥ 0.38 (performance route) |
 
-**Next steps** (see `docs/plans/M0.5-pre-smoke-hardening.md`):
-1. Step 2b public baseline (running): 6 NetBox tasks × 3, then `tools/bench_summary.py promote`.
-2. Wave-2 practice tasks (in progress on another device); then the dev baseline on all 17 dev tasks.
-3. First experiment: the `prefix-hierarchy-annotations` failure (E007), judged against the promoted baseline under §5a.
-4. A calibration upload to learn how local results map to validator scores.
+**Next steps**:
+1. Upload `submissions/v001` (calibration upload; ~$5 + validator inference, 12 h cooldown), then record the validator score in `submissions/README.md`.
+2. E008 (extra fix rounds) comparison against the NetBox baseline: trending to revert (not better on prefix-hierarchy, ~2× cost).
+3. Weak spots from held-out: `pg-expr-index-lower` 0/3 (checks failed), `ch-go-skip-index` 2/3. Diagnose on dev-equivalent tasks, never by tuning on held-out.

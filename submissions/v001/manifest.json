@@ -1,0 +1,25 @@
+{
+ "version": "v001",
+ "uploaded_at": "",
+ "competition_set_id": 28,
+ "git_commit": "",
+ "src_commit": "550c4f8",
+ "sha256": "2b2d12812ca668a05f79b8a60d1511dceb977353d2094c56a5d1087983fab1d6",
+ "models": {"spec": "deterministic (no model)", "driver": "openai/gpt-5.6-luna (fallback deepseek/deepseek-v4-pro-0813)", "critic": "none"},
+ "local": {
+  "dev_solve": 1.0,
+  "public_solve": 0.9444,
+  "heldout_solve": 0.8095,
+  "cost_usd": 0.00614,
+  "p50_sec": 115.0,
+  "repeats": 3,
+  "runs": {
+   "heldout": "bench/runs/20260930-105435-heldout",
+   "dev_baseline": "bench/baselines/dev-2b2d1281.json",
+   "public_baseline": "bench/baselines/public-2b2d1281.json"
+  },
+  "gate": "G7 PASSED 2026-09-30 (tools/submission_gate.py --with-gates): 17/21 held-out, 0 mechanical, $0.0061/trial, lint clean, originality 1.0% max"
+ },
+ "upload": {"agent_id": "", "quote_id": "", "block_hash": "", "extrinsic_index": ""},
+ "validator": {"score": null, "cost_usd": null, "runtime_sec": null, "status": "", "leader_at_approval": "0.36 at $0.090/task (checked 2026-09-30)"}
+}
