@@ -2,22 +2,26 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import random
 import socket
+import threading
 import time
 import urllib.error
-import urllib.request
+import urllib.parse
 import uuid
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple
 
-from quarry.wallet import BudgetExhausted, Wallet, is_budget_refusal
+from quarry.wallet import BudgetExhausted, Wallet, is_budget_refusal, is_temporary_budget_refusal
 
 RETRY_STATUS = {408, 409, 425, 429, 500, 502, 503, 504, 520, 522, 524, 529}
 MAX_ATTEMPTS = 4
 MIN_ATTEMPT_SEC = 5.0  # an attempt with less time than this is not worth starting
+SWITCH_AFTER = 2  # consecutive retryable primary failures within one call before its fallback is used (H-LLM-02)
+PRIMARY_COOLDOWN_SEC = 60.0  # after a fallback switch, calls start on the fallback for this long (H-LLM-02)
 DEFAULT_PROXY = "http://sandbox-proxy:80"  # documented default of SANDBOX_PROXY_URL
 
 
@@ -109,16 +113,76 @@ def estimate_tokens(messages: List[Dict], tools: Optional[List[Dict]] = None) ->
     return int(size / 3.2) + 50
 
 
-Transport = Callable[[str, bytes, Dict[str, str], float], Tuple[int, str]]
+# A transport returns (status, body) or (status, body, lower-case headers).
+Transport = Callable[[str, bytes, Dict[str, str], float], tuple]
+MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 
-def urllib_transport(url: str, body: bytes, headers: Dict[str, str], timeout: float) -> Tuple[int, str]:
-    request = urllib.request.Request(url, data=body, headers=headers, method="POST")
+def http_transport(url: str, body: bytes, headers: Dict[str, str], timeout: float,
+                   max_bytes: int = MAX_RESPONSE_BYTES) -> Tuple[int, str, Dict[str, str]]:
+    """POST and read the whole response within `timeout` seconds in total (H-LLM-07). A socket timeout alone only
+    bounds each read, so a body sent in small pieces could outlive it; a watchdog closes the socket at the deadline."""
+    deadline = time.monotonic() + timeout
+    parts = urllib.parse.urlsplit(url)
+    connection_class = http.client.HTTPSConnection if parts.scheme == "https" else http.client.HTTPConnection
+    connection = connection_class(parts.hostname, parts.port, timeout=max(0.01, timeout))
+    expired = threading.Event()
+
+    def cut_off() -> None:
+        expired.set()
+        sock = connection.sock
+        if sock is not None:
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+    watchdog = threading.Timer(max(0.0, timeout), cut_off)
+    watchdog.daemon = True
+    watchdog.start()
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return response.status, response.read().decode("utf-8", "replace")
-    except urllib.error.HTTPError as exc:
-        return exc.code, exc.read().decode("utf-8", "replace")
+        path = (parts.path or "/") + ("?" + parts.query if parts.query else "")
+        connection.request("POST", path, body=body, headers=headers)
+        response = connection.getresponse()
+        chunks: List[bytes] = []
+        total = 0
+        while True:
+            left = deadline - time.monotonic()
+            if left <= 0 or expired.is_set():
+                raise TimeoutError("response exceeded the attempt deadline")
+            if connection.sock is not None:
+                connection.sock.settimeout(left)
+            chunk = response.read1(65536)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError(f"response larger than {max_bytes} bytes")
+            chunks.append(chunk)
+        if expired.is_set():
+            raise TimeoutError("response exceeded the attempt deadline")
+        reply_headers = {name.lower(): value for name, value in response.getheaders()}
+        return response.status, b"".join(chunks).decode("utf-8", "replace"), reply_headers
+    except (OSError, http.client.HTTPException) as exc:
+        if expired.is_set():
+            raise TimeoutError("response exceeded the attempt deadline") from exc
+        raise
+    finally:
+        watchdog.cancel()
+        connection.close()
+
+
+urllib_transport = http_transport  # earlier name, kept for callers outside the package
+
+
+def retry_after_seconds(headers: Dict[str, str]) -> Optional[float]:
+    """Seconds from a `Retry-After` header; None when absent, malformed or negative (H-LLM-09)."""
+    value = (headers or {}).get("retry-after")
+    try:
+        seconds = float(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return seconds if seconds >= 0 else None
 
 
 def parse_tool_calls(message: Dict) -> List[ToolCall]:
@@ -165,7 +229,7 @@ class ProxyClient:
         self.sleep = sleep
         self.clock = clock
         self.telemetry: List[CallRecord] = []
-        self._failures: Dict[str, int] = {}
+        self.cooldown_until: Dict[str, float] = {}  # primary model -> clock time before which calls start on its fallback
 
     def complete(
         self,
@@ -180,8 +244,9 @@ class ProxyClient:
         """One completion. `deadline` is an absolute time on `self.clock`; no attempt, wait or backoff passes it."""
         max_out = max_tokens or route.max_tokens
         model = route.model
-        if route.fallback and self._failures.get(model, 0) >= 2:
-            model = route.fallback
+        if route.fallback and self.cooldown_until.get(route.model, float("-inf")) > self.clock():
+            model = route.fallback  # the primary failed recently: let it recover (H-LLM-02)
+        streak = 0  # consecutive retryable failures of the current model within this call
         prompt_est = estimate_tokens(messages, tools)
         last_error = ""
         for attempt in range(MAX_ATTEMPTS):
@@ -203,9 +268,14 @@ class ProxyClient:
                 headers["Authorization"] = "Bearer " + self.key
             started = self.clock()
             never_sent = False
+            reply_headers: Dict[str, str] = {}
             try:
-                status, text = self.transport(self.url, json.dumps(body).encode(), headers, attempt_timeout)
-            except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError, OSError) as exc:
+                reply = self.transport(self.url, json.dumps(body).encode(), headers, attempt_timeout)
+                status, text = reply[0], reply[1]
+                if len(reply) > 2 and isinstance(reply[2], dict):
+                    reply_headers = reply[2]
+            except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError, OSError,
+                    http.client.HTTPException, ValueError) as exc:
                 status, text = 0, f"transport error: {exc}"
                 never_sent = _never_sent(exc)
             latency = self.clock() - started
@@ -232,6 +302,8 @@ class ProxyClient:
                     status, text = 502, f"unparseable response: {exc}"
                 else:
                     if not rejected:
+                        if model == route.model:
+                            self.cooldown_until.pop(route.model, None)
                         return self._success(data, message, model, role, latency, reservation)
             # Failed attempt. An HTTP error response means the request was rejected (no charge); a sent request
             # with no usable answer (timeout, reset, broken body) may have been charged: keep its reservation.
@@ -242,7 +314,8 @@ class ProxyClient:
             else:
                 cost, source = self.wallet.keep_unknown(reservation)
             record = CallRecord(role, model, status, latency, cost, source, ok=False, **usage_fields(usage))
-            if is_budget_refusal(status, text):
+            temporary = is_temporary_budget_refusal(status, text, reply_headers)
+            if not temporary and is_budget_refusal(status, text):
                 self.wallet.mark_spent()
                 record.note = f"budget refusal {status}"
                 self.telemetry.append(record)
@@ -250,15 +323,24 @@ class ProxyClient:
             last_error = f"{status}: {text[:300]}"
             record.note = last_error[:120]
             self.telemetry.append(record)
-            self._failures[model] = self._failures.get(model, 0) + 1
-            retryable = status == 0 or status in RETRY_STATUS
+            retryable = status == 0 or status in RETRY_STATUS or temporary
             if not retryable:
                 break
-            if route.fallback and model != route.fallback and self._failures[model] >= 2:
-                model = route.fallback
+            if not temporary:  # a momentary spending reservation says nothing about the model (H-LLM-03)
+                streak += 1
+            if route.fallback and model == route.model and streak >= SWITCH_AFTER:
+                record.note = f"switch {route.model} -> fallback {route.fallback} after {streak} failures; {last_error}"[:160]
+                model, streak = route.fallback, 0
+                self.cooldown_until[route.model] = self.clock() + PRIMARY_COOLDOWN_SEC
             pause = min(20.0, (2 ** attempt) + random.random())
+            wait = retry_after_seconds(reply_headers)
+            if wait is not None:
+                pause = max(pause, wait)
             if deadline is not None:
-                pause = min(pause, deadline - self.clock() - MIN_ATTEMPT_SEC)
+                room = deadline - self.clock() - MIN_ATTEMPT_SEC
+                if wait is not None and wait > room:
+                    break  # the server asked for a wait this call cannot afford (H-LLM-09)
+                pause = min(pause, room)
                 if pause < 0:
                     break
             self.sleep(pause)
@@ -268,7 +350,6 @@ class ProxyClient:
         usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
         cost, source = self.wallet.settle(reservation, model, usage)
         self.telemetry.append(CallRecord(role, model, 200, latency, cost, source, **usage_fields(usage)))
-        self._failures[model] = 0
         calls = parse_tool_calls(message)
         assistant = {"role": "assistant", "content": message.get("content") or ""}
         if message.get("tool_calls"):

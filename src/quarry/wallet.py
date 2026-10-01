@@ -188,8 +188,18 @@ class Wallet:
         }
 
 
+def is_temporary_budget_refusal(status: int, body: str, headers: Optional[Dict[str, str]] = None) -> bool:
+    """A 402 that only says spending is momentarily reserved by requests still in flight, or that names a time
+    to retry: worth retrying within the call, and not evidence that the cap was reached (H-LLM-03)."""
+    if status != 402:
+        return False
+    text = (body or "").lower()
+    return any(marker in text for marker in ("in_flight", "in-flight", "inflight")) or "retry-after" in (headers or {})
+
+
 def is_budget_refusal(status: int, body: str) -> bool:
-    """True when a provider response means the cost cap was hit (never worth retrying)."""
+    """True when a provider response means the cost cap was hit (never worth retrying). Check
+    is_temporary_budget_refusal first: a temporary 402 is not a cap."""
     if status == 402:
         return True
     text = (body or "").lower()
