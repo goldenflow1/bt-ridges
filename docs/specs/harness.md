@@ -134,6 +134,7 @@ Repairs run first, then checks. A check failure makes the candidate ineligible (
 | H-BUILD-03 | Knowledge packs and prompts (`src/quarry/packs/*.md`, `src/quarry/prompts/*.md`) are embedded as string constants. | unit |
 | H-LINT-01 | `prescreen_lint` fails on grading vocabulary, evaluation-environment words, sample task/repo names, long encoded blobs and decode calls; warns on hard-coded URLs, dynamic execution and scoring words. | unit |
 | H-LINT-02 | Originality (upload gate): `tools/originality_check.py` compares the bundle with every public agent in `references/` by distinctive-line overlap and 12-token shingle containment; identical files or ≥ 30% on either measure fail, ≥ 15% warns, and no references means "not run", never a pass. | unit |
+| H-LINT-03 | The bundle contains no SQL function-call text that the upload API's web firewall rejects (`COALESCE(…)`, `CAST(…)` with arguments): `prescreen_lint` fails on it. Found 2026-09-30: the first upload of v001 got HTTP 403 from Cloudflare; three pack lines were the trigger. | unit |
 
 ## 11. Out of scope for M0 (tracked, not yet specified in detail)
 Lab phase (baseline, repro, work proof), evidence ledger T3/T4, critic, second attempt, Go/TS symbol splice (tree-sitter), ClickHouse lab helpers. See `docs/plans/`.

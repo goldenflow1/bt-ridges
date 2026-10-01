@@ -19,6 +19,9 @@ RULES: List[Tuple[str, str, str]] = [
      r"|orders[_-]fanout|replacing[_-]final|sqlx[_-]pagination|prisma[_-]groupby"),
     ("FAIL", "long encoded blob", r"[A-Za-z0-9+/=]{200,}"),
     ("FAIL", "base64/zlib decode", r"b64decode|zlib\.decompress|codecs\.decode|marshal\.loads|pickle\.loads"),
+    # The upload API sits behind a web firewall that rejects the whole file on SQL function calls with arguments
+    # (found 2026-09-30: `COALESCE(x, 0)` and `Cast(expr, ...)` in pack text -> HTTP 403). Name the function in prose.
+    ("FAIL", "SQL function call text (upload firewall)", r"\b(coalesce|cast)\s*\("),
     ("WARN", "hard-coded URL", r"https?://"),
     ("WARN", "dynamic code execution", r"\bexec\(|\beval\(|__import__\("),
     ("WARN", "scoring words", r"\bscor(e|es|ed|ing)\b"),

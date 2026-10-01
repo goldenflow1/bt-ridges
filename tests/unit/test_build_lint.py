@@ -111,3 +111,10 @@ def test_H_LINT_01_bench_requirements_are_traced_with_status(tmp_path):
     assert not traceability(bad_status)
     wrong_shape = _bench_tree(tmp_path / "g", ["| B-RUN-09 | x only |\n"])
     assert not traceability(wrong_shape)
+
+
+def test_H_LINT_03_sql_function_calls_that_the_upload_firewall_rejects_fail_the_lint():
+    for text in ("wrap with COALESCE(..., 0) when", "use Cast(expr, FloatField())", "func.coalesce(col, 0)"):
+        fails, _, report = lint(text)
+        assert fails == 1 and "upload firewall" in report[0]
+    assert lint("wrap the aggregate in COALESCE with a default of 0; Cast to a FloatField")[0] == 0
