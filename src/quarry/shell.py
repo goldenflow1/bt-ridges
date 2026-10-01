@@ -12,7 +12,7 @@ from quarry.assets import asset, pack_text
 from quarry.clock import Clock
 from quarry.git import GitRepo
 from quarry.guard import Guard, GuardContext, GuardReport
-from quarry.llm import ModelRoute, ProxyClient
+from quarry.llm import MIN_ATTEMPT_SEC, ModelRoute, ProxyClient, estimate_tokens
 from quarry.loop import DriverLoop, LoopOutcome
 from quarry.proc import ProcessRunner, cap_output
 from quarry.profile import EnvProfile, build_profile, select_packs
@@ -201,6 +201,8 @@ class Workflow:
         if ctx.target_symbol and len(ctx.edited) == 1:
             target = (ctx.edited[0], ctx.target_symbol)
         report = self.guard.run(GuardContext(self.repo, self.spec, target))
+        if not report.diff.strip():
+            return report, [], None  # preserve recovery time; unchanged code has no new check evidence
         before = self.repo.fingerprint()
         checks, failures = self.run_checks(round_label)
         if checks is not None and self.repo.fingerprint() != before:
@@ -259,10 +261,10 @@ class Workflow:
         self.baseline_checks()
         messages = self.messages()
         registry = ToolRegistry(default_tools())
-        timer = self.clock.slice(self.settings.driver_share)
+        timer = self.clock.slice(self.settings.driver_share, reserve_sec=self.settings.finalize_min_sec)
         ctx = ToolContext(
             self.root, self.spec, self.runner, self.scratch, self.profile.databases,
-            command_timeout=lambda: max(5.0, min(self.clock.command_timeout(300), timer.remaining())),
+            command_timeout=lambda: min(self.clock.command_timeout(300), timer.remaining()),
         )
         slice_sec = max(1.0, timer.remaining())
 
@@ -275,7 +277,8 @@ class Workflow:
         with self.wallet.phase("driver", self.wallet.spendable * self.settings.driver_budget_share):
             for round_no in range(self.settings.fix_rounds + 1):
                 loop = DriverLoop(self.client, self.settings.driver, registry, ctx, timer, self.settings.max_turns,
-                                  reserve=reserve_reached, has_changes=self.tree_changed)
+                                  reserve=reserve_reached, has_changes=self.tree_changed,
+                                  can_continue=lambda m: self.can_afford_turn(m, registry))
                 outcome = last_outcome = loop.run(messages)
                 self.note(f"round {round_no}: {outcome.reason} after {outcome.turns} turns; consumed ${self.wallet.consumed_usd:.4f}")
                 report, failures, checks = self.gate(ctx, f"r{round_no}")
@@ -307,6 +310,15 @@ class Workflow:
         except Exception:
             return True  # unknown: never refuse a finish on a guess
 
+    def can_afford_turn(self, messages: List[Dict], registry: ToolRegistry) -> bool:
+        """Quote the next routed request before asking an empty finish to continue."""
+        route = self.settings.driver
+        cooldown = getattr(self.client, "cooldown_until", {}).get(route.model, float("-inf"))
+        now = getattr(self.client, "clock", self.clock.now)()
+        model = route.fallback if route.fallback and cooldown > now else route.model
+        quote = self.wallet.estimate(model, estimate_tokens(messages, registry.schemas()), route.max_tokens)
+        return self.wallet.can_afford(quote)
+
     def finalization_round(self, messages: List[Dict], registry: ToolRegistry, ctx: ToolContext, outcome) -> None:
         """With no candidate after the driver rounds, spend the budget kept outside the driver phase on one short
         round that turns the gathered evidence into a change (H-SHELL-15)."""
@@ -315,17 +327,19 @@ class Workflow:
         reserve = self.wallet.remaining()
         if reserve < self.settings.finalize_min_share * self.wallet.spendable:
             return
-        if self.clock.remaining() < self.settings.finalize_min_sec:
+        if self.clock.remaining() < MIN_ATTEMPT_SEC:
             return
         self.note(f"finalization round: no candidate after the driver ({outcome.reason}); "
                   f"${reserve:.4f} and {self.clock.remaining():.0f}s left")
         timer = self.clock.slice(1.0)
+        ctx.command_timeout = lambda: min(self.clock.command_timeout(300), timer.remaining())
         ctx.finished = False
         name = "prompts/finalize_verify.md" if self.tree_changed() else "prompts/finalize.md"
         messages.append({"role": "user", "content": asset(name).strip()})
         with self.wallet.phase("finalize", reserve):
             loop = DriverLoop(self.client, self.settings.driver, registry, ctx, timer, self.settings.finalize_turns,
-                              has_changes=self.tree_changed)
+                              has_changes=self.tree_changed,
+                              can_continue=lambda m: self.can_afford_turn(m, registry))
             final = loop.run(messages)
             self.note(f"finalization round: {final.reason} after {final.turns} turns; consumed ${self.wallet.consumed_usd:.4f}")
             report, failures, checks = self.gate(ctx, "final")

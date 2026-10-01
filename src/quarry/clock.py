@@ -49,9 +49,9 @@ class Clock:
     def expired(self) -> bool:
         return self.remaining() <= 0.0
 
-    def slice(self, share: float) -> PhaseTimer:
-        """A timer for one phase: its share of the total, never past the deadline."""
-        budget = min(share * self.total, self.remaining())
+    def slice(self, share: float, reserve_sec: float = 0.0) -> PhaseTimer:
+        """A timer for one phase, optionally preserving working time for a later phase."""
+        budget = min(share * self.total, max(0.0, self.remaining() - reserve_sec))
         return PhaseTimer(self, self._now() + budget)
 
     def command_timeout(self, cap: float = 300.0) -> float:
