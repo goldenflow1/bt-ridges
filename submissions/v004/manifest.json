@@ -1,6 +1,6 @@
 {
  "version": "v004",
- "status": "pending-g7",
+ "status": "ready",
  "sha256": "5406e4dd79608e0109e8d1c283879f63b78099a11cd422193623a4a7f5a49637",
  "competition_set_id": 28,
  "source_commit": "a2bbc42",
@@ -21,7 +21,15 @@
   "normal_public": "bench/runs/20261001-135021-public (16/18)",
   "confirm_dev": "bench/runs/20261001-172851-dev-A/-B (tz-buckets: baseline 2/3, v004 3/3)",
   "exception": "prefix-hierarchy confirmation stopped after 1/6 trials by user decision 2026-10-01 18:07 PDT (drop unconfirmed)",
-  "heldout": null
+  "heldout": {
+   "heldout_run": "bench/runs/20261001-180806-heldout",
+   "solved": 16,
+   "trials": 21,
+   "solve_rate": 0.7619,
+   "cost_usd_mean": 0.0065,
+   "mechanical": 0,
+   "gate": "G7 PASSED (evidence/submission-gate.txt)"
+  }
  },
  "upload": {
   "agent_id": "",
@@ -34,5 +42,10 @@
   "cost_usd": null,
   "status": ""
  },
- "drafted_at_utc": "2026-10-02T01:10:06Z"
+ "drafted_at_utc": "2026-10-02T01:10:06Z",
+ "evidence_sha256": {
+  "manifest.json": "e4e53e79c9ab19fc7efa76d10d49e621dfbaabe88f0e1a1c5d04bc8ba619666a",
+  "results.csv": "096224ed02b790af85823fbb6369422541d0b8e50bcf0ca8d02f844224a6f497"
+ },
+ "validated_at_utc": "2026-10-02T01:49:31+00:00"
 }

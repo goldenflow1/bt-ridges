@@ -1,0 +1,10 @@
+PASS  bundle is the one measured: file 5406e4dd79608e01, run 5406e4dd79608e01, trials ['5406e4dd79608e01']
+PASS  production model routing: default routing
+PASS  complete held-out evaluation: set heldout, purposes ['evaluation'], min valid trials 3, unresolved 0
+PASS  solve rate: 16/21 solved, need >= 11
+PASS  mechanical failures: 0
+PASS  cost per trial: mean $0.0065 over 21/21 reconciled
+PASS  pre-screen lint: clean
+PASS  originality: highest overlap: set-28/emerge-victory_v3_d78218d7/agent.py 1.4% 1.1%
+
+G7 submission gate PASSED for submissions/v004 (5406e4dd79608e01)

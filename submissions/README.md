@@ -14,3 +14,4 @@ The v003 manifest now has status `uploaded`, so the helper blocks another paid u
 |---|---|---|---|---|---|
 | v001 | 0.81 (17/21) | — | — | $0.0061 | — |
 | v003 | 0.81 (17/21) | — | — | $0.0067 | — |
+| v004 | 0.76 (16/21) | — | — | $0.0065 | — |

@@ -1,0 +1,21 @@
+{
+ "mean_solve": 0.7619047619047619,
+ "always_solved": [
+  "ch-py-argmax-state",
+  "go-sqlc-interval",
+  "py-django-annotate-subquery",
+  "py-sqla-distinct-on",
+  "ts-typeorm-fanout"
+ ],
+ "outcomes": {
+  "solved": 16,
+  "checks-failed": 3,
+  "unsolved": 2
+ },
+ "failures": [],
+ "cost": "cost: key-usage reconciled on 21/21 runs; mean $0.0065 max $0.0099; telemetry accounted on 21/21 (21 complete); cache read share mean 90% over 21/21 runs reporting it",
+ "ledger": {
+  "usd": 10.891487,
+  "source": "key-usage"
+ }
+}
