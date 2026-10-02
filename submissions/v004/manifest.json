@@ -1,6 +1,6 @@
 {
  "version": "v004",
- "status": "ready",
+ "status": "uploaded",
  "sha256": "5406e4dd79608e0109e8d1c283879f63b78099a11cd422193623a4a7f5a49637",
  "competition_set_id": 28,
  "source_commit": "a2bbc42",
@@ -32,10 +32,15 @@
   }
  },
  "upload": {
-  "agent_id": "",
-  "quote_id": "",
-  "block_hash": "",
-  "extrinsic_index": ""
+  "agent_id": "0526c28a-a760-510e-8e40-a74b2345b3fc",
+  "quote_id": "e756dd8b-de37-417e-a2db-f0a263ea4639",
+  "block_hash": "0xe843810af4d29ebbd28c19df7d4a02298a05100c46fa57d103f2023b46988a39",
+  "extrinsic_index": 7,
+  "alpha_burned": "1.7232 (1723223022 rao) on SN62",
+  "miner_hotkey": "5HK2dPSQ77YaHLhf1rhWHi3aRMnwHsJFNW8j4qksFMo4s9yE",
+  "miner_coldkey": "5CqpH3HCqya1JUjixjocYsirQeahPBD2A9MGKfdcqUinixd7 (goldenflow-safe)",
+  "receipt_source": "User-provided successful CLI upload output",
+  "receipt_recorded_at_utc": "2026-10-02T02:14:53+00:00"
  },
  "validator": {
   "score": null,
