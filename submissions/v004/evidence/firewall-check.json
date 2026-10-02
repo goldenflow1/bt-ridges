@@ -1,0 +1,7 @@
+{
+ "checked_at_utc": "2026-10-02T01:08:36Z",
+ "endpoint": "/upload/agent/check (unsigned)",
+ "http_status": 422,
+ "firewall_blocked": false,
+ "interpretation": "API validation reached (whole file passes the upload firewall)"
+}

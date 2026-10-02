@@ -1,0 +1,38 @@
+{
+ "version": "v004",
+ "status": "pending-g7",
+ "sha256": "5406e4dd79608e0109e8d1c283879f63b78099a11cd422193623a4a7f5a49637",
+ "competition_set_id": 28,
+ "source_commit": "a2bbc42",
+ "source_rebuilds_identically": true,
+ "models": {
+  "driver": "openai/gpt-5.6-luna",
+  "fallback": "deepseek/deepseek-v4-pro-0813 (per call, 60 s primary cooldown)"
+ },
+ "experiments": [
+  "E012",
+  "E013",
+  "E014",
+  "E015",
+  "E016"
+ ],
+ "local": {
+  "normal_dev": "bench/runs/20261001-121805-dev (50/51)",
+  "normal_public": "bench/runs/20261001-135021-public (16/18)",
+  "confirm_dev": "bench/runs/20261001-172851-dev-A/-B (tz-buckets: baseline 2/3, v004 3/3)",
+  "exception": "prefix-hierarchy confirmation stopped after 1/6 trials by user decision 2026-10-01 18:07 PDT (drop unconfirmed)",
+  "heldout": null
+ },
+ "upload": {
+  "agent_id": "",
+  "quote_id": "",
+  "block_hash": "",
+  "extrinsic_index": ""
+ },
+ "validator": {
+  "score": null,
+  "cost_usd": null,
+  "status": ""
+ },
+ "drafted_at_utc": "2026-10-02T01:10:06Z"
+}

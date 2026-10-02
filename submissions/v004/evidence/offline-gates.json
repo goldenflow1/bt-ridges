@@ -1,0 +1,39 @@
+{
+ "checked_at_utc": "2026-10-02T01:09:48Z",
+ "command": "uv run python tools/gate.py",
+ "result": "passed",
+ "gates": [
+  {
+   "status": "PASS",
+   "gate": "G0 ruff"
+  },
+  {
+   "status": "PASS",
+   "gate": "G1 unit + scenario tests"
+  },
+  {
+   "status": "PASS",
+   "gate": "G2 bundle builds"
+  },
+  {
+   "status": "PASS",
+   "gate": "G2b bundle imports on Python 3.9"
+  },
+  {
+   "status": "PASS",
+   "gate": "G3 offline e2e on the bundle"
+  },
+  {
+   "status": "PASS",
+   "gate": "G4 pre-screen lint"
+  },
+  {
+   "status": "PASS",
+   "gate": "G4b originality vs public agents"
+  },
+  {
+   "status": "PASS",
+   "gate": "G5 traceability: 102/102 requirements have tests"
+  }
+ ]
+}
